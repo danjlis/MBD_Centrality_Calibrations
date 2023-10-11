@@ -248,132 +248,135 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
   float sum_s = 0.;
   float sum_n2 = 0.;
   float sum_s2 = 0.;
-  if (DEBUG) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
-  if (DEBUG) std::cout << " Channel\tCharge\tTDC"<<endl; 
-  for (int ich = 0 ; ich < 128; ich++)
+
+  for (int i = 0 ; i < (DEBUG ? 10 : t->GetEntries()); i++)
     {
-      mbd_time[ich] = ((25. - mbd_time_raw[ich] * (9.0 / 5000.) - time_shift_corr[ich]))*time_scale_corr[ich];
-      mbd_charge[ich] = mbd_charge_raw[ich]*gain_corr[ich];
-
-      if (DEBUG) std::cout << " "<<ich<<"\t"<<mbd_charge[ich]<<"\t"<< mbd_time[ich]<<<<endl; 
-    }
-  for (int ich = 0 ; ich < 64; ich++)
-    {
-
-
-      if (mbd_charge[ich] > cthresh)
+      if (DEBUG) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
+      if (DEBUG) std::cout << " Channel\tCharge\tTDC"<<endl; 
+      for (int ich = 0 ; ich < 128; ich++)
 	{
-	  hits_s++;
-	  charge_sum += mbd_charge[ich];	      
-	  if (!(ich == 56 || fabs(mbd_time[ich]) > 15))
-	    { 
-		  
-	      float timme = mbd_time[ich];
-	      hits_s_t++;
-	      time_sum_s.push_back(timme);
-		  
-	      sum_s += timme;
-	      sum_s2 += (timme*timme);
-	    }      
+	  mbd_time[ich] = ((25. - mbd_time_raw[ich] * (9.0 / 5000.) - time_shift_corr[ich]))*time_scale_corr[ich];
+	  mbd_charge[ich] = mbd_charge_raw[ich]*gain_corr[ich];
+
+	  if (DEBUG) std::cout << " "<<ich<<"\t"<<mbd_charge[ich]<<"\t"<< mbd_time[ich]<<endl; 
 	}
-      if (mbd_charge[ich + 64] > cthresh)
+      for (int ich = 0 ; ich < 64; ich++)
 	{
-	  hits_n++;
-	  charge_sum += mbd_charge[ich+64];	      
-	  if (!(ich == 56 || fabs(mbd_time[ich+64]) > 15))
-	    { 
-		  
-	      float timme = mbd_time[ich+64];
-		  
-		  
-	      hits_n_t++;
-	      time_sum_n.push_back(timme);
-	      sum_n += timme;;
-	      sum_n2 += (timme*timme);
 
+
+	  if (mbd_charge[ich] > cthresh)
+	    {
+	      hits_s++;
+	      charge_sum += mbd_charge[ich];	      
+	      if (!(ich == 56 || fabs(mbd_time[ich]) > 15))
+		{ 
+		  
+		  float timme = mbd_time[ich];
+		  hits_s_t++;
+		  time_sum_s.push_back(timme);
+		  
+		  sum_s += timme;
+		  sum_s2 += (timme*timme);
+		}      
 	    }
-	}
-      
-    } 
-      
-  sort(time_sum_n.begin(), time_sum_n.end());
-  sort(time_sum_s.begin(), time_sum_s.end());
-  float mean_north;
-  float mean_south;
-  if (hits_s_t >= central_cut && hits_n_t >=central_cut){
-    minbias = true;
-    mean_north = sum_n/static_cast<float>(hits_n_t);
-    mean_south = sum_s/static_cast<float>(hits_s_t);
+	  if (mbd_charge[ich + 64] > cthresh)
+	    {
+	      hits_n++;
+	      charge_sum += mbd_charge[ich+64];	      
+	      if (!(ich == 56 || fabs(mbd_time[ich+64]) > 15))
+		{ 
+		  
+		  float timme = mbd_time[ich+64];
+		  
+		  
+		  hits_n_t++;
+		  time_sum_n.push_back(timme);
+		  sum_n += timme;;
+		  sum_n2 += (timme*timme);
 
-    float rms_n = sqrt(sum_n2/static_cast<float>(hits_n_t) - TMath::Power(mean_north, 2));
-    float rms_s = sqrt(sum_s2/static_cast<float>(hits_s_t) - TMath::Power(mean_south, 2));
-    int nhit_n_center = 0;
-    int nhit_s_center = 0;
-    float sum_n_center = 0.;
-    float sum_s_center = 0.;
-    for (unsigned int ino = 0; ino < time_sum_n.size(); ino++)
-      {
-	if (fabs(time_sum_n.at(ino) - mean_north) < sigma_cut )
+		}
+	    }
+      
+	} 
+      
+      sort(time_sum_n.begin(), time_sum_n.end());
+      sort(time_sum_s.begin(), time_sum_s.end());
+      float mean_north;
+      float mean_south;
+      if (hits_s_t >= central_cut && hits_n_t >=central_cut){
+	minbias = true;
+	mean_north = sum_n/static_cast<float>(hits_n_t);
+	mean_south = sum_s/static_cast<float>(hits_s_t);
+
+	float rms_n = sqrt(sum_n2/static_cast<float>(hits_n_t) - TMath::Power(mean_north, 2));
+	float rms_s = sqrt(sum_s2/static_cast<float>(hits_s_t) - TMath::Power(mean_south, 2));
+	int nhit_n_center = 0;
+	int nhit_s_center = 0;
+	float sum_n_center = 0.;
+	float sum_s_center = 0.;
+	for (unsigned int ino = 0; ino < time_sum_n.size(); ino++)
 	  {
-	    sum_n_center += time_sum_n.at(ino);
-	    nhit_n_center++;
+	    if (fabs(time_sum_n.at(ino) - mean_north) < sigma_cut )
+	      {
+		sum_n_center += time_sum_n.at(ino);
+		nhit_n_center++;
+	      }
 	  }
-      }
-    for (unsigned int is = 0; is < time_sum_s.size(); is++)
-      {
-	if (fabs(time_sum_s.at(is) - mean_south) < sigma_cut )
+	for (unsigned int is = 0; is < time_sum_s.size(); is++)
 	  {
-	    sum_s_center += time_sum_s.at(is);
-	    nhit_s_center++;
+	    if (fabs(time_sum_s.at(is) - mean_south) < sigma_cut )
+	      {
+		sum_s_center += time_sum_s.at(is);
+		nhit_s_center++;
+	      }
 	  }
+	float mean_north_center = sum_n_center/static_cast<float>(nhit_n_center);
+	float mean_south_center = sum_s_center/static_cast<float>(nhit_s_center);
+	mean_north = mean_north_center;
+	mean_south = mean_south_center;
+	z_vertex = 15.*(mean_north_center - mean_south_center);
+	time_0 = (mean_north_center + mean_south_center)/2.;
+
+	h_rms_by_time_n->Fill(time_0, rms_n);
+	h_rms_by_time_s->Fill(time_0, rms_s);
+
+
       }
-    float mean_north_center = sum_n_center/static_cast<float>(nhit_n_center);
-    float mean_south_center = sum_s_center/static_cast<float>(nhit_s_center);
-    mean_north = mean_north_center;
-    mean_south = mean_south_center;
-    z_vertex = 15.*(mean_north_center - mean_south_center);
-    time_0 = (mean_north_center + mean_south_center)/2.;
 
-    h_rms_by_time_n->Fill(time_0, rms_n);
-    h_rms_by_time_s->Fill(time_0, rms_s);
+      else if (hits_s >=2 && hits_n >=2 && (hits_s_t > 1 && hits_n_t > 1)){
 
+	minbias = true;
+	mean_north = sum_n/static_cast<float>(hits_n);
+	mean_south = sum_s/static_cast<float>(hits_s);
 
-  }
+	z_vertex = 15*(mean_north - mean_south);
+	time_0 = (mean_north + mean_south)/2.;
 
-  else if (hits_s >=2 && hits_n >=2 && (hits_s_t > 1 && hits_n_t > 1)){
-
-    minbias = true;
-    mean_north = sum_n/static_cast<float>(hits_n);
-    mean_south = sum_s/static_cast<float>(hits_s);
-
-    z_vertex = 15*(mean_north - mean_south);
-    time_0 = (mean_north + mean_south)/2.;
-
-  }
-  else z_vertex = -999;
+      }
+      else z_vertex = -999;
 
 
-  h_vertex->Fill(z_vertex);
-  h_mean_north_south->Fill(mean_north, mean_south);
+      h_vertex->Fill(z_vertex);
+      h_mean_north_south->Fill(mean_north, mean_south);
       
-  //h_vertex_w_t->Fill(z_vertex);
+      //h_vertex_w_t->Fill(z_vertex);
       
-  int cent_bin =GetCentBin(charge_sum);
+      int cent_bin =GetCentBin(charge_sum);
       
-  h_vertex_c[cent_bin]->Fill(z_vertex);
-  h_time_0->Fill(time_0);
-  h_charge_sum->Fill(charge_sum);
+      h_vertex_c[cent_bin]->Fill(z_vertex);
+      h_time_0->Fill(time_0);
+      h_charge_sum->Fill(charge_sum);
       
-  if (!minbias) continue;
+      if (!minbias) continue;
 
-  h_charge_sum_min_bias->Fill(charge_sum);
-
-  if (TMath::Abs(z_vertex) > 30) continue;
-
+      h_charge_sum_min_bias->Fill(charge_sum);
+  
+      if (TMath::Abs(z_vertex) > 30) continue;
+  
       h_charge_sum_min_bias_w_vertex_30->Fill(charge_sum);
-}
+    }
 
-TFile *fout = new TFile(Form("%s/output/plots/mbd_charge_sum_%d.root", env_p, runnumber), "RECREATE");
+  TFile *fout = new TFile(Form("%s/output/plots/mbd_charge_sum_%d.root", env_p, runnumber), "RECREATE");
 
   TTree *tweird = new TTree("tweird", "holds weird events and such");
   int wevent;

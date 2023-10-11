@@ -54,7 +54,11 @@ MBD Calibrations
 $ submit_waveform.sh [runnumber][# of segments]
 $ submit_MbdCalibrationAnalysis.sh [runnumber][# of segments]
 
-$ finish_waveform.sh [runnumber]
+After these are done
+
+$ submit_singalProcessing.sh [runnumber][# of segments]
+
+$ finish_signals.sh [runnumber]
 $ finish_MbdCalibrationAnalysis.sh [runnumber]
 
 
