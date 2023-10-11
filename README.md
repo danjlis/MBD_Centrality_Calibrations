@@ -1,4 +1,13 @@
+# FIRST!!#
+
+$ bash setup_dirs.sh
+
+then edit ./macros/setup_env.sh to be the base of this repo
+
+
 # A couple thigns you need to build before hand #
+
+
 
 make a build directory and go there:
 

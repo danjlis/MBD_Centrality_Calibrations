@@ -7,6 +7,8 @@
 const int DEBUG =  0;
 //void QA_FindCentralities()
 
+
+;
 #include "/sphenix/user/samfred/commissioning/macros/calib/mbd_info.h"
 #include "/sphenix/user/samfred/commissioning/macros/style.h"
 
@@ -49,6 +51,7 @@ void QA_centrality(
 		   )
 {
   QA_MBDCalibrations(runnumber, doPerRunCalibration, 1);  
+  QA_MBDTimeCalibrations(runnumber);  
   QA_MakeChargeSum(runnumber, loadRunCalibration);
   return;
 }
@@ -72,10 +75,17 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
   float sigma_cut = 1.5;
 
 
+  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+
+  if(!env_p)
+    {
+      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      return;
+    }
 
   if (loadRunCalibration)
     {
-      calibfile = new TFile(Form("../calib/calib_mbd_%d.root", runnumber), "r");
+      calibfile = new TFile(Form("%s/calib/calib_mbd_%d.root", env_p, runnumber), "r");
         
       if (!calibfile)
 	{
@@ -96,7 +106,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 	  s->GetEntry(i);
 	  gain_corr[i] = g;
 	}
-      tcalibfile = new TFile(Form("../calib/t0_calib_mbd_%d.root", runnumber), "r");
+      tcalibfile = new TFile(Form("%s/calib/t0_calib_mbd_%d.root", env_p, runnumber), "r");
 
       if (!tcalibfile)
 	{
@@ -162,11 +172,11 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 
   TEfficiency *h_ring_occuppancy[3]; 
   TEfficiency *h_ring_voccuppancy[3]; 
-    for (int i = 0; i < 3; i++)
-      {
-	h_ring_voccuppancy[i] = new TEfficiency(Form("h_voccuppancy_ring_%d", i),"", 128, -0.5, 127.5);
-	h_ring_occuppancy[i]= new TEfficiency(Form("h_occuppancy_ring_%d", i),"", 128, -0.5, 127.5);
-      }
+  for (int i = 0; i < 3; i++)
+    {
+      h_ring_voccuppancy[i] = new TEfficiency(Form("h_voccuppancy_ring_%d", i),"", 128, -0.5, 127.5);
+      h_ring_occuppancy[i]= new TEfficiency(Form("h_occuppancy_ring_%d", i),"", 128, -0.5, 127.5);
+    }
   TH1D *h_charge_sum = new TH1D("h_charge_sum","", nbin, -0.5, (float)maxrange - 0.5);
   TH1D *h_charge_sum_min_bias = new TH1D("h_charge_sum_min_bias","",  nbin, -0.5, (float)maxrange - 0.5);
   TH1D *h_charge_sum_min_bias_w_vertex_30 = new TH1D("h_charge_sum_min_bias_w_vertex_30","", nbin, -0.5, (float)maxrange - 0.5);
@@ -201,7 +211,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
       h_time_wo_t[ich]  = new TH1D(Form("h_time_wo_t_%d", ich), "", nbins_t, low_t, high_t);
     }
 
-  TFile *file = new TFile(Form("../output/run%d/trees_%d.root", runnumber, runnumber), "r");
+  TFile *file = new TFile(Form("%s/output/run%d/trees_%d.root", env_p, runnumber, runnumber), "r");
   if (!file)
     {
       std::cout << " No Tree File found " <<std::endl;
@@ -214,10 +224,8 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
   
   float mbd_charge[128];
   float mbd_time[128];
-  float mbd_time_q[128];
   float mbd_charge_raw[128];
   float mbd_time_raw[128];
-  float time_of_arrival[256];
 
   float z_vertex;
   float time_0;  
@@ -226,160 +234,146 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
   t->SetBranchAddress("mbd_charge_raw",mbd_charge_raw);
   t->SetBranchAddress("mbd_time_raw",mbd_time_raw);
 
-  TFile *fwave = new TFile(Form("/sphenix/user/dlis/Projects/signal_processing/output/run%d/processedsignal_%d.root", runnumber, runnumber), "r");
-  TTree *twave = (TTree*) fwave->Get("ttree");
-  twave->SetBranchAddress("time_of_arrival", time_of_arrival);
+  double charge_sum = 0;
 
+  //// vertex
+  int hits_n = 0;
+  int hits_s = 0;      
+  int hits_n_t = 0;
+  int hits_s_t = 0;      
 
-  for (int i = 0; i < (DEBUG? 10: t->GetEntries());i++)
+  std::vector<float> time_sum_n;
+  std::vector<float> time_sum_s;
+  float sum_n = 0.;
+  float sum_s = 0.;
+  float sum_n2 = 0.;
+  float sum_s2 = 0.;
+  if (DEBUG) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
+  if (DEBUG) std::cout << " Channel\tCharge\tTDC"<<endl; 
+  for (int ich = 0 ; ich < 128; ich++)
     {
-      minbias = false;
-      z_vertex = -999;      
-      if (i%10000 == 0) cout << i << endl;
-      t->GetEntry(i);
-      twave->GetEntry(i);
+      mbd_time[ich] = ((25. - mbd_time_raw[ich] * (9.0 / 5000.) - time_shift_corr[ich]))*time_scale_corr[ich];
+      mbd_charge[ich] = mbd_charge_raw[ich]*gain_corr[ich];
 
-      double charge_sum = 0;
+      if (DEBUG) std::cout << " "<<ich<<"\t"<<mbd_charge[ich]<<"\t"<< mbd_time[ich]<<<<endl; 
+    }
+  for (int ich = 0 ; ich < 64; ich++)
+    {
 
-      //// vertex
-      int hits_n = 0;
-      int hits_s = 0;      
-      int hits_n_t = 0;
-      int hits_s_t = 0;      
 
-      std::vector<float> time_sum_n;
-      std::vector<float> time_sum_s;
-      float sum_n = 0.;
-      float sum_s = 0.;
-      float sum_n2 = 0.;
-      float sum_s2 = 0.;
-      if (DEBUG) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
-      if (DEBUG) std::cout << " Channel\tCharge\tTDC\tTOA"<<endl; 
-      for (int ich = 0 ; ich < 128; ich++)
+      if (mbd_charge[ich] > cthresh)
 	{
-	  mbd_time[ich] = ((25. - mbd_time_raw[ich] * (9.0 / 5000.) - time_shift_corr[ich]))*time_scale_corr[ich];
-	  mbd_charge[ich] = mbd_charge_raw[ich]*gain_corr[ich];
-
-	  mbd_time_q[ich] = time_of_arrival[8+(ich/8)*16 + ich%8] - toa_shift_corr[ich]; 
-	  if (DEBUG) std::cout << " "<<ich<<"\t"<<mbd_charge[ich]<<"\t"<< mbd_time[ich]<<"\t"<<mbd_time_q[ich]<<endl; 
+	  hits_s++;
+	  charge_sum += mbd_charge[ich];	      
+	  if (!(ich == 56 || fabs(mbd_time[ich]) > 15))
+	    { 
+		  
+	      float timme = mbd_time[ich];
+	      hits_s_t++;
+	      time_sum_s.push_back(timme);
+		  
+	      sum_s += timme;
+	      sum_s2 += (timme*timme);
+	    }      
 	}
-      for (int ich = 0 ; ich < 64; ich++)
+      if (mbd_charge[ich + 64] > cthresh)
 	{
-
-
-	  if (mbd_charge[ich] > cthresh)
-	    {
-	      hits_s++;
-	      charge_sum += mbd_charge[ich];	      
-	      if (!(ich == 56 || fabs(mbd_time[ich]) > 15))
-		{ 
+	  hits_n++;
+	  charge_sum += mbd_charge[ich+64];	      
+	  if (!(ich == 56 || fabs(mbd_time[ich+64]) > 15))
+	    { 
 		  
-		  float timme = mbd_time[ich];
-		  hits_s_t++;
-		  time_sum_s.push_back(timme);
+	      float timme = mbd_time[ich+64];
 		  
-		  sum_s += timme;
-		  sum_s2 += (timme*timme);
-		}      
+		  
+	      hits_n_t++;
+	      time_sum_n.push_back(timme);
+	      sum_n += timme;;
+	      sum_n2 += (timme*timme);
+
 	    }
-	  if (mbd_charge[ich + 64] > cthresh)
-	    {
-	      hits_n++;
-	      charge_sum += mbd_charge[ich+64];	      
-	      if (!(ich == 56 || fabs(mbd_time[ich+64]) > 15))
-		{ 
-		  
-		  float timme = mbd_time[ich+64];
-		  
-		  
-		  hits_n_t++;
-		  time_sum_n.push_back(timme);
-		  sum_n += timme;;
-		  sum_n2 += (timme*timme);
-
-		}
-	    }
+	}
       
-	} 
+    } 
       
-      sort(time_sum_n.begin(), time_sum_n.end());
-      sort(time_sum_s.begin(), time_sum_s.end());
-      float mean_north;
-      float mean_south;
-      if (hits_s_t >= central_cut && hits_n_t >=central_cut){
-	minbias = true;
-	mean_north = sum_n/static_cast<float>(hits_n_t);
-	mean_south = sum_s/static_cast<float>(hits_s_t);
+  sort(time_sum_n.begin(), time_sum_n.end());
+  sort(time_sum_s.begin(), time_sum_s.end());
+  float mean_north;
+  float mean_south;
+  if (hits_s_t >= central_cut && hits_n_t >=central_cut){
+    minbias = true;
+    mean_north = sum_n/static_cast<float>(hits_n_t);
+    mean_south = sum_s/static_cast<float>(hits_s_t);
 
-	float rms_n = sqrt(sum_n2/static_cast<float>(hits_n_t) - TMath::Power(mean_north, 2));
-	float rms_s = sqrt(sum_s2/static_cast<float>(hits_s_t) - TMath::Power(mean_south, 2));
-	int nhit_n_center = 0;
-	int nhit_s_center = 0;
-	float sum_n_center = 0.;
-	float sum_s_center = 0.;
-	for (unsigned int ino = 0; ino < time_sum_n.size(); ino++)
+    float rms_n = sqrt(sum_n2/static_cast<float>(hits_n_t) - TMath::Power(mean_north, 2));
+    float rms_s = sqrt(sum_s2/static_cast<float>(hits_s_t) - TMath::Power(mean_south, 2));
+    int nhit_n_center = 0;
+    int nhit_s_center = 0;
+    float sum_n_center = 0.;
+    float sum_s_center = 0.;
+    for (unsigned int ino = 0; ino < time_sum_n.size(); ino++)
+      {
+	if (fabs(time_sum_n.at(ino) - mean_north) < sigma_cut )
 	  {
-	    if (fabs(time_sum_n.at(ino) - mean_north) < sigma_cut )
-	      {
-		sum_n_center += time_sum_n.at(ino);
-		nhit_n_center++;
-	      }
+	    sum_n_center += time_sum_n.at(ino);
+	    nhit_n_center++;
 	  }
-	for (unsigned int is = 0; is < time_sum_s.size(); is++)
+      }
+    for (unsigned int is = 0; is < time_sum_s.size(); is++)
+      {
+	if (fabs(time_sum_s.at(is) - mean_south) < sigma_cut )
 	  {
-	    if (fabs(time_sum_s.at(is) - mean_south) < sigma_cut )
-	      {
-		sum_s_center += time_sum_s.at(is);
-		nhit_s_center++;
-	      }
+	    sum_s_center += time_sum_s.at(is);
+	    nhit_s_center++;
 	  }
-	float mean_north_center = sum_n_center/static_cast<float>(nhit_n_center);
-	float mean_south_center = sum_s_center/static_cast<float>(nhit_s_center);
-	mean_north = mean_north_center;
-	mean_south = mean_south_center;
-	z_vertex = 15.*(mean_north_center - mean_south_center);
-	time_0 = (mean_north_center + mean_south_center)/2.;
-
-	h_rms_by_time_n->Fill(time_0, rms_n);
-	h_rms_by_time_s->Fill(time_0, rms_s);
-
-
       }
+    float mean_north_center = sum_n_center/static_cast<float>(nhit_n_center);
+    float mean_south_center = sum_s_center/static_cast<float>(nhit_s_center);
+    mean_north = mean_north_center;
+    mean_south = mean_south_center;
+    z_vertex = 15.*(mean_north_center - mean_south_center);
+    time_0 = (mean_north_center + mean_south_center)/2.;
 
-      else if (hits_s >=2 && hits_n >=2 && (hits_s_t > 1 && hits_n_t > 1)){
-
-	minbias = true;
-	mean_north = sum_n/static_cast<float>(hits_n);
-	mean_south = sum_s/static_cast<float>(hits_s);
-
-	z_vertex = 15*(mean_north - mean_south);
-	time_0 = (mean_north + mean_south)/2.;
-
-      }
-      else z_vertex = -999;
+    h_rms_by_time_n->Fill(time_0, rms_n);
+    h_rms_by_time_s->Fill(time_0, rms_s);
 
 
-      h_vertex->Fill(z_vertex);
-      h_mean_north_south->Fill(mean_north, mean_south);
+  }
+
+  else if (hits_s >=2 && hits_n >=2 && (hits_s_t > 1 && hits_n_t > 1)){
+
+    minbias = true;
+    mean_north = sum_n/static_cast<float>(hits_n);
+    mean_south = sum_s/static_cast<float>(hits_s);
+
+    z_vertex = 15*(mean_north - mean_south);
+    time_0 = (mean_north + mean_south)/2.;
+
+  }
+  else z_vertex = -999;
+
+
+  h_vertex->Fill(z_vertex);
+  h_mean_north_south->Fill(mean_north, mean_south);
       
-      //h_vertex_w_t->Fill(z_vertex);
+  //h_vertex_w_t->Fill(z_vertex);
       
-      int cent_bin =GetCentBin(charge_sum);
+  int cent_bin =GetCentBin(charge_sum);
       
-      h_vertex_c[cent_bin]->Fill(z_vertex);
-      h_time_0->Fill(time_0);
-      h_charge_sum->Fill(charge_sum);
+  h_vertex_c[cent_bin]->Fill(z_vertex);
+  h_time_0->Fill(time_0);
+  h_charge_sum->Fill(charge_sum);
       
-      if (!minbias) continue;
+  if (!minbias) continue;
 
-      h_charge_sum_min_bias->Fill(charge_sum);
+  h_charge_sum_min_bias->Fill(charge_sum);
 
-      if (TMath::Abs(z_vertex) > 30) continue;
+  if (TMath::Abs(z_vertex) > 30) continue;
 
       h_charge_sum_min_bias_w_vertex_30->Fill(charge_sum);
-    }
+}
 
-  TFile *fout = new TFile(Form("../plots/mbd_charge_sum_%d.root", runnumber), "RECREATE");
+TFile *fout = new TFile(Form("%s/output/plots/mbd_charge_sum_%d.root", env_p, runnumber), "RECREATE");
 
   TTree *tweird = new TTree("tweird", "holds weird events and such");
   int wevent;
@@ -450,9 +444,17 @@ void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, cons
   float gain_corr[128];
   float g;
 
+  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+
+  if(!env_p)
+    {
+      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      return;
+    }
+  
   // Output from the centrality module.
 
-  TFile *file = new TFile(Form("../output/run%d/mbd_calib_trees_%d.root", runnumber, runnumber), "r");
+  TFile *file = new TFile(Form("%s/output/run%d/mbd_calib_trees_%d.root", env_p, runnumber, runnumber), "r");
   if (!file)
     {
       std::cout << " No Tree File found " <<std::endl;
@@ -470,7 +472,7 @@ void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, cons
     }
   if (!makeNewHistograms)
     {
-      TFile *fin2 = new TFile(Form("../plots/mbd_calib_plots_%d.root", runnumber), "r");
+      TFile *fin2 = new TFile(Form("%s/output/plots/mbd_calib_plots_%d.root", env_p, runnumber), "r");
       for (int ich = 0 ; ich < 128; ich++)
 	{
 	  h_charge[ich] = (TH1D*) fin2->Get(Form("h_mbd_charge_ch%d", ich));
@@ -518,7 +520,7 @@ void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, cons
   TFile *fcalibout;
   TNtuple *tn;
 
-  fcalibout = new TFile(Form("../calib/calib_mbd_%d.root", runnumber),"RECREATE");
+  fcalibout = new TFile(Form("%s/calib/calib_mbd_%d.root", env_p, runnumber),"RECREATE");
   tn = new TNtuple("mbd_calib","mbd_calib","channel:peak:width");
 
   for (int ich = 0 ; ich < 128; ich++){
@@ -840,13 +842,21 @@ void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, cons
 void QA_MBDTimeCalibrations(const int runnumber)
 {
 
-  TFile *f = new TFile(Form("/sphenix/user/dlis/Projects/centrality/output/run%d/processedsignal_%d.root", runnumber, runnumber), "r");
+  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+
+  if(!env_p)
+    {
+      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      return;
+    }
+
+  TFile *f = new TFile(Form("%s/output/run%d/signals/processedsignal_%d.root", env_p, runnumber, runnumber), "r");
   TTree *t = (TTree*) f->Get("ttree");
 
-  TFile *f2 = new TFile(Form("/sphenix/user/dlis/Projects/centrality/output/run%d/mbd_calib_trees_%d.root", runnumber, runnumber), "r");
+  TFile *f2 = new TFile(Form("%s/output/run%d/mbdcalibana/mbd_calib_trees_%d.root", env_p, runnumber, runnumber), "r");
   TTree *t2 = (TTree*) f2->Get("T");
 
-  TFile *fcalib = new TFile(Form("/sphenix/user/dlis/Projects/centrality/calib/calib_mbd_%d.root", runnumber), "r");
+  TFile *fcalib = new TFile(Form("%s/calib/calib_mbd_%d.root", env_p, runnumber), "r");
   TNtuple *tcalib = (TNtuple*) fcalib->Get("mbd_calib");
 
   // get calib
@@ -1002,7 +1012,7 @@ void QA_MBDTimeCalibrations(const int runnumber)
   
   std::cout << "\rFilling Histograms ... [Done]"<<std::endl;
   
-  TFile *ftcalib = new TFile(Form("/sphenix/user/dlis/Projects/centrality/calib/t0_calib_mbd_%d.root", runnumber),"recreate");
+  TFile *ftcalib = new TFile(Form("%s/calib/t0_calib_mbd_%d.root", env_p, runnumber),"recreate");
 
   TNtuple *t_calib = new TNtuple("ttree","time calib","channel:shift:scale:toa_shift");
 
@@ -1123,7 +1133,7 @@ void QA_MBDTimeCalibrations(const int runnumber)
   ftcalib->Write();
   ftcalib->Close();
 
-  TFile *fout21 = new TFile(Form("../output/hists/fitsout_%d.root", runnumber),"recreate");
+  TFile *fout21 = new TFile(Form("%s//output/hists/fitsout_%d.root", env_p, runnumber),"recreate");
   for (int i = 0; i < 128; i++)
     {
       h_tdc_channel[i]->Write();
@@ -1177,7 +1187,7 @@ void QA_MBDTimeCalibrations(const int runnumber)
   std::cout << "\rFilling Histograms ... [Done]"<<std::endl;
 
 
-  TFile *fout2 = new TFile(Form("../output/hists/histout_%d.root", runnumber),"recreate");
+  TFile *fout2 = new TFile(Form("%s/output/hists/histout_%d.root", env_p, runnumber),"recreate");
   for (int i = 0; i < 128; i++)
     {
       h_tdc_channel[i]->Write();

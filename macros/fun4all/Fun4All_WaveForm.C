@@ -28,13 +28,22 @@ void Fun4All_WaveForm(const int runnumber, const int rollover = 1)
   gSystem->Load("libcalopacketgetter");
   gSystem->Load("libtmbdemulatortreemaker");
 
+
+  const char* env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+
+  if(!env_p)
+    {
+      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      return;
+    }
+
   std::ostringstream rstr;
   rstr << std::setw(8) << std::setfill('0') << runnumber;
 
   std::ostringstream ostr;
   ostr << std::setw(4) << std::setfill('0') << rollover;
 
-  const char *tree_outfile = Form("/gpfs02/sphenix/user/dlis/Projects/centrality/output/run%d/waves/waveform_tree_%s_%s.root", runnumber, rstr.str().c_str(), ostr.str().c_str());
+  const char *tree_outfile = Form("/gpfs02/%s/output/run%d/waves/waveform_tree_%s_%s.root", env_p, runnumber, rstr.str().c_str(), ostr.str().c_str());
 
   std::string fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
 
