@@ -8,7 +8,7 @@ fi
 
 runnumber=$1
 retDir=${PWD}
-mkdir /sphenix/user/dlis/Projects/centrality/output/run${runnumber}
+mkdir -p ../output/run${runnumber}
 cFile=mbdcalibana_dlis.job
 DATE=`date +%Y%m%d`
 TIME=`date +%H%M%S`
