@@ -457,7 +457,7 @@ void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, cons
   
   // Output from the centrality module.
 
-  TFile *file = new TFile(Form("%s/output/run%d/mbd_calib_trees_%d.root", env_p, runnumber, runnumber), "r");
+  TFile *file = new TFile(Form("%s/output/run%d/mbdcalibana/mbd_calib_trees_%d.root", env_p, runnumber, runnumber), "r");
   if (!file)
     {
       std::cout << " No Tree File found " <<std::endl;
@@ -830,7 +830,7 @@ void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, cons
   fcalibout->Close();
 
   // As function of number of tubes hit, RMS of the time dists;
-  TFile *fout = new TFile(Form("../plots/mbd_calib_plots_%d.root", runnumber), "RECREATE");
+  TFile *fout = new TFile(Form("%s/output/plots/mbd_calib_plots_%d.root", env_p, runnumber), "RECREATE");
   for (int ich = 0 ; ich < 128; ich++)
     {
       h_charge[ich]->Write();
