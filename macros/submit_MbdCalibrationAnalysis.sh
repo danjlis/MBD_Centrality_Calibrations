@@ -6,10 +6,12 @@ if (( $# < 2 )); then
     exit
 fi
 
+source setup_env.sh
 
 runnumber=$1
 retDir=${PWD}
-mkdir -p ../output/run${runnumber}/mbdcalibana/
+
+mkdir -p  ${MBD_CENTRALITY_CALIB_PATH}/output/run${runnumber}/mbdcalibana/
 cFile=mbdcalibana_dlis.job
 DATE=`date +%Y%m%d`
 TIME=`date +%H%M%S`
@@ -28,7 +30,8 @@ echo "Queue $2" >> $cFile2
 
 cp $cFile2 $cDir
 rm $cFile2
-cp ./scriptsforcondor/scriptForMbdCalibrationAnalysis.sh $cDir
+cp scriptsforcondor/scriptForMbdCalibrationAnalysis.sh $cDir
+cp setup_env.sh $cDir
 sed -i -e "s@RUN@$runnumber@g" $cDir/scriptForMbdCalibrationAnalysis.sh
 
 cd $cDir
