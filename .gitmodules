@@ -1,0 +1,3 @@
+[submodule "CaloTriggerEmulator"]
+	path = CaloTriggerEmulator
+	url = https://github.com/danjlis/CaloTriggerEmulator
