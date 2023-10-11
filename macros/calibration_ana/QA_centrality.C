@@ -1136,7 +1136,7 @@ void QA_MBDTimeCalibrations(const int runnumber)
   ftcalib->Write();
   ftcalib->Close();
 
-  TFile *fout21 = new TFile(Form("%s//output/hists/fitsout_%d.root", env_p, runnumber),"recreate");
+  TFile *fout21 = new TFile(Form("%s//output/plots/fitsout_%d.root", env_p, runnumber),"recreate");
   for (int i = 0; i < 128; i++)
     {
       h_tdc_channel[i]->Write();
@@ -1190,7 +1190,7 @@ void QA_MBDTimeCalibrations(const int runnumber)
   std::cout << "\rFilling Histograms ... [Done]"<<std::endl;
 
 
-  TFile *fout2 = new TFile(Form("%s/output/hists/histout_%d.root", env_p, runnumber),"recreate");
+  TFile *fout2 = new TFile(Form("%s/output/plots/histout_%d.root", env_p, runnumber),"recreate");
   for (int i = 0; i < 128; i++)
     {
       h_tdc_channel[i]->Write();
