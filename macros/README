@@ -1,0 +1,12 @@
+Overall Structure
+
+Run Fun4All_MbdCalibrationAnalysis.C in condor
+
+$ bash submit_MbdCalibrationAnalysis.sh [runnumber] [# of segments]
+
+after this is done:
+
+$ bash finish_MbdCalibrationsAnalysis.sh [runnumber]
+
+
+
