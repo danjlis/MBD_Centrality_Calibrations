@@ -201,8 +201,8 @@ void Peak_Spline(const int runnumber, const int segment)
       h_peaktime[i] = new TH1D(Form("h_peaktime_ch_%d_%d_sigma", i, j), "", 310, 0, 31);
     }
 
-  TFile *file = new TFile(Form("/sphenix/user/dlis/Projects/centrality/output/run%d/waveform_tree_%s.root", runnumber, rstr.str().c_str()), "r");
-  if (segment != -1) file = new TFile(Form("/sphenix/user/dlis/Projects/centrality/output/run%d/waveform_tree_%s_%s.root", runnumber, rstr.str().c_str(), sstr.str().c_str()) , "r");
+  TFile *file = new TFile(Form("/sphenix/user/dlis/Projects/centrality/output/run%d/waves/waveform_tree_%s.root", runnumber, rstr.str().c_str()), "r");
+  if (segment != -1) file = new TFile(Form("/sphenix/user/dlis/Projects/centrality/output/run%d/waves/waveform_tree_%s_%s.root", runnumber, rstr.str().c_str(), sstr.str().c_str()) , "r");
   
   if (!file)
     {
@@ -222,7 +222,7 @@ void Peak_Spline(const int runnumber, const int segment)
   float peak[256];
   float pedestal[256];
 
-  TFile *fouttree = new TFile(Form("/sphenix/user/dlis/Projects/centrality/output/run%d/signal_%s_%s.root", runnumber, rstr.str().c_str(), sstr.str().c_str()), "RECREATE");
+  TFile *fouttree = new TFile(Form("/sphenix/user/dlis/Projects/centrality/output/run%d/signals/signal_%s_%s.root", runnumber, rstr.str().c_str(), sstr.str().c_str()), "RECREATE");
   if (segment == -1) fouttree = new TFile(Form("/sphenix/user/dlis/Projects/centrality/macros/waveform_tree_%s.root", rstr.str().c_str()), "RECREATE");
   if (debug) fouttree = new TFile(Form("/sphenix/user/dlis/Projects/centrality/macros/debug_waveform_tree_%s.root", rstr.str().c_str()), "RECREATE");
   TTree *tout = new TTree("ttree"," a persevering date tree");

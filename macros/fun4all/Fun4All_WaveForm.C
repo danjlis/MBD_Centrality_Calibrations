@@ -34,9 +34,26 @@ void Fun4All_WaveForm(const int runnumber, const int rollover = 1)
   std::ostringstream ostr;
   ostr << std::setw(4) << std::setfill('0') << rollover;
 
-  const char *tree_outfile = Form("/gpfs02/sphenix/user/dlis/Projects/CaloTriggerEmulator/outputs/waves/run%d/waveform_tree_%s_%s.root", runnumber, rstr.str().c_str(), ostr.str().c_str());
+  const char *tree_outfile = Form("/gpfs02/sphenix/user/dlis/Projects/centrality/output/run%d/waves/waveform_tree_%s_%s.root", runnumber, rstr.str().c_str(), ostr.str().c_str());
 
   std::string fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
+
+  if (FILE *file = fopen(fname1.c_str(),"r")){
+    fclose(file);
+  }
+  else
+  {
+    fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
+  }
+
+  if (FILE *file = fopen(fname1.c_str(),"r")){
+    fclose(file);
+  }
+  else
+  {
+    std::cout << "NOOOOO"<<std::endl;
+    return;
+  }
 
   Fun4AllServer *se = Fun4AllServer::instance();
 

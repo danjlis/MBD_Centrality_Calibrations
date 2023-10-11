@@ -8,7 +8,7 @@ fi
 
 runnumber=$1
 
-dir="/sphenix/user/dlis/Projects/centrality/output/run${runnumber}/"
+dir="/sphenix/user/dlis/Projects/centrality/output/run${runnumber}/centrality/"
 
 echo $dir
 

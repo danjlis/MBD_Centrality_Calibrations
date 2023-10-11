@@ -8,7 +8,7 @@ fi
 
 runnumber=$1
 retDir=${PWD}
-mkdir -p ../output/run${runnumber}
+mkdir -p ../output/run${runnumber}/mbdcalibana/
 cFile=mbdcalibana_dlis.job
 DATE=`date +%Y%m%d`
 TIME=`date +%H%M%S`

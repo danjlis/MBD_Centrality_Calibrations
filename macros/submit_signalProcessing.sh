@@ -9,7 +9,7 @@ fi
 runnumber=$1
 retDir=${PWD}
 
-mkdir -p /sphenix/user/dlis/Projects/centrality/output/run${runnumber}
+mkdir -p /sphenix/user/dlis/Projects/centrality/output/run${runnumber}/signals/
 
 cFile=signalProcessing_dlis.job
 DATE=`date +%Y%m%d`
@@ -29,7 +29,7 @@ echo "Queue $2" >> $cFile2
 
 cp $cFile2 $cDir
 rm $cFile2
-cp scriptsfodcondor/scriptForSignalProcessing.sh $cDir
+cp scriptsforcondor/scriptForSignalProcessing.sh $cDir
 sed -i -e "s@RUN@$runnumber@g" $cDir/scriptForSignalProcessing.sh
 
 cd $cDir

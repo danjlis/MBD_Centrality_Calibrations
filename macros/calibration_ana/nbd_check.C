@@ -46,7 +46,7 @@ double NBD_getValue(int n, double mu, double k);
 
 // here is the main routine
 void nbd_check(int runnumber = 21813,
-	       int maxcentbins = 9,
+	       int maxcentbins = 19,
 	       bool flag_determineNBDparameters = true, 
 	       bool flag_determineBiasFactors = false, string name = "./lemon_glauber_auau200_100k_histo.root", double alpha = 1.0, int vtxflag = 1, double particlealpha = 1.00, bool npartscaling = true, bool centraltrigger = false,
 	       bool npartminusone = false, double forcetrigfrac = 93., bool sphenix = true, int which=0) {
@@ -333,7 +333,7 @@ void nbd_check(int runnumber = 21813,
   hRealBBC->SetLineWidth(2);
   hRealBBC->SetMarkerStyle(24);
   hRealBBC->SetMaximum(hSimBBC->GetBinContent(10)*3);
-  hRealBBC->GetXaxis()->SetRangeUser(0.0,2100);
+  hRealBBC->GetXaxis()->SetRangeUser(0.0,2500);
   gPad->SetTopMargin(.13);
   
   char foo[100];
@@ -359,7 +359,7 @@ void nbd_check(int runnumber = 21813,
   hSimBBC->SetLineColor(1);
   
   hSimBBC->DrawCopy("l,same");
-  drawText("8/30/2023", 0.8, 0.92, 0, kBlack, 0.07);
+  //  drawText("8/30/2023", 0.8, 0.92, 0, kBlack, 0.07);
   TLatex l;
   l.SetNDC();
   l.SetTextSize(0.04);
@@ -453,8 +453,16 @@ void nbd_check(int runnumber = 21813,
   double centrality_high[20] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
 
   centrality_low[maxcentbins-1] = 0.0;
-  centrality_high[0] = 1999.0;
-  for (int i=nhistbins;i>=1;i--) {
+  int ihigh;
+  for (ihigh = nhistbins; ihigh > 0; ihigh--)
+    {
+      if (hRealBBC->GetBinContent(ihigh))
+	{
+	  centrality_high[0] = hRealBBC->GetBinCenter(ihigh);
+	  break;
+	}
+    }
+  for (int i=ihigh;i>=1;i--) {
     if (maxcentbins == 4) {
       if ((hSimBBCwTrig->Integral(i,nhistbins)/hSimBBCwTrig->Integral()) > (20./forcetrigfrac) && centrality_low[0] == 0.0) {
 	centrality_low[0] = hSimBBCwTrig->GetBinCenter(i);
@@ -636,7 +644,8 @@ void nbd_check(int runnumber = 21813,
   // redraw real data to be on top
   hRealBBC->DrawCopy("p,e,l,same");
   
-
+  c1->SaveAs(Form("glauber_fit_%d.pdf", runnumber));
+  c1->SaveAs(Form("glauber_fit_%d.png", runnumber));
   //===============================================================================
   
   TCanvas *c3 = new TCanvas("canvas_bbchits_ncoll","canvas_bbchits_ncoll");

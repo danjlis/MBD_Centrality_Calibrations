@@ -1,7 +1,7 @@
 #pragma once
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,00,0)
 
-#include <qacentrality/QACentralityReco.h>
+#include <centrality/CentralityAnalysis.h>
 #include <fun4all/SubsysReco.h>
 #include <fun4all/Fun4AllServer.h>
 #include <fun4all/Fun4AllInputManager.h>
@@ -31,10 +31,27 @@ void Fun4All_CentralityRecoQA(const int runnumber, const int rollover = 0)
   std::ostringstream ostr;
   ostr << std::setw(4) << std::setfill('0') << rollover;
 
-  const char *hist_outfile = Form("/gpfs02/sphenix/user/dlis/Projects/centrality/output/run%d/centrality_reco_hist_%s_%s.root", runnumber, rstr.str().c_str(), ostr.str().c_str());
-  const char *tree_outfile = Form("/gpfs02/sphenix/user/dlis/Projects/centrality/output/run%d/centrality_reco_tree_%s_%s.root", runnumber, rstr.str().c_str(), ostr.str().c_str());
+  const char *hist_outfile = Form("/gpfs02/sphenix/user/dlis/Projects/centrality/output/run%d/centrality/centrality_reco_hist_%s_%s.root", runnumber, rstr.str().c_str(), ostr.str().c_str());
+  const char *tree_outfile = Form("/gpfs02/sphenix/user/dlis/Projects/centrality/output/run%d/centrality/centrality_reco_tree_%s_%s.root", runnumber, rstr.str().c_str(), ostr.str().c_str());
 
   std::string fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
+
+  if (FILE *file = fopen(fname1.c_str(),"r")){
+    fclose(file);
+  }
+  else
+  {
+    fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
+  }
+
+  if (FILE *file = fopen(fname1.c_str(),"r")){
+    fclose(file);
+  }
+  else
+  {
+    std::cout << "NOOOOO"<<std::endl;
+    return;
+  }
 
   Fun4AllServer *se = Fun4AllServer::instance();
 
