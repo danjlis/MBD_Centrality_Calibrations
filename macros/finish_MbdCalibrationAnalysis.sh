@@ -5,10 +5,11 @@ if (( $# < 1 )); then
     echo "Usage finish.sh [runnumber]"
     exit
 fi
+source setup_env.sh
 
 runnumber=$1
 
-dir="/sphenix/user/dlis/Projects/centrality/output/run${runnumber}/mbdcalibana/"
+dir="${MBD_CENTRALITY_CALIB_PATH}/output/run${runnumber}/mbdcalibana/"
 
 echo $dir
 

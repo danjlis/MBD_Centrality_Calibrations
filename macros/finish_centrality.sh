@@ -6,9 +6,11 @@ if (( $# < 1 )); then
     exit
 fi
 
+source setup_env.sh
+
 runnumber=$1
 
-dir="/sphenix/user/dlis/Projects/centrality/output/run${runnumber}/centrality/"
+dir="${MBD_CENTRALITY_CALIB_PATH}/output/run${runnumber}/centrality/"
 
 echo $dir
 
