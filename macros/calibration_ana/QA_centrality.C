@@ -71,7 +71,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 
   double tthresh = 16;
   double cthresh = 0.4;
-  int central_cut = 6;
+  int central_cut = 8;
   float sigma_cut = 1.5;
 
 
@@ -181,27 +181,6 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
   TH1D *h_charge_sum_min_bias = new TH1D("h_charge_sum_min_bias","",  nbin, -0.5, (float)maxrange - 0.5);
   TH1D *h_charge_sum_min_bias_w_vertex_30 = new TH1D("h_charge_sum_min_bias_w_vertex_30","", nbin, -0.5, (float)maxrange - 0.5);
 
-  TH1D *event_with_weird_time[100][2];
-
-  TH2Poly *h_timemap_tot[100][2];
-  TH2Poly *h_hitmap_tot[100][2];
-  for (int i = 0 ; i < 100; i++)
-    {
-      event_with_weird_time[i][0] = new TH1D(Form("event_%d_with_weird_time_s",i),"", 120, -5, 25);
-      event_with_weird_time[i][1] = new TH1D(Form("event_%d_with_weird_time_n", i),"", 120, -5, 25);
-      for (int j = 0; j < 2; j++)
-	{
-	  h_hitmap_tot[i][j] = new TH2Poly(Form("h_hitmap_%s_tot_%d", (j?"n":"s"), i),";x (cm);y (cm);Charge   ",-width,width,-height,height);
-	  h_timemap_tot[i][j] = new TH2Poly(Form("h_timemap_%s_tot_%d", (j?"n":"s"), i),";x (cm);y (cm);Time   ",-width,width,-height,height);
-	  mbd_honeycomb(h_hitmap_tot[i][j],-width,-height,a,10,11);
-	  mbd_honeycomb(h_timemap_tot[i][j],-width,-height,a,10,11);
-	}
-    }
-  int iweird = 0;
-  int weird_event[100];
-  float weird_time[100][128];
-  float weird_charge[100][128];
-
   TH1D *h_time_w_t[128];
   TH1D *h_time_wo_t[128];
 
@@ -211,7 +190,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
       h_time_wo_t[ich]  = new TH1D(Form("h_time_wo_t_%d", ich), "", nbins_t, low_t, high_t);
     }
 
-  TFile *file = new TFile(Form("%s/output/run%d/trees_%d.root", env_p, runnumber, runnumber), "r");
+  TFile *file = new TFile(Form("%s/output/run%d/mbdcalibana/mbd_calib_trees_%d.root", env_p, runnumber, runnumber), "r");
   if (!file)
     {
       std::cout << " No Tree File found " <<std::endl;
@@ -229,8 +208,14 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 
   float z_vertex;
   float time_0;  
+
   TTree *t = (TTree*)file->Get("T");
-  t->SetBranchAddress("zdc_sum_low",zdc_sum);
+
+  t->SetBranchStatus("*", 0);
+  t->SetBranchStatus("mbd_charge_raw", 1);
+  t->SetBranchStatus("mbd_time_raw", 1);
+  //  t->SetBranchStatus("zdc_sum_low", 1);
+  //t->SetBranchAddress("zdc_sum_low",zdc_sum);
   t->SetBranchAddress("mbd_charge_raw",mbd_charge_raw);
   t->SetBranchAddress("mbd_time_raw",mbd_time_raw);
 
@@ -249,27 +234,38 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
   float sum_n2 = 0.;
   float sum_s2 = 0.;
 
+  cout <<"NEvents = "<<t->GetEntries()<<std::endl;
+
   for (int i = 0 ; i < (DEBUG ? 10 : t->GetEntries()); i++)
     {
-      if (DEBUG) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
-      if (DEBUG) std::cout << " Channel\tCharge\tTDC"<<endl; 
+      t->GetEntry(i);
+      if (i%1000 == 0) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
+
       for (int ich = 0 ; ich < 128; ich++)
 	{
+
 	  mbd_time[ich] = ((25. - mbd_time_raw[ich] * (9.0 / 5000.) - time_shift_corr[ich]))*time_scale_corr[ich];
 	  mbd_charge[ich] = mbd_charge_raw[ich]*gain_corr[ich];
 
-	  if (DEBUG) std::cout << " "<<ich<<"\t"<<mbd_charge[ich]<<"\t"<< mbd_time[ich]<<endl; 
-	}
-      for (int ich = 0 ; ich < 64; ich++)
-	{
-
-
 	  if (mbd_charge[ich] > cthresh)
 	    {
-	      hits_s++;
-	      charge_sum += mbd_charge[ich];	      
-	      if (!(ich == 56 || fabs(mbd_time[ich]) > 15))
-		{ 
+	      charge_sum += mbd_charge[ich];	      	      
+	      if (ich/64) hits_n++;
+	      else hits_s++;
+
+	      if (!(ich == 56 || fabs(mbd_time[ich]) > 10)) continue;
+	      if (ich/64) 
+		{
+		  float timme = mbd_time[ich+64];
+		 		  
+		  hits_n_t++;
+		  time_sum_n.push_back(timme);
+		  sum_n += timme;;
+		  sum_n2 += (timme*timme);
+
+		}
+	      else
+		{
 		  
 		  float timme = mbd_time[ich];
 		  hits_s_t++;
@@ -277,30 +273,16 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 		  
 		  sum_s += timme;
 		  sum_s2 += (timme*timme);
-		}      
-	    }
-	  if (mbd_charge[ich + 64] > cthresh)
-	    {
-	      hits_n++;
-	      charge_sum += mbd_charge[ich+64];	      
-	      if (!(ich == 56 || fabs(mbd_time[ich+64]) > 15))
-		{ 
-		  
-		  float timme = mbd_time[ich+64];
-		  
-		  
-		  hits_n_t++;
-		  time_sum_n.push_back(timme);
-		  sum_n += timme;;
-		  sum_n2 += (timme*timme);
 
 		}
+
 	    }
-      
+	  
 	} 
       
       sort(time_sum_n.begin(), time_sum_n.end());
       sort(time_sum_s.begin(), time_sum_s.end());
+
       float mean_north;
       float mean_south;
       if (hits_s_t >= central_cut && hits_n_t >=central_cut){
@@ -332,6 +314,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 	  }
 	float mean_north_center = sum_n_center/static_cast<float>(nhit_n_center);
 	float mean_south_center = sum_s_center/static_cast<float>(nhit_s_center);
+
 	mean_north = mean_north_center;
 	mean_south = mean_south_center;
 	z_vertex = 15.*(mean_north_center - mean_south_center);
@@ -378,24 +361,6 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 
   TFile *fout = new TFile(Form("%s/output/plots/mbd_charge_sum_%d.root", env_p, runnumber), "RECREATE");
 
-  TTree *tweird = new TTree("tweird", "holds weird events and such");
-  int wevent;
-  float wcharge[128];
-  float wtime[128];
-  tweird->Branch("event", &wevent, "event/I");
-  tweird->Branch("charge", wcharge, "charge[128]/F");
-  tweird->Branch("time", wtime, "time[128]/F");
-  for (int i = 0; i < iweird;i++)
-    {
-      wevent = weird_event[i];
-      for (int j = 0; j < 128; j++)
-	{
-	  wcharge[j] = weird_charge[i][j];
-	  wtime[j] = weird_time[i][j];
-	}
-      tweird->Fill();
-    }
-  fout->Write();
   h_charge_sum->Write();
   h_charge_sum_min_bias->Write();
   h_charge_sum_min_bias_w_vertex_30->Write();
@@ -421,15 +386,6 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
     {
       h_ring_voccuppancy[i]->Write();
       h_ring_occuppancy[i]->Write();
-    }
-  for (int i = 0; i < iweird;i++)
-    {      
-      for (int j = 0; j < 2; j++)
-	{
-	  h_hitmap_tot[i][j]->Write();
-	  h_timemap_tot[i][j]->Write();
-	  event_with_weird_time[i][j]->Write();
-	}
     }
   fout->Close();
   
@@ -1227,6 +1183,7 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
   double maxy = -999.99;
   double miny = -999.99;
   double minx = -999.99;
+  double maxvalue;
   for (int ib = 1; ib < h_rebinned->GetNbinsX()-1; ib++)
     {
       // find first bin with something in it
@@ -1302,16 +1259,31 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
     }
 
   // look for most maximum maximums
+  maxvalue = 2000;
+  if(v_max.size() > 1 )
+    {
+      std::sort(v_max.begin(), v_max.end(), [](auto &left, auto &right) {
+	  return left.second > right.second;
+	});
+
+      maxvalue = 0.2*v_max.at(0).second;
+
+      std::sort(v_max.begin(), v_max.end(), [](auto &left, auto &right) {
+	  return left.first < right.first;
+	});
+    }
+
   auto maxv = v_max.begin();
   while (maxv != v_max.end())
     {
-      if ((*maxv).second < 1000)
+      if ((*maxv).second < maxvalue)
 	v_max.erase(maxv);
       else if ((*maxv).first < minimumx || (*maxv).first > maximumx)
 	v_max.erase(maxv);
       else
 	maxv++;
     }
+
 
   if (!v_max.size())
     {
@@ -1334,6 +1306,7 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
 	  std::sort(v_max.begin(), v_max.end(), [](auto &left, auto &right) {
 	      return left.second > right.second;
 	    });
+
 
 	  auto maxv = v_max.begin() + 3;
 	  while (maxv != v_max.end())
@@ -1373,6 +1346,7 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
 	}
 
     }  
+
 
   for (unsigned int i = 0; i < v_max.size(); i++)
     {
