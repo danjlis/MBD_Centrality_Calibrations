@@ -12,6 +12,7 @@ runnumber=$1
 retDir=${PWD}
 
 mkdir -p  ${MBD_CENTRALITY_CALIB_PATH}/output/run${runnumber}/mbdcalibana/
+mkdir -p  ${MBD_CENTRALITY_CALIB_PATH}/output/run${runnumber}/plots/
 cFile=mbdcalibana_dlis.job
 DATE=`date +%Y%m%d`
 TIME=`date +%H%M%S`

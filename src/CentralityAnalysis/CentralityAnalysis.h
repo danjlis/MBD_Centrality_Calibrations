@@ -48,7 +48,7 @@ class CentralityAnalysis : public SubsysReco
 
   void SetOperationMode(int imode) { _op_mode = imode; }
   void ResetVars();
-
+  void useZDC(bool use_zdc) { _use_ZDC = use_zdc; }
  protected:
 
   enum Bbc
@@ -56,6 +56,8 @@ class CentralityAnalysis : public SubsysReco
     South = 0,
     North = 1
   };
+
+  bool _use_ZDC = true;
   Fun4AllHistoManager *hm = nullptr;
 
   TFile *outfile = nullptr;

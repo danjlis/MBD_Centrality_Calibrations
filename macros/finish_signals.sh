@@ -22,3 +22,5 @@ echo "From: ${readfiles}"
 echo "To: ${newfile}"
 
 hadd -f ${newfile} ${readfiles} 
+
+rm ${readfiles}

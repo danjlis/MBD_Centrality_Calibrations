@@ -79,21 +79,23 @@ int CentralityAnalysis::Init(PHCompositeNode * /*unused*/)
   ttree->Branch("mbd_charge_sum", &_mbd_charge_sum);
   ttree->Branch("mbd_charge_sum_n", &_mbd_charge_sum_n);
   ttree->Branch("mbd_charge_sum_s", &_mbd_charge_sum_s);
-
-  ttree->Branch("zdc_energy_sum", &_zdc_energy_sum);
-  ttree->Branch("zdc_energy_sum_n", &_zdc_energy_sum_n);
-  ttree->Branch("zdc_energy_sum_s", &_zdc_energy_sum_s);
-
+  if (_use_ZDC)
+    {
+      ttree->Branch("zdc_energy_sum", &_zdc_energy_sum);
+      ttree->Branch("zdc_energy_sum_n", &_zdc_energy_sum_n);
+      ttree->Branch("zdc_energy_sum_s", &_zdc_energy_sum_s);
+    }
   ttree->Branch("mbd_charge", m_mbd_charge, "mbd_charge[128]/F");
   ttree->Branch("mbd_time_t", m_mbd_time_t, "mbd_time_t[128]/F");
   ttree->Branch("mbd_time_q", m_mbd_time_q, "mbd_time_q[128]/F");
   ttree->Branch("mbd_side", m_mbd_side, "mbd_side[128]/I");
-
-  ttree->Branch("zdc_energy_low", m_zdc_energy_low, "zdc_energy_low[6]/F");
-  ttree->Branch("zdc_energy_high", m_zdc_energy_high, "zdc_energy_high[6]/F");
-  ttree->Branch("zdc_sum_low", m_zdc_sum_low, "zdc_sum_low[2]/F");
-  ttree->Branch("zdc_sum_high", m_zdc_sum_high, "zdc_sum_high[2]/F");
-
+  if (_use_ZDC)
+    {
+      ttree->Branch("zdc_energy_low", m_zdc_energy_low, "zdc_energy_low[6]/F");
+      ttree->Branch("zdc_energy_high", m_zdc_energy_high, "zdc_energy_high[6]/F");
+      ttree->Branch("zdc_sum_low", m_zdc_sum_low, "zdc_sum_low[2]/F");
+      ttree->Branch("zdc_sum_high", m_zdc_sum_high, "zdc_sum_high[2]/F");
+    }
   // histograms
 
   hm = new Fun4AllHistoManager("CENTRALITY_HIST");
@@ -110,28 +112,30 @@ int CentralityAnalysis::Init(PHCompositeNode * /*unused*/)
   hm->registerHisto(h_mbd_charge_ns);
   hm->registerHisto(h_mbd_charge_n);
   hm->registerHisto(h_mbd_charge_s);
-
-  h_mbd_charge_ns_w_zdc_cut = new TH1D("h_mbd_charge_ns_w_zdc_cut", "", 2500, 0, 2500);
-  h_mbd_charge_n_w_zdc_cut = new TH1D("h_mbd_charge_n_w_zdc_cut", "", 2500, 0, 2500);
-  h_mbd_charge_s_w_zdc_cut = new TH1D("h_mbd_charge_s_w_zdc_cut", "", 2500, 0, 2500);
-  hm->registerHisto(h_mbd_charge_ns_w_zdc_cut);
-  hm->registerHisto(h_mbd_charge_n_w_zdc_cut);
-  hm->registerHisto(h_mbd_charge_s_w_zdc_cut);
-
-  h_mbd_charge_ns_w_zdc_cut_w_mbd_cut = new TH1D("h_mbd_charge_ns_w_zdc_cut_w_mbd_cut", "", 2500, 0, 2500);
-  h_mbd_charge_n_w_zdc_cut_w_mbd_cut = new TH1D("h_mbd_charge_n_w_zdc_cut_w_mbd_cut", "", 2500, 0, 2500);
-  h_mbd_charge_s_w_zdc_cut_w_mbd_cut = new TH1D("h_mbd_charge_s_w_zdc_cut_w_mbd_cut", "", 2500, 0, 2500);
-  hm->registerHisto(h_mbd_charge_ns_w_zdc_cut_w_mbd_cut);
-  hm->registerHisto(h_mbd_charge_n_w_zdc_cut_w_mbd_cut);
-  hm->registerHisto(h_mbd_charge_s_w_zdc_cut_w_mbd_cut);
-  for (int i = 0; i < 5; i++)
+  if (_use_ZDC)
     {
-      h_mbd_charge_ns_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH1D(Form("h_mbd_charge_ns_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 2500, 0, 2500);
-      h_mbd_charge_n_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH1D(Form("h_mbd_charge_n_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 2500, 0, 2500);
-      h_mbd_charge_s_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH1D(Form("h_mbd_charge_s_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 2500, 0, 2500);
-      hm->registerHisto(h_mbd_charge_ns_w_zdc_cut_w_mbd_cut_and_vertex[i]);
-      hm->registerHisto(h_mbd_charge_n_w_zdc_cut_w_mbd_cut_and_vertex[i]);
-      hm->registerHisto(h_mbd_charge_s_w_zdc_cut_w_mbd_cut_and_vertex[i]);
+      h_mbd_charge_ns_w_zdc_cut = new TH1D("h_mbd_charge_ns_w_zdc_cut", "", 2500, 0, 2500);
+      h_mbd_charge_n_w_zdc_cut = new TH1D("h_mbd_charge_n_w_zdc_cut", "", 2500, 0, 2500);
+      h_mbd_charge_s_w_zdc_cut = new TH1D("h_mbd_charge_s_w_zdc_cut", "", 2500, 0, 2500);
+      hm->registerHisto(h_mbd_charge_ns_w_zdc_cut);
+      hm->registerHisto(h_mbd_charge_n_w_zdc_cut);
+      hm->registerHisto(h_mbd_charge_s_w_zdc_cut);
+      
+      h_mbd_charge_ns_w_zdc_cut_w_mbd_cut = new TH1D("h_mbd_charge_ns_w_zdc_cut_w_mbd_cut", "", 2500, 0, 2500);
+      h_mbd_charge_n_w_zdc_cut_w_mbd_cut = new TH1D("h_mbd_charge_n_w_zdc_cut_w_mbd_cut", "", 2500, 0, 2500);
+      h_mbd_charge_s_w_zdc_cut_w_mbd_cut = new TH1D("h_mbd_charge_s_w_zdc_cut_w_mbd_cut", "", 2500, 0, 2500);
+      hm->registerHisto(h_mbd_charge_ns_w_zdc_cut_w_mbd_cut);
+      hm->registerHisto(h_mbd_charge_n_w_zdc_cut_w_mbd_cut);
+      hm->registerHisto(h_mbd_charge_s_w_zdc_cut_w_mbd_cut);
+      for (int i = 0; i < 5; i++)
+	{
+	  h_mbd_charge_ns_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH1D(Form("h_mbd_charge_ns_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 2500, 0, 2500);
+	  h_mbd_charge_n_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH1D(Form("h_mbd_charge_n_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 2500, 0, 2500);
+	  h_mbd_charge_s_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH1D(Form("h_mbd_charge_s_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 2500, 0, 2500);
+	  hm->registerHisto(h_mbd_charge_ns_w_zdc_cut_w_mbd_cut_and_vertex[i]);
+	  hm->registerHisto(h_mbd_charge_n_w_zdc_cut_w_mbd_cut_and_vertex[i]);
+	  hm->registerHisto(h_mbd_charge_s_w_zdc_cut_w_mbd_cut_and_vertex[i]);
+	}
     }
   for (int i = 0; i < 3; i++)
     {
@@ -139,65 +143,68 @@ int CentralityAnalysis::Init(PHCompositeNode * /*unused*/)
       h_mbd_ring_charge_sum_s[i] = new TH1D(Form("h_mbd_ring_charge_sum_s_%d", i), "", 2500, 0, 2500);
       hm->registerHisto(h_mbd_ring_charge_sum_n[i]);
       hm->registerHisto(h_mbd_ring_charge_sum_s[i]);
-
-      h_mbd_ring_charge_sum_n_w_zdc_cut[i] = new TH1D(Form("h_mbd_ring_charge_sum_n_w_zdc_cut_%d", i), "", 2500, 0, 2500);
-      h_mbd_ring_charge_sum_s_w_zdc_cut[i] = new TH1D(Form("h_mbd_ring_charge_sum_s_w_zdc_cut_%d", i), "", 2500, 0, 2500);
-      hm->registerHisto(h_mbd_ring_charge_sum_n_w_zdc_cut[i]);
-      hm->registerHisto(h_mbd_ring_charge_sum_s_w_zdc_cut[i]);
-
-      h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut[i] = new TH1D(Form("h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut_%d", i), "", 2500, 0, 2500);
-      h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut[i] = new TH1D(Form("h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut_%d", i), "", 2500, 0, 2500);
-      hm->registerHisto(h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut[i]);
-      hm->registerHisto(h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut[i]);
-      for (int j = 0; j < 5; j++)
+      if (_use_ZDC)
 	{
-	  h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut_and_vertex[i][j] = new TH1D(Form("h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut_and_vertex_%d_%d", static_cast<int>(_mbd_vertex_cuts[j]), i), "", 2500, 0, 2500);
-	  h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut_and_vertex[i][j] = new TH1D(Form("h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut_and_vertex_%d_%d", static_cast<int>(static_cast<int>(_mbd_vertex_cuts[j])), i), "", 2500, 0, 2500);
-	  hm->registerHisto(h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut_and_vertex[i][j]);
-	  hm->registerHisto(h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut_and_vertex[i][j]);
+	  h_mbd_ring_charge_sum_n_w_zdc_cut[i] = new TH1D(Form("h_mbd_ring_charge_sum_n_w_zdc_cut_%d", i), "", 2500, 0, 2500);
+	  h_mbd_ring_charge_sum_s_w_zdc_cut[i] = new TH1D(Form("h_mbd_ring_charge_sum_s_w_zdc_cut_%d", i), "", 2500, 0, 2500);
+	  hm->registerHisto(h_mbd_ring_charge_sum_n_w_zdc_cut[i]);
+	  hm->registerHisto(h_mbd_ring_charge_sum_s_w_zdc_cut[i]);
+	  
+	  h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut[i] = new TH1D(Form("h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut_%d", i), "", 2500, 0, 2500);
+	  h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut[i] = new TH1D(Form("h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut_%d", i), "", 2500, 0, 2500);
+	  hm->registerHisto(h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut[i]);
+	  hm->registerHisto(h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut[i]);
+	  for (int j = 0; j < 5; j++)
+	    {
+	      h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut_and_vertex[i][j] = new TH1D(Form("h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut_and_vertex_%d_%d", static_cast<int>(_mbd_vertex_cuts[j]), i), "", 2500, 0, 2500);
+	      h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut_and_vertex[i][j] = new TH1D(Form("h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut_and_vertex_%d_%d", static_cast<int>(static_cast<int>(_mbd_vertex_cuts[j])), i), "", 2500, 0, 2500);
+	      hm->registerHisto(h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut_and_vertex[i][j]);
+	      hm->registerHisto(h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut_and_vertex[i][j]);
+	    }
 	}
     }
-
-  // zdc
-  h_zdc_energy_ns = new TH1D("h_zdc_energy_ns", "", 2000, 0, 7000);
-  h_zdc_energy_n = new TH1D("h_zdc_energy_n", "", 2000, 0, 7000);
-  h_zdc_energy_s = new TH1D("h_zdc_energy_s", "", 2000, 0, 7000);
-  hm->registerHisto(h_zdc_energy_ns);
-  hm->registerHisto(h_zdc_energy_n);
-  hm->registerHisto(h_zdc_energy_s);
-
-  // correlations
-  h_zdc_mbd_corr_ns = new TH2D("h_zdc_mbd_corr_ns", "", 100, 0, 2500, 100, 0, 10000);
-  h_zdc_mbd_corr_n = new TH2D("h_zdc_mbd_corr_n", "", 100, 0, 2500, 100, 0, 10000);
-  h_zdc_mbd_corr_s = new TH2D("h_zdc_mbd_corr_s", "", 100, 0, 2500, 100, 0, 10000);
-  hm->registerHisto(h_zdc_mbd_corr_ns);
-  hm->registerHisto(h_zdc_mbd_corr_n);
-  hm->registerHisto(h_zdc_mbd_corr_s);
-
-  h_zdc_mbd_corr_ns_w_zdc_cut = new TH2D("h_zdc_mbd_corr_ns_w_zdc_cut", "", 100, 0, 2500, 100, 0, 10000);
-  h_zdc_mbd_corr_n_w_zdc_cut = new TH2D("h_zdc_mbd_corr_n_w_zdc_cut", "", 100, 0, 2500, 100, 0, 10000);
-  h_zdc_mbd_corr_s_w_zdc_cut = new TH2D("h_zdc_mbd_corr_s_w_zdc_cut", "", 100, 0, 2500, 100, 0, 10000);
-  hm->registerHisto(h_zdc_mbd_corr_ns_w_zdc_cut);
-  hm->registerHisto(h_zdc_mbd_corr_n_w_zdc_cut);
-  hm->registerHisto(h_zdc_mbd_corr_s_w_zdc_cut);
-
-  h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut = new TH2D("h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut", "", 100, 0, 2500, 100, 0, 10000);
-  h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut = new TH2D("h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut", "", 100, 0, 2500, 100, 0, 10000);
-  h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut = new TH2D("h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut", "", 100, 0, 2500, 100, 0, 10000);
-  hm->registerHisto(h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut);
-  hm->registerHisto(h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut);
-  hm->registerHisto(h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut);
-
-  for (int i = 0; i < 5; i++)
+  if (_use_ZDC)
     {
-      h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH2D(Form("h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 100, 0, 2500, 100, 0, 10000);
-      h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH2D(Form("h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 100, 0, 2500, 100, 0, 10000);
-      h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH2D(Form("h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 100, 0, 2500, 100, 0, 10000);
-      hm->registerHisto(h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut_and_vertex[i]);
-      hm->registerHisto(h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut_and_vertex[i]);
-      hm->registerHisto(h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut_and_vertex[i]);
+      // zdc
+      h_zdc_energy_ns = new TH1D("h_zdc_energy_ns", "", 2000, 0, 7000);
+      h_zdc_energy_n = new TH1D("h_zdc_energy_n", "", 2000, 0, 7000);
+      h_zdc_energy_s = new TH1D("h_zdc_energy_s", "", 2000, 0, 7000);
+      hm->registerHisto(h_zdc_energy_ns);
+      hm->registerHisto(h_zdc_energy_n);
+      hm->registerHisto(h_zdc_energy_s);
+      
+      // correlations
+      h_zdc_mbd_corr_ns = new TH2D("h_zdc_mbd_corr_ns", "", 100, 0, 2500, 100, 0, 10000);
+      h_zdc_mbd_corr_n = new TH2D("h_zdc_mbd_corr_n", "", 100, 0, 2500, 100, 0, 10000);
+      h_zdc_mbd_corr_s = new TH2D("h_zdc_mbd_corr_s", "", 100, 0, 2500, 100, 0, 10000);
+      hm->registerHisto(h_zdc_mbd_corr_ns);
+      hm->registerHisto(h_zdc_mbd_corr_n);
+      hm->registerHisto(h_zdc_mbd_corr_s);
+      
+      h_zdc_mbd_corr_ns_w_zdc_cut = new TH2D("h_zdc_mbd_corr_ns_w_zdc_cut", "", 100, 0, 2500, 100, 0, 10000);
+      h_zdc_mbd_corr_n_w_zdc_cut = new TH2D("h_zdc_mbd_corr_n_w_zdc_cut", "", 100, 0, 2500, 100, 0, 10000);
+      h_zdc_mbd_corr_s_w_zdc_cut = new TH2D("h_zdc_mbd_corr_s_w_zdc_cut", "", 100, 0, 2500, 100, 0, 10000);
+      hm->registerHisto(h_zdc_mbd_corr_ns_w_zdc_cut);
+      hm->registerHisto(h_zdc_mbd_corr_n_w_zdc_cut);
+      hm->registerHisto(h_zdc_mbd_corr_s_w_zdc_cut);
+      
+      h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut = new TH2D("h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut", "", 100, 0, 2500, 100, 0, 10000);
+      h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut = new TH2D("h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut", "", 100, 0, 2500, 100, 0, 10000);
+      h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut = new TH2D("h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut", "", 100, 0, 2500, 100, 0, 10000);
+      hm->registerHisto(h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut);
+      hm->registerHisto(h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut);
+      hm->registerHisto(h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut);
+      
+      for (int i = 0; i < 5; i++)
+	{
+	  h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH2D(Form("h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 100, 0, 2500, 100, 0, 10000);
+	  h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH2D(Form("h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 100, 0, 2500, 100, 0, 10000);
+	  h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut_and_vertex[i] = new TH2D(Form("h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut_and_vertex_%d", static_cast<int>(_mbd_vertex_cuts[i])), "", 100, 0, 2500, 100, 0, 10000);
+	  hm->registerHisto(h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut_and_vertex[i]);
+	  hm->registerHisto(h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut_and_vertex[i]);
+	  hm->registerHisto(h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut_and_vertex[i]);
+	}
     }
-  
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -208,7 +215,7 @@ int CentralityAnalysis::InitRun(PHCompositeNode * /*unused*/)
     std::cout << __FILE__ << " :: " << __FUNCTION__ << std::endl;
   }
 
-  return 0;
+  return Fun4AllReturnCodes::EVENT_OK;
 }
 
 void CentralityAnalysis::ResetVars()
@@ -263,7 +270,7 @@ int CentralityAnalysis::FillVars()
     {
       _tmp_pmt = _pmts_mbd->get_tower_at_channel(ipmt);
       _side = ipmt%64;
-      
+      if (Verbosity()) _tmp_pmt->identify();      
       _charge = _tmp_pmt->get_q();
       _time_t = _tmp_pmt->get_tt();
       _time_q = _tmp_pmt->get_tq();
@@ -275,43 +282,45 @@ int CentralityAnalysis::FillVars()
       m_mbd_ipmt[ipmt] = ipmt;
     }
 
-  for (unsigned int i = 0; i < _towers_zdc->size(); i++)
-  {
-    _tmp_tower = _towers_zdc->get_tower_at_channel(i);
-    _energy = _tmp_tower->get_energy();
-
-    if (!(i % 2))
+  if (_use_ZDC)
     {
-      if ((i / 2) % 4 == 3)
-      {
-        m_zdc_sum_low[i / 8] = _energy;
-      }
-      else
-      {
-        m_zdc_energy_low[i / 2] = _zdc_gain_factors[i / 2] * _energy;
-      }
+      for (unsigned int i = 0; i < _towers_zdc->size(); i++)
+	{
+	  _tmp_tower = _towers_zdc->get_tower_at_channel(i);
+	  _energy = _tmp_tower->get_energy();
+	  
+	  if (!(i % 2))
+	    {
+	      if ((i / 2) % 4 == 3)
+		{
+		  m_zdc_sum_low[i / 8] = _energy;
+		}
+	      else
+		{
+		  m_zdc_energy_low[i / 2] = _zdc_gain_factors[i / 2] * _energy;
+		}
+	    }
+	  else
+	    {
+	      if ((i / 2) % 4 == 3)
+		{
+		  m_zdc_sum_high[i / 8] = _energy;
+		}
+	      else
+		{
+		  m_zdc_energy_high[i / 2] = _zdc_gain_factors[i / 2] * _energy;
+		}
+	    }
+	}
     }
-    else
-    {
-      if ((i / 2) % 4 == 3)
-      {
-        m_zdc_sum_high[i / 8] = _energy;
-      }
-      else
-      {
-        m_zdc_energy_high[i / 2] = _zdc_gain_factors[i / 2] * _energy;
-      }
-    }
-  }
-
   // centrality info
-
+  
   _isMinBias = _central->isMinBias();
-
+  
   _centile = (_central->has_centile(CentralityInfo::PROP::mbd_NS)?_central->get_centile(CentralityInfo::PROP::mbd_NS) : -999.99);
-
+  
   // bbc vertex
-
+  
   _z_vertex = _bbc_out->get_zvtx();
   _tubes_hit_s = _bbc_out->get_npmt(Bbc::South);
   _tubes_hit_n = _bbc_out->get_npmt(Bbc::North);
@@ -326,46 +335,50 @@ int CentralityAnalysis::FillVars()
 
   _mbd_time_0 = _bbc_out->get_t0();
 
-
+  if (_use_ZDC)
+    {
+      if (Verbosity() >= 10)
+	{
+	  std::cout << "--------- ZDC data: ----------" << std::endl;
+	  std::cout << "South:" << std::endl;
+	  for (int i = 0; i < 3; i++)
+	    {
+	      std::cout << i << " : " << m_zdc_energy_low[i] << " (" << m_zdc_energy_high[i] << ") " << std::endl;
+	    }
+	  std::cout << "Sum : " << m_zdc_sum_low[0] << " (" << m_zdc_sum_high[0] << ") " << std::endl;
+	  std::cout << "North:" << std::endl;
+	  for (int i = 0; i < 3; i++)
+	    {
+	      std::cout << i << " : " << m_zdc_energy_low[i + 3] << " (" << m_zdc_energy_high[i + 3] << ") " << std::endl;
+	    }
+	  std::cout << "Sum : " << m_zdc_sum_low[1] << " (" << m_zdc_sum_high[1] << ") " << std::endl;
+	}
+    }
   if (Verbosity() >= 10)
-  {
-    std::cout << "--------- ZDC data: ----------" << std::endl;
-    std::cout << "South:" << std::endl;
-    for (int i = 0; i < 3; i++)
     {
-      std::cout << i << " : " << m_zdc_energy_low[i] << " (" << m_zdc_energy_high[i] << ") " << std::endl;
+      std::cout << "--------- MBD data: ----------" << std::endl;
+      std::cout << "South:" << std::endl;
+      for (int i = 0; i < 64; i++)
+	{
+	  std::cout << m_mbd_ipmt[i] << " : " << m_mbd_charge[i] << "  " << m_mbd_time_t[i] <<" "<<m_mbd_time_q[i]<< ") " << std::endl;
+	}
+      std::cout << "North:" << std::endl;
+      for (int i = 64; i < 128; i++)
+	{
+	  std::cout << m_mbd_ipmt[i] << " : " << m_mbd_charge[i] << "  " << m_mbd_time_t[i] <<" "<<m_mbd_time_q[i]<< ") " << std::endl;
+	}
+      std::cout << "--------- CentralityInfo: ----------" << std::endl;
+      std::cout << "   IsMinBias : "<< _isMinBias << std::endl;
+      std::cout << "   Centile  : "<< _centile << std::endl;
+      
+      std::cout << "--------- BbcOut: ----------" << std::endl;
+      std::cout << "   z-vertex   : "<< _z_vertex << std::endl;
+      std::cout << "  nPmt S -- N : "<< _tubes_hit_s <<" -- "<< _tubes_hit_n << std::endl;
+      std::cout << "  Charge Sum  : "<< _mbd_charge_sum_s <<"(S) + "<< _mbd_charge_sum_n <<" (N) = "<< _mbd_charge_sum <<  std::endl;
+      std::cout << "  Time 0      : "<< _mbd_time_s <<"(S) + "<< _mbd_time_n <<" (N) = "<< _mbd_time_0 <<  std::endl;
+      
     }
-    std::cout << "Sum : " << m_zdc_sum_low[0] << " (" << m_zdc_sum_high[0] << ") " << std::endl;
-    std::cout << "North:" << std::endl;
-    for (int i = 0; i < 3; i++)
-    {
-      std::cout << i << " : " << m_zdc_energy_low[i + 3] << " (" << m_zdc_energy_high[i + 3] << ") " << std::endl;
-    }
-    std::cout << "Sum : " << m_zdc_sum_low[1] << " (" << m_zdc_sum_high[1] << ") " << std::endl;
-
-    std::cout << "--------- MBD data: ----------" << std::endl;
-    std::cout << "South:" << std::endl;
-    for (int i = 0; i < 64; i++)
-    {
-      std::cout << m_mbd_ipmt[i] << " : " << m_mbd_charge[i] << "  " << m_mbd_time_t[i] <<" "<<m_mbd_time_q[i]<< ") " << std::endl;
-    }
-    std::cout << "North:" << std::endl;
-    for (int i = 64; i < 128; i++)
-    {
-      std::cout << m_mbd_ipmt[i] << " : " << m_mbd_charge[i] << "  " << m_mbd_time_t[i] <<" "<<m_mbd_time_q[i]<< ") " << std::endl;
-    }
-    std::cout << "--------- CentralityInfo: ----------" << std::endl;
-    std::cout << "   IsMinBias : "<< _isMinBias << std::endl;
-    std::cout << "   Centile  : "<< _centile << std::endl;
-
-    std::cout << "--------- BbcOut: ----------" << std::endl;
-    std::cout << "   z-vertex   : "<< _z_vertex << std::endl;
-    std::cout << "  nPmt S -- N : "<< _tubes_hit_s <<" -- "<< _tubes_hit_n << std::endl;
-    std::cout << "  Charge Sum  : "<< _mbd_charge_sum_s <<"(S) + "<< _mbd_charge_sum_n <<" (N) = "<< _mbd_charge_sum <<  std::endl;
-    std::cout << "  Time 0      : "<< _mbd_time_s <<"(S) + "<< _mbd_time_n <<" (N) = "<< _mbd_time_0 <<  std::endl;
-
-  }
-
+  
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -386,83 +399,85 @@ void CentralityAnalysis::FillHistograms()
     h_mbd_ring_charge_sum_n[i]->Fill(_mbd_ring_charge_sum_n[i]);
     h_mbd_ring_charge_sum_s[i]->Fill(_mbd_ring_charge_sum_s[i]);
   }
-  // zdc
-  h_zdc_energy_ns->Fill(_zdc_energy_sum);
-  h_zdc_energy_n->Fill(_zdc_energy_sum_n);
-  h_zdc_energy_s->Fill(_zdc_energy_sum_s);
-
-  // correlations
-  h_zdc_mbd_corr_ns->Fill(_mbd_charge_sum, _zdc_energy_sum);
-  h_zdc_mbd_corr_n->Fill(_mbd_charge_sum_n, _zdc_energy_sum_n);
-  h_zdc_mbd_corr_s->Fill(_mbd_charge_sum_s, _zdc_energy_sum_s);
-
-  if (!_zdc_check)
-  {
-    return;
-  }
-
-  h_mbd_vertex_w_zdc_cut->Fill(_z_vertex);
-
-  h_mbd_charge_ns_w_zdc_cut->Fill(_mbd_charge_sum);
-  h_mbd_charge_n_w_zdc_cut->Fill(_mbd_charge_sum_n);
-  h_mbd_charge_s_w_zdc_cut->Fill(_mbd_charge_sum_s);
-
-  for (int i = 0; i < 3; i++)
-  {
-    h_mbd_ring_charge_sum_n_w_zdc_cut[i]->Fill(_mbd_ring_charge_sum_n[i]);
-    h_mbd_ring_charge_sum_s_w_zdc_cut[i]->Fill(_mbd_ring_charge_sum_s[i]);
-  }
-
-  // correlations
-  h_zdc_mbd_corr_ns_w_zdc_cut->Fill(_mbd_charge_sum, _zdc_energy_sum);
-  h_zdc_mbd_corr_n_w_zdc_cut->Fill(_mbd_charge_sum_n, _zdc_energy_sum_n);
-  h_zdc_mbd_corr_s_w_zdc_cut->Fill(_mbd_charge_sum_s, _zdc_energy_sum_s);
-  if (Verbosity())
-  {
-    std::cout << "tubes hit in N/S : " << _tubes_hit_n << " / " << _tubes_hit_s << std::endl;
-  }
-  if (_tubes_hit_s < 2 || _tubes_hit_n < 2)
-  {
-    return;
-  }
-
-  h_mbd_charge_ns_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum);
-  h_mbd_charge_n_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum_n);
-  h_mbd_charge_s_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum_s);
-
-  for (int i = 0; i < 3; i++)
-  {
-    h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut[i]->Fill(_mbd_ring_charge_sum_n[i]);
-    h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut[i]->Fill(_mbd_ring_charge_sum_s[i]);
-  }
-
-  // correlations
-  h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum, _zdc_energy_sum);
-  h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum_n, _zdc_energy_sum_n);
-  h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum_s, _zdc_energy_sum_s);
-
-  for (int j = 0; j < 5; j++)
-  {
-    if (std::abs(_z_vertex) > _mbd_vertex_cuts[j])
+  if (_use_ZDC)
     {
-      continue;
+      // zdc
+      h_zdc_energy_ns->Fill(_zdc_energy_sum);
+      h_zdc_energy_n->Fill(_zdc_energy_sum_n);
+      h_zdc_energy_s->Fill(_zdc_energy_sum_s);
+      
+      // correlations
+      h_zdc_mbd_corr_ns->Fill(_mbd_charge_sum, _zdc_energy_sum);
+      h_zdc_mbd_corr_n->Fill(_mbd_charge_sum_n, _zdc_energy_sum_n);
+      h_zdc_mbd_corr_s->Fill(_mbd_charge_sum_s, _zdc_energy_sum_s);
+      
+      if (!_zdc_check)
+	{
+	  return;
+	}
+      
+      h_mbd_vertex_w_zdc_cut->Fill(_z_vertex);
+      
+      h_mbd_charge_ns_w_zdc_cut->Fill(_mbd_charge_sum);
+      h_mbd_charge_n_w_zdc_cut->Fill(_mbd_charge_sum_n);
+      h_mbd_charge_s_w_zdc_cut->Fill(_mbd_charge_sum_s);
+      
+      for (int i = 0; i < 3; i++)
+	{
+	  h_mbd_ring_charge_sum_n_w_zdc_cut[i]->Fill(_mbd_ring_charge_sum_n[i]);
+	  h_mbd_ring_charge_sum_s_w_zdc_cut[i]->Fill(_mbd_ring_charge_sum_s[i]);
+	}
+      
+      // correlations
+      h_zdc_mbd_corr_ns_w_zdc_cut->Fill(_mbd_charge_sum, _zdc_energy_sum);
+      h_zdc_mbd_corr_n_w_zdc_cut->Fill(_mbd_charge_sum_n, _zdc_energy_sum_n);
+      h_zdc_mbd_corr_s_w_zdc_cut->Fill(_mbd_charge_sum_s, _zdc_energy_sum_s);
+      if (Verbosity())
+	{
+	  std::cout << "tubes hit in N/S : " << _tubes_hit_n << " / " << _tubes_hit_s << std::endl;
+	}
+      if (_tubes_hit_s < 2 || _tubes_hit_n < 2)
+	{
+	  return;
+	}
+      
+      h_mbd_charge_ns_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum);
+      h_mbd_charge_n_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum_n);
+      h_mbd_charge_s_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum_s);
+      
+      for (int i = 0; i < 3; i++)
+	{
+	  h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut[i]->Fill(_mbd_ring_charge_sum_n[i]);
+	  h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut[i]->Fill(_mbd_ring_charge_sum_s[i]);
+	}
+      
+      // correlations
+      h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum, _zdc_energy_sum);
+      h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum_n, _zdc_energy_sum_n);
+      h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut->Fill(_mbd_charge_sum_s, _zdc_energy_sum_s);
+      
+      for (int j = 0; j < 5; j++)
+	{
+	  if (std::abs(_z_vertex) > _mbd_vertex_cuts[j])
+	    {
+	      continue;
+	    }
+	  h_mbd_charge_ns_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum);
+	  h_mbd_charge_n_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum_n);
+	  h_mbd_charge_s_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum_s);
+	  
+	  for (int i = 0; i < 3; i++)
+	    {
+	      h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut_and_vertex[i][j]->Fill(_mbd_ring_charge_sum_n[i]);
+	      h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut_and_vertex[i][j]->Fill(_mbd_ring_charge_sum_s[i]);
+	    }
+	  
+	  // correlations
+	  h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum, _zdc_energy_sum);
+	  h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum_n, _zdc_energy_sum_n);
+	  h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum_s, _zdc_energy_sum_s);
+	}
     }
-    h_mbd_charge_ns_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum);
-    h_mbd_charge_n_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum_n);
-    h_mbd_charge_s_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum_s);
-
-    for (int i = 0; i < 3; i++)
-    {
-      h_mbd_ring_charge_sum_n_w_zdc_cut_w_mbd_cut_and_vertex[i][j]->Fill(_mbd_ring_charge_sum_n[i]);
-      h_mbd_ring_charge_sum_s_w_zdc_cut_w_mbd_cut_and_vertex[i][j]->Fill(_mbd_ring_charge_sum_s[i]);
-    }
-
-    // correlations
-    h_zdc_mbd_corr_ns_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum, _zdc_energy_sum);
-    h_zdc_mbd_corr_n_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum_n, _zdc_energy_sum_n);
-    h_zdc_mbd_corr_s_w_zdc_cut_w_mbd_cut_and_vertex[j]->Fill(_mbd_charge_sum_s, _zdc_energy_sum_s);
-  }
-
   return;
 }
 
@@ -472,7 +487,7 @@ int CentralityAnalysis::process_event(PHCompositeNode *topNode)
   {
     std::cout << __FILE__ << " :: " << __FUNCTION__ << " :: " << __LINE__ << std::endl;
   }
-
+  
   // Get Nodes from the Tree
   if (GetNodes(topNode))
   {
@@ -516,17 +531,19 @@ int CentralityAnalysis::GetNodes(PHCompositeNode *topNode)
       std::cout << "no mbd out node " << std::endl;
       return Fun4AllReturnCodes::ABORTRUN;
     }
-
-  _towers_zdc = findNode::getClass<TowerInfoContainer>(topNode, "TOWERS_ZDC");
-
-  if (!_towers_zdc)
-  {
-    std::cout << "no zdc towers node " << std::endl;
-    return Fun4AllReturnCodes::ABORTRUN;
-  }
-
+  if (Verbosity()) _bbc_out->identify();
+  if (_use_ZDC)
+    {
+      _towers_zdc = findNode::getClass<TowerInfoContainer>(topNode, "TOWERS_ZDC");
+      
+      if (!_towers_zdc)
+	{
+	  std::cout << "no zdc towers node " << std::endl;
+	  return Fun4AllReturnCodes::ABORTRUN;
+	}
+    }
   _central = findNode::getClass<CentralityInfov2>(topNode, "CentralityInfo");
-
+  
   if (!_central)
   {
     std::cout << "no centrality node " << std::endl;
