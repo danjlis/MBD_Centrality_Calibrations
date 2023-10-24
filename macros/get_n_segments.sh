@@ -6,24 +6,17 @@ if (( $# < 1 )); then
     exit
 fi
 
-aligned=$(ls /sphenix/lustre01/sphnxpro/commissioning/aligned/*${1}* | wc -l)
+runnumber=${1}
 
-aligned_prdf=$(ls /sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/*${1}* | wc -l)
+aligned=$(ls /sphenix/lustre01/sphnxpro/commissioning/aligned/*${runnumber}* 2> /dev/null | wc -l)
 
-if (( aligned > 0 ))
+aligned_prdf=$(ls /sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/*${runnumber}* 2> /dev/null | wc -l)
+
+
+if (( aligned > aligned_prdf ))
 then
-    echo "Run ${1} has ${aligned} segments in sphenix/lustre01/sphnxpro/commissioning/aligned/"
+    echo $aligned
+else
+    echo $aligned_prdf
 fi
-
-if (( aligned_prdf > 0 ))
-then
-    echo "Run ${1} has ${aligned_prdf} segments in sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/"
-fi
-
-if (( aligned_prdf == 0 && aligned == 0))
-then
-    echo "Run ${1} has NOTHING"
-fi
-
-
 

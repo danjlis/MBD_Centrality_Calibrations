@@ -31,12 +31,12 @@
 MbdCalibrationAnalysis::MbdCalibrationAnalysis(const std::string &name, const std::string &tree_name)
   : SubsysReco(name)
 {
-  _zdc_gain_factors[0] = 1.37;
-  _zdc_gain_factors[1] = 0.64;
-  _zdc_gain_factors[2] = 0.44;
-  _zdc_gain_factors[3] = 1.39;
-  _zdc_gain_factors[4] = 0.78;
-  _zdc_gain_factors[5] = 0.29;
+  zdc_factors[0] = 1.1;
+  zdc_factors[1] = 0.517;
+  zdc_factors[2] = 0.352;
+  zdc_factors[3] = 0.94;
+  zdc_factors[4] = 0.5264;
+  zdc_factors[5] = 0.1974;
 
   _tree_filename = tree_name;
 }
@@ -58,10 +58,11 @@ int MbdCalibrationAnalysis::Init(PHCompositeNode * /*unused*/)
   ttree->Branch("mbd_side", m_mbd_side, "mbd_side[128]/I");
   ttree->Branch("mbd_ipmt", m_mbd_ipmt, "mbd_ipmt[128]/I");
 
-  ttree->Branch("zdc_energy_low", m_zdc_energy_low, "zdc_energy_low[6]/F");
-  ttree->Branch("zdc_energy_high", m_zdc_energy_high, "zdc_energy_high[6]/F");
-  ttree->Branch("zdc_sum_low", m_zdc_sum_low, "zdc_sum_low[2]/F");
-  ttree->Branch("zdc_sum_high", m_zdc_sum_high, "zdc_sum_high[2]/F");
+  ttree->Branch("zdc_energy", m_zdc_energy, "zdc_energy[6]/F");
+  ttree->Branch("zdc_sum", m_zdc_sum, "zdc_sum[2]/F");
+
+  ttree->Branch("zdc_energy_prime", m_zdc_energy_prime, "zdc_energy_prime[6]/F");
+  ttree->Branch("zdc_sum_prime", m_zdc_sum_prime, "zdc_sum_prime[2]/F");
 
   return Fun4AllReturnCodes::EVENT_OK;
 
@@ -89,13 +90,13 @@ void MbdCalibrationAnalysis::ResetVars()
 
   for (int i = 0; i < 6; i++)
   {
-    m_zdc_energy_low[i] = 0;
-    m_zdc_energy_high[i] = 0;
+    m_zdc_energy[i] = 0;
+    m_zdc_energy_prime[i] = 0;
   }
   for (int i = 0; i < 2; i++)
   {
-    m_zdc_sum_low[i] = 0;
-    m_zdc_sum_high[i] = 0;
+    m_zdc_sum[i]  = 0;
+    m_zdc_sum_prime[i]  = 0;
   }
   return;
 }
@@ -135,35 +136,38 @@ int MbdCalibrationAnalysis::FillVars()
 	}
     }
 
+  int j  = 0;
   for (unsigned int i = 0; i < _towers_zdc->size(); i++)
   {
     _tmp_tower = _towers_zdc->get_tower_at_channel(i);
     _energy = _tmp_tower->get_energy();
-
-    if (!(i % 2))
-    {
-      if ((i / 2) % 4 == 3)
-      {
-        m_zdc_sum_low[i / 8] = _energy;
-      }
-      else
-      {
-        m_zdc_energy_low[i / 2] = _zdc_gain_factors[i / 2] * _energy;
-      }
+    if (_energy!=0) {
+      m_zdc_energy[j] = _energy;
+      m_zdc_sum[j/3] += _energy;
+      j++;
     }
-    else
-    {
-      if ((i / 2) % 4 == 3)
+    if (Verbosity())
       {
-        m_zdc_sum_high[i / 8] = _energy;
+	std::cout << i <<"\t"<<j<<"t"<<_energy<<std::endl; 
       }
-      else
-      {
-        m_zdc_energy_high[i / 2] = _zdc_gain_factors[i / 2] * _energy;
-      }
-    }
   }
 
+  j  = 0;
+  for (unsigned int i = 0; i < _towers_zdc_raw->size(); i++)
+  {
+    _tmp_tower = _towers_zdc_raw->get_tower_at_channel(i);
+    _energy = _tmp_tower->get_energy();
+    if (i%8 == 0 || i%8 == 2 || i%8 == 4) {
+      m_zdc_energy_prime[j] = _energy*zdc_factors[j];
+      m_zdc_sum_prime[j/3] += _energy*zdc_factors[j];
+      j++;
+    }
+    if (Verbosity())
+      {
+	std::cout << i <<"\t"<<j<<"t"<<_energy<<std::endl; 
+      }
+  }
+  
 
   return Fun4AllReturnCodes::EVENT_OK;
 }
@@ -210,13 +214,22 @@ int MbdCalibrationAnalysis::GetNodes(PHCompositeNode *topNode)
       return Fun4AllReturnCodes::ABORTRUN;
     }
   
-  _towers_zdc = findNode::getClass<TowerInfoContainer>(topNode, "TOWERS_ZDC");
+  _towers_zdc = findNode::getClass<TowerInfoContainer>(topNode, "TOWERINFO_CALIB_ZDC");
   
   if (!_towers_zdc)
     {
       std::cout << "no zdc towers node " << std::endl;
       return Fun4AllReturnCodes::ABORTRUN;
     }
+
+  _towers_zdc_raw = findNode::getClass<TowerInfoContainer>(topNode, "TOWERS_ZDC");
+  
+  if (!_towers_zdc_raw)
+    {
+      std::cout << "no zdc towers node " << std::endl;
+      return Fun4AllReturnCodes::ABORTRUN;
+    }
+
   return Fun4AllReturnCodes::EVENT_OK;  
 }
 

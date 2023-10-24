@@ -17,9 +17,8 @@ echo $segments
 
 retDir=${PWD}
 
-mkdir -p  ${MBD_CENTRALITY_CALIB_PATH}/output/run${runnumber}/mbdcalibana/
 mkdir -p  ${MBD_CENTRALITY_CALIB_PATH}/output/run${runnumber}/plots/
-cFile=mbdcalibana_dlis.job
+cFile=dansvtx_dlis.job
 DATE=`date +%Y%m%d`
 TIME=`date +%H%M%S`
 cDir=condorDir/condor_"$DATE"_"$TIME"
@@ -37,9 +36,10 @@ echo "Queue ${segments}" >> $cFile2
 
 cp $cFile2 $cDir
 rm $cFile2
-cp scriptsforcondor/scriptForMbdCalibrationAnalysis.sh $cDir
+cp scriptsforcondor/scriptForDansSpecialVertex.sh $cDir
 cp setup_env.sh $cDir
-sed -i -e "s@RUN@$runnumber@g" $cDir/scriptForMbdCalibrationAnalysis.sh
+
+sed -i -e "s@RUN@$runnumber@g" $cDir/scriptForDansSpecialVertex.sh
 
 cd $cDir
 condor_submit $cFile2

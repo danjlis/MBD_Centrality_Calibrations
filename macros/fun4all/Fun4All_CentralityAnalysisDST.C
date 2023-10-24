@@ -1,6 +1,8 @@
 #pragma once
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,00,0)
 
+
+#include <nodedump/Dumper.h>
 #include <centrality/CentralityAnalysis.h>
 #include <centrality/CentralityReco.h>
 #include <fun4all/SubsysReco.h>
@@ -26,7 +28,7 @@ R__LOAD_LIBRARY(libcentrality.so)
 R__LOAD_LIBRARY(libcentralityanalysis.so)
 #endif
 
-void Fun4All_CentralityAnalysis(const int runnumber, const int rollover = 0)
+void Fun4All_CentralityAnalysisDST(const int runnumber, const int rollover = 0)
 {
   gSystem->Load("libbbc_io");
   gSystem->Load("libg4dst");
@@ -67,47 +69,38 @@ void Fun4All_CentralityAnalysis(const int runnumber, const int rollover = 0)
   const char *hist_outfile = Form("/gpfs02/%s/%s/centrality_reco_hist_%s_%s.root", env_p, dir, rstr.str().c_str(), ostr.str().c_str());
   const char *tree_outfile = Form("/gpfs02/%s/%s/centrality_reco_tree_%s_%s.root", env_p, dir, rstr.str().c_str(), ostr.str().c_str());
 
-  std::string fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
+  std::string fname1 = Form("/sphenix/user/chiu/sphenix_bbc/RUN23_TEST/DST_MBD_%s-%s.root", rstr.str().c_str(), ostr.str().c_str());
 
   if (FILE *file = fopen(fname1.c_str(),"r")){
     fclose(file);
   }
   else
   {
-    fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
-
-
-    if (FILE *file = fopen(fname1.c_str(),"r")){
-      fclose(file);
-    }
-    else
-      {
-	std::cout << "NOOOOO ... no "<< fname1 <<std::endl;
-	return;
-      }
+    std::cout << "NOOOOO ... no "<< fname1 <<std::endl;
+    return;
   }
-
+  
 
   Fun4AllServer *se = Fun4AllServer::instance();
 
-  recoConsts *rc = recoConsts::instance();
+  // recoConsts *rc = recoConsts::instance();
 
-  //===============
-  // conditions DB flags
-  //===============
-  // ENABLE::CDB = true;
-  // global tag
-  rc->set_StringFlag("CDB_GLOBALTAG","ProdA_2023");
-  // // 64 bit timestamp
-  rc->set_uint64Flag("TIMESTAMP",stoi(fname1.substr(fname1.length()-15,5)));
+  // //===============
+  // // conditions DB flags
+  // //===============
+  // // ENABLE::CDB = true;
+  // // global tag
+  // rc->set_StringFlag("CDB_GLOBALTAG","ProdA_2023");
+  // // // 64 bit timestamp
+  // rc->set_uint64Flag("TIMESTAMP",stoi(fname1.substr(fname1.length()-15,5)));
 
-  Fun4AllInputManager *in = new Fun4AllPrdfInputManager("in");
+  Fun4AllInputManager *in = new Fun4AllDstInputManager("in");
   in->fileopen(fname1);
   se->registerInputManager(in);
 
-  BbcReco * bc = new BbcReco();
-  bc->Verbosity(verbosity);
-  se->registerSubsystem(bc);
+
+  //  DumpCdbUrlSave *ducus = new DumpCdbUrlSave("CdbUrl");
+  //se->RegisterSubsystem(ducus);
 
   CentralityReco *cr = new CentralityReco("CentralityReco");
   cr->Verbosity(verbosity);  

@@ -46,28 +46,32 @@ class MbdCalibrationAnalysis : public SubsysReco
   };
 
 
+  float zdc_factors[6] = {};
+
   TFile *outfile = nullptr;
   TTree *ttree = nullptr;
   TowerInfo *_tmp_tower = nullptr;  
   TowerInfoContainer *_pmts_mbd = nullptr;
   TowerInfoContainer *_towers_zdc = nullptr;
+  TowerInfoContainer *_towers_zdc_raw = nullptr;
   std::string _tree_filename;
 
   int _tubes_hit_s = std::numeric_limits<int>::signaling_NaN();;
   int _tubes_hit_n = std::numeric_limits<int>::signaling_NaN();;
 
   float _energy = std::numeric_limits<float>::signaling_NaN();
-  float _zdc_gain_factors[6]{};
   float m_mbd_charge_raw[128]{};
   float m_mbd_time_raw[128]{};
   
   float m_mbd_side[128]{};
   float m_mbd_ipmt[128]{};
 
-  float m_zdc_energy_low[6]{};
-  float m_zdc_energy_high[6]{};
-  float m_zdc_sum_low[2]{};
-  float m_zdc_sum_high[2]{};
+  float m_zdc_energy[6]{};
+  float m_zdc_sum[2]{};
+
+  float m_zdc_energy_prime[6]{};
+  float m_zdc_sum_prime[2]{};
+
 };
 
 #endif

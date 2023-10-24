@@ -5,6 +5,8 @@
 //      To be run on the output of the CentralityReco Module
 
 const int DEBUG =  0;
+const int SILENCE = 1;
+
 //void QA_FindCentralities()
 #include <string>
 #include <string.h>
@@ -30,11 +32,11 @@ const int centrality_map[20] = {1999, 1499, 1291, 1102, 937, 790, 660, 547, 449,
 
 int GetCentBin(float sum);
 double NBD_getValue(int n, double mu, double k);
-std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx = -25., float maximumx = 25.);
+std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx = -25., float maximumx = 25., bool ForceSingle = false);
 std::pair<int, string> tokenize_path(string path);
 
 void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, const int makeNewHistograms);
-void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration);
+void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration = 1, const int shift_runnumber = 0);
 void QA_MBDTimeCalibrations(const int runnumber, const int useChargeTime = 0);
 void QA_MakeCentralityCalibrations(const int runnumber, const bool doVertexSelection = 1);
 void QA_MakeCentralityComparison();
@@ -48,9 +50,9 @@ void QA_centrality(
 		   const int doVertexSelection = 1
 		   )
 {
-  QA_MBDCalibrations(runnumber, doPerRunCalibration, 1);  
+  //QA_MBDCalibrations(runnumber, doPerRunCalibration, 1);  
   QA_MBDTimeCalibrations(runnumber);  
-  QA_MakeChargeSum(runnumber, loadRunCalibration);
+  //QA_MakeChargeSum(runnumber, loadRunCalibration);
   return;
 }
 
@@ -283,7 +285,7 @@ void QA_CentralityCheck(const int runnumber, const int centrality_runnumber = 21
 }
 
 
-void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
+void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration = 1, const int shift_runnumber = 0)
 {
   int before = 2;
   int start_looking = 10;
@@ -369,6 +371,19 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 
     }
 
+  // Get the mbd charge sum plot to shift to.
+  float mbd_charge_factor = 1.;
+  
+  if (shift_runnumber)
+    {
+      TFile *fout = new TFile(Form("%s/output/plots/mbd_charge_sum_%d.root", env_p, shift_runnumber), "r");
+      if (!fout) return;
+      TH1D *h_shift = (TH1D*) fout->Get("h_charge_sum_min_bias_w_vertex_30");
+      if (!h_shift) return;
+      h_shift->SetName("h_charge_sum_shift");
+      mbd_charge_factor = h_shift->GetMean();
+    }
+
   //ku66tt66ttttyy7y
   float low_t = -20.;
   float high_t = 20.;
@@ -418,6 +433,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
   TH1D *h_charge_sum = new TH1D("h_charge_sum","", nbin, -0.5, (float)maxrange - 0.5);
   TH1D *h_charge_sum_min_bias = new TH1D("h_charge_sum_min_bias","",  nbin, -0.5, (float)maxrange - 0.5);
   TH1D *h_charge_sum_min_bias_w_vertex_30 = new TH1D("h_charge_sum_min_bias_w_vertex_30","", nbin, -0.5, (float)maxrange - 0.5);
+  TH1D *h_charge_sum_min_bias_w_vertex_30_shifted = new TH1D("h_charge_sum_min_bias_w_vertex_30_shifted","", nbin, -0.5, (float)maxrange - 0.5);
 
   TH1D *h_time_w_t[128];
   TH1D *h_time_wo_t[128];
@@ -428,6 +444,45 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
       h_time_wo_t[ich]  = new TH1D(Form("h_time_wo_t_%d", ich), "", nbins_t, low_t, high_t);
     }
 
+
+  TH1D *h_zdc_sum_n = new TH1D("h_zdc_sum_n", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+  TH1D *h_zdc_sum_s = new TH1D("h_zdc_sum_s", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+  TH1D *h_zdc_sum_n_prime = new TH1D("h_zdc_sum_n_prime", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+  TH1D *h_zdc_sum_s_prime = new TH1D("h_zdc_sum_s_prime", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+
+  TH1D *h_zdc_sum_n_w_vertex_30 = new TH1D("h_zdc_sum_n_w_vertex_30", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+  TH1D *h_zdc_sum_s_w_vertex_30 = new TH1D("h_zdc_sum_s_w_vertex_30", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+  TH1D *h_zdc_sum_n_prime_w_vertex_30 = new TH1D("h_zdc_sum_n_prime_w_vertex_30", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+  TH1D *h_zdc_sum_s_prime_w_vertex_30 = new TH1D("h_zdc_sum_s_prime_w_vertex_30", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+
+  // TAxis *axis_n = h_zdc_sum_n->GetXaxis();
+  // TAxis *axis_s = h_zdc_sum_s->GetXaxis();
+  // TAxis *axis_np = h_zdc_sum_n_prime->GetXaxis();
+  // TAxis *axis_sp = h_zdc_sum_s_prime->GetXaxis();
+
+  // const int bins = axis_n->GetNbins();
+
+  // Axis_t from = axis_n->GetXmin();
+  // Axis_t to = axis_n->GetXmax();
+  // Axis_t width = (to - from) / bins;
+  // Axis_t *new_bins = new Axis_t[bins + 1];
+
+  // for (int i = 0; i <= bins; i++) {
+  //   new_bins[i] = TMath::Power(10, from + i * width);
+  // }
+
+  // axis_n->Set(bins, new_bins);
+  // axis_s->Set(bins, new_bins);
+  // axis_np->Set(bins, new_bins);
+  // axis_sp->Set(bins, new_bins);
+  // h_zdc_sum_n_w_vertex_30->GetXaxis()->Set(bins, new_bins);
+  // h_zdc_sum_s_w_vertex_30->GetXaxis()->Set(bins, new_bins);
+  // h_zdc_sum_n_prime_w_vertex_30->GetXaxis()->Set(bins, new_bins);
+  // h_zdc_sum_s_prime_w_vertex_30->GetXaxis()->Set(bins, new_bins);
+
+  // delete[] new_bins;
+
+
   TFile *file = new TFile(Form("%s/output/run%d/mbdcalibana/mbd_calib_trees_%d.root", env_p, runnumber, runnumber), "r");
   if (!file)
     {
@@ -437,7 +492,9 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 
   // Making fresh histograms
 
+
   float zdc_sum[2];
+  float zdc_sum_prime[2];
   
   float mbd_charge[128];
   float mbd_time[128];
@@ -448,11 +505,9 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
   float time_0;  
 
   TTree *t = (TTree*)file->Get("T");
-  t->SetBranchStatus("*", 0);
-  t->SetBranchStatus("mbd_charge_raw", 1);
-  t->SetBranchStatus("mbd_time_raw", 1);
-  //  t->SetBranchStatus("zdc_sum_low", 1);
-  //t->SetBranchAddress("zdc_sum_low",zdc_sum);
+
+  t->SetBranchAddress("zdc_sum",zdc_sum);
+  t->SetBranchAddress("zdc_sum_prime",zdc_sum_prime);
   t->SetBranchAddress("mbd_charge_raw",mbd_charge_raw);
   t->SetBranchAddress("mbd_time_raw",mbd_time_raw);
 
@@ -536,6 +591,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
       
       sort(time_sum_n.begin(), time_sum_n.end());
       sort(time_sum_s.begin(), time_sum_s.end());
+
       minbias = true;
       float mean_north = 999;
       float mean_south = 999;
@@ -554,7 +610,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 	// get rid of times outside of RMS*1.5 range
 	for (unsigned int is = 0; is < time_sum_s.size(); is++)
 	  {
-	    if (fabs(time_sum_s.at(is) - mean_south) < sigma_cut )
+	    if (fabs(time_sum_s.at(is) - mean_south) < sigma_cut*rms_s )
 	      {
 		sum_s_center += time_sum_s.at(is);
 		nhit_s_center++;
@@ -586,7 +642,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 	
 	for (unsigned int ino = 0; ino < time_sum_n.size(); ino++)
 	  {
-	    if (fabs(time_sum_n.at(ino) - mean_north) < sigma_cut )
+	    if (fabs(time_sum_n.at(ino) - mean_north) < sigma_cut*rms_n )
 	      {
 		sum_n_center += time_sum_n.at(ino);
 		nhit_n_center++;
@@ -604,6 +660,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
 
 	h_vertex_w_mean->Fill(z_vertex);
       }
+
       else minbias = false;
 
       if (mean_north != 999 && mean_south != -999) {
@@ -635,7 +692,10 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
       h_vertex_c[cent_bin]->Fill(z_vertex);
       h_time_0->Fill(time_0);
       h_charge_sum->Fill(charge_sum);
-      
+      h_zdc_sum_n->Fill(zdc_sum[1]);      
+      h_zdc_sum_s->Fill(zdc_sum[0]);      
+      h_zdc_sum_n_prime->Fill(zdc_sum_prime[1]);      
+      h_zdc_sum_s_prime->Fill(zdc_sum_prime[0]);      
       if (!minbias) continue;
 
       h_charge_sum_min_bias->Fill(charge_sum);
@@ -643,13 +703,174 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
       if (TMath::Abs(z_vertex) > 30) continue;
   
       h_charge_sum_min_bias_w_vertex_30->Fill(charge_sum);
+      h_zdc_sum_n_w_vertex_30->Fill(zdc_sum[1]);      
+      h_zdc_sum_s_w_vertex_30->Fill(zdc_sum[0]);      
+      h_zdc_sum_n_prime_w_vertex_30->Fill(zdc_sum_prime[1]);      
+      h_zdc_sum_s_prime_w_vertex_30->Fill(zdc_sum_prime[0]);      
+
     }
 
-  TFile *fout = new TFile(Form("%s/output/run%d/plots/mbd_charge_sum_%d.root", env_p, runnumber, runnumber), "RECREATE");
+
+  if (shift_runnumber)
+    {
+      mbd_charge_factor *= 1./(h_charge_sum_min_bias_w_vertex_30->GetMean());
+      for (int i = 0 ; i < (DEBUG ? 10 : t->GetEntries()); i++)
+	{
+	  minbias = false;
+	  hits_n = 0;
+	  hits_s = 0;      
+	  hits_n_t = 0;
+	  hits_s_t = 0;      
+	  charge_sum = 0;
+	  time_sum_n.clear();
+	  time_sum_s.clear();
+	  sum_n = 0.;
+	  sum_s = 0.;
+	  sum_n2 = 0.;
+	  sum_s2 = 0.;
+
+	  t->GetEntry(i);
+
+	  for (int ich = 0 ; ich < 128; ich++)
+	    {
+
+	      mbd_time[ich] = ((25. - mbd_time_raw[ich] * (9.0 / 5000.) - time_shift_corr[ich]))*time_scale_corr[ich];
+	      mbd_charge[ich] = mbd_charge_raw[ich]*gain_corr[ich];
+
+	      if (mbd_charge[ich] > cthresh)
+		{
+		  charge_sum += mbd_charge[ich];	      	      
+
+		  // get hit charge channels
+		  if (ich/64) hits_n++;
+		  else hits_s++;
+
+		  // if bad channel or the time is greater than 10 ns after 0-point don't count the time
+		  if (ich == 56 || ich == 56+64 || fabs(mbd_time[ich]) > 10) continue;
+
+		  float timme = mbd_time[ich];
+
+		  if (ich/64) 
+		    {
+		 		  
+		      hits_n_t++;
+		      time_sum_n.push_back(timme);
+		      sum_n += timme;;
+		      sum_n2 += (timme*timme);
+
+		    }
+		  else
+		    {
+		  
+		      hits_s_t++;
+		      time_sum_s.push_back(timme);
+		  
+		      sum_s += timme;
+		      sum_s2 += (timme*timme);
+
+		    }
+
+		}
+	  
+	    } 
+      
+	  sort(time_sum_n.begin(), time_sum_n.end());
+	  sort(time_sum_s.begin(), time_sum_s.end());
+	  minbias = true;
+	  float mean_north = 999;
+	  float mean_south = 999;
+
+	  // does event meet cut?
+	  if (hits_s_t >= central_cut){
+
+	    // get the mean
+	    mean_south = sum_s/static_cast<float>(hits_s_t);
+
+	    // get rms
+	    float rms_s = sqrt(sum_s2/static_cast<float>(hits_s_t) - TMath::Power(mean_south, 2));
+	    int nhit_s_center = 0;
+	    float sum_s_center = 0.;
+	
+	    // get rid of times outside of RMS*1.5 range
+	    for (unsigned int is = 0; is < time_sum_s.size(); is++)
+	      {
+		if (fabs(time_sum_s.at(is) - mean_south) < sigma_cut )
+		  {
+		    sum_s_center += time_sum_s.at(is);
+		    nhit_s_center++;
+		  }
+	      }
+
+	    // Get the mean again
+	    float mean_south_center = sum_s_center/static_cast<float>(nhit_s_center);
+
+	
+	    mean_south = mean_south_center;
+	
+	  }
+
+	  else if (hits_s >=2 && (hits_s_t >= 1)){
+
+	    mean_south = sum_s/static_cast<float>(hits_s_t);
+
+	  }
+	  else minbias = false;
+
+	  if (hits_n_t >=central_cut){
+	
+	    mean_north = sum_n/static_cast<float>(hits_n_t);
+	
+	    float rms_n = sqrt(sum_n2/static_cast<float>(hits_n_t) - TMath::Power(mean_north, 2));
+	    int nhit_n_center = 0;
+	    float sum_n_center = 0.;
+	
+	    for (unsigned int ino = 0; ino < time_sum_n.size(); ino++)
+	      {
+		if (fabs(time_sum_n.at(ino) - mean_north) < sigma_cut )
+		  {
+		    sum_n_center += time_sum_n.at(ino);
+		    nhit_n_center++;
+		  }
+	      }
+	
+	    float mean_north_center = sum_n_center/static_cast<float>(nhit_n_center);
+       
+	    mean_north = mean_north_center;
+	  }
+
+	  else if (hits_n >=2 && hits_n_t >= 1){
+
+	    mean_north = sum_n/static_cast<float>(hits_n_t);
+
+	    h_vertex_w_mean->Fill(z_vertex);
+	  }
+	  else minbias = false;
+
+	  if (mean_north != 999 && mean_south != -999) {
+
+	    z_vertex = 15*(mean_north - mean_south);
+	    time_0 = (mean_north + mean_south)/2.;
+	  }
+	  else 
+	    {
+	      z_vertex = 999;
+	      time_0 = 999;
+	    }
+      
+	  if (!minbias) continue;
+	  if (TMath::Abs(z_vertex) > 30) continue;
+  
+	  h_charge_sum_min_bias_w_vertex_30_shifted->Fill(charge_sum*mbd_charge_factor);
+	}
+
+
+    }
+  TFile *fout = new TFile(Form("%s/output/plots/mbd_charge_sum_%d.root", env_p, runnumber), "RECREATE");
 
   h_charge_sum->Write();
   h_charge_sum_min_bias->Write();
   h_charge_sum_min_bias_w_vertex_30->Write();
+  if (shift_runnumber)   h_charge_sum_min_bias_w_vertex_30_shifted->Write();
   h_vertex->Write();
   h_vertex_w_center->Write();
   h_vertex_w_mean->Write();
@@ -660,7 +881,16 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
   h_vtx_time_0_center->Write();
   h_vtx_diff_nhit_center_t->Write();
   h_vtx_diff_nhit_center->Write();
-	  
+  h_zdc_sum_n->Write();
+  h_zdc_sum_s->Write();
+  h_zdc_sum_n_prime->Write();
+  h_zdc_sum_s_prime->Write();
+
+  h_zdc_sum_n_w_vertex_30->Write();
+  h_zdc_sum_s_w_vertex_30->Write();
+  h_zdc_sum_n_prime_w_vertex_30->Write();
+  h_zdc_sum_s_prime_w_vertex_30->Write();
+	  	  
   for (int i = 0; i < 20;  i++)
     {
       h_vertex_c[i]->Write();
@@ -682,8 +912,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration)
       h_ring_occuppancy[i]->Write();
     }
   fout->Close();
-  
-  
+    
 }
 
 void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, const int makeNewHistograms)
@@ -696,6 +925,7 @@ void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, cons
   int min_range = 15;
   float gain_corr[128];
   float g;
+  double chisquare[128];
 
   const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
 
@@ -739,7 +969,7 @@ void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, cons
   
   TTree *t = (TTree*)file->Get("T");
 
-  t->SetBranchAddress("zdc_sum_low", zdc_sum);
+  t->SetBranchAddress("zdc_sum", zdc_sum);
   t->SetBranchAddress("mbd_charge_raw",mbd_charge_raw);
   t->SetBranchAddress("mbd_time_raw",mbd_time_raw);
 
@@ -1034,6 +1264,8 @@ void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, cons
 	std::cout << "try "<<tries<<std::endl;
 
       }
+
+    chisquare[ich] = f_lan_w_gausexp->GetChisquare()/f_lan_w_gausexp->GetNDF();
   }
 
   if (makeNewHistograms)
@@ -1160,6 +1392,132 @@ void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, cons
   h_peaks->Write();
   h_peaks_raw->Write();
   fout->Close();
+
+  double avg_chisquare = 0.;
+  for (int i = 0; i < 128; i++)
+    {
+      avg_chisquare += (chisquare[i]/128.);
+    }
+
+  std::cout << " ************************************ " << std::endl;
+  std::cout << "  Run " << runnumber << std::endl;
+  std::cout << "  Avg. Chi^2/NDF = "<<avg_chisquare << std::endl;
+  std::cout << " ************************************ " << std::endl;
+
+}
+
+
+void QA_ZDCCheck(const int runnumber)
+{
+
+  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+
+  if(!env_p)
+    {
+      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      return;
+    }
+
+  TFile *f2 = new TFile(Form("%s/output/run%d/mbdcalibana/mbd_calib_trees_%d.root", env_p, runnumber, runnumber), "r");
+  TTree *t2 = (TTree*) f2->Get("T");
+
+  TH1D *h_zdc_energy[6];
+  TH1D *h_zdc_energy_prime[6];
+  TH1D *h_zdc_energy_log[6];
+  TH1D *h_zdc_energy_log_prime[6];
+  for (int i = 0; i < 6;i++) 
+    {
+      h_zdc_energy[i] = new TH1D(Form("h_zdc_energy_%d", i), ";ZDC Energy [GeV]; Counts", 500, 0, 5000);
+      h_zdc_energy_prime[i] = new TH1D(Form("h_zdc_energy_prime_%d", i), ";ZDC Energy [GeV]; Counts", 500, 0, 5000);
+      h_zdc_energy_log[i] = new TH1D(Form("h_zdc_energy_log_%d", i), ";ZDC Energy [GeV]; Counts", 500, 1, 4);
+      h_zdc_energy_log_prime[i] = new TH1D(Form("h_zdc_energy_log_prime_%d", i), ";ZDC Energy [GeV]; Counts", 500, 1, 4);
+    }
+  TH1D *h_zdc_sum_n = new TH1D("h_zdc_sum_n", ";ZDC sum [GeV]; Counts", 400, 1, 4);
+  TH1D *h_zdc_sum_s = new TH1D("h_zdc_sum_s", ";ZDC sum [GeV]; Counts", 400, 1, 4);
+  TH1D *h_zdc_sum_n_prime = new TH1D("h_zdc_sum_n_prime", ";ZDC sum [GeV]; Counts", 400, 1, 4);
+  TH1D *h_zdc_sum_s_prime = new TH1D("h_zdc_sum_s_prime", ";ZDC sum [GeV]; Counts", 400, 1, 4);
+
+  TAxis *axis_n = h_zdc_sum_n->GetXaxis();
+  TAxis *axis_s = h_zdc_sum_s->GetXaxis();
+  TAxis *axis_np = h_zdc_sum_n_prime->GetXaxis();
+  TAxis *axis_sp = h_zdc_sum_s_prime->GetXaxis();
+
+  const int bins = axis_n->GetNbins();
+
+  Axis_t from = axis_n->GetXmin();
+  Axis_t to = axis_n->GetXmax();
+  Axis_t width = (to - from) / bins;
+  Axis_t *new_bins = new Axis_t[bins + 1];
+
+  for (int i = 0; i <= bins; i++) {
+    new_bins[i] = TMath::Power(10, from + i * width);
+  }
+
+  axis_n->Set(bins, new_bins);
+  axis_s->Set(bins, new_bins);
+  axis_np->Set(bins, new_bins);
+  axis_sp->Set(bins, new_bins);
+
+  for (int i = 0 ; i < 6; i++) 
+    {
+      h_zdc_energy_log[i]->GetXaxis()->Set(bins, new_bins);
+      h_zdc_energy_log_prime[i]->GetXaxis()->Set(bins, new_bins);
+    }
+
+  delete[] new_bins;
+
+  float zdc_sum[2];
+  float zdc_energy[6];
+
+  float zdc_sum_prime[2];
+  float zdc_energy_prime[6];
+
+  t2->SetBranchAddress("zdc_sum", zdc_sum);
+  t2->SetBranchAddress("zdc_energy", zdc_energy);
+  t2->SetBranchAddress("zdc_sum_prime", zdc_sum_prime);
+  t2->SetBranchAddress("zdc_energy_prime", zdc_energy_prime);
+
+  int n_min_bias = 0;;
+  int n_min_bias_prime = 0;;
+  int n_events = t2->GetEntries();
+  
+  for (int i = 0; i < t2->GetEntries(); i++)
+    {
+      t2->GetEntry(i);
+      h_zdc_sum_n->Fill(zdc_sum[1]);
+      h_zdc_sum_s->Fill(zdc_sum[0]);
+      h_zdc_sum_n_prime->Fill(zdc_sum_prime[1]);
+      h_zdc_sum_s_prime->Fill(zdc_sum_prime[0]);
+
+      if (zdc_sum[0] >= 40 && zdc_sum[1] >= 40) n_min_bias++;
+      if (zdc_sum_prime[0] >= 40 && zdc_sum_prime[1] >= 40) n_min_bias_prime++;
+      for (int j= 0; j < 6; j++)
+	{
+	  h_zdc_energy[j]->Fill(zdc_energy[j]);
+	  h_zdc_energy_log[j]->Fill(zdc_energy[j]);
+	  h_zdc_energy_prime[j]->Fill(zdc_energy_prime[j]);
+	  h_zdc_energy_log_prime[j]->Fill(zdc_energy_prime[j]);
+
+	}
+    }  
+
+  std::cout << "Number of events passing ZDC coincidence                      : "<<n_min_bias <<"/"<<n_events<<" = "<<static_cast<double>(n_min_bias)/static_cast<double>(n_events)<<std::endl;
+  std::cout << "Number of events passing ZDC coincidence with our calibrations: "<<n_min_bias_prime <<"/"<<n_events<<" = "<<static_cast<double>(n_min_bias_prime)/static_cast<double>(n_events)<<std::endl;
+
+  TFile *fout21 = new TFile(Form("%s//output/plots/zdc_check_%d.root", env_p, runnumber),"recreate");
+  h_zdc_sum_n->Write();
+  h_zdc_sum_s->Write();
+  h_zdc_sum_n_prime->Write();
+  h_zdc_sum_s_prime->Write();
+
+  for (int i = 0; i < 6; i++)
+    {
+      h_zdc_energy[i]->Write();
+      h_zdc_energy_log[i]->Write();
+      h_zdc_energy_prime[i]->Write();
+      h_zdc_energy_log_prime[i]->Write();
+    }
+  fout21->Close();
 }
 
 void QA_MBDTimeCalibrations(const int runnumber, const int useChargeTime = 0)
@@ -1194,7 +1552,6 @@ void QA_MBDTimeCalibrations(const int runnumber, const int useChargeTime = 0)
     {
       tcalib->GetEntry(i);
       gain_corr[i] = g;
-      std::cout << i <<": "<< g <<" "<<gain_corr[i]<<std::endl;
     }
 
   
@@ -1266,12 +1623,12 @@ void QA_MBDTimeCalibrations(const int runnumber, const int useChargeTime = 0)
       center_toa[i] = 0.;
       center_peak_time[i] = 0.;
     }
-  std::cout << "\rChecking the number of events per channel ..."<<std::flush;
+  if (!SILENCE) std::cout << "\rChecking the number of events per channel ..."<<std::flush;
   for (int i = 0; i < t2->GetEntries(); i++)
     {
 
       t2->GetEntry(i);
-      if (1 != 0 && i%(t2->GetEntries()/100) == 0) std::cout << "\rChecking the number of events per channel ... "<<floor(static_cast<float>(i)/static_cast<float>(t2->GetEntries())*100)<<"%"<<std::flush;
+      if ( !SILENCE && i != 0 && i%(t2->GetEntries()/100) == 0) std::cout << "\rChecking the number of events per channel ... "<<floor(static_cast<float>(i)/static_cast<float>(t2->GetEntries())*100)<<"%"<<std::flush;
 
       for (int ich = 0; ich < 128; ich++)
 	{
@@ -1279,14 +1636,16 @@ void QA_MBDTimeCalibrations(const int runnumber, const int useChargeTime = 0)
 	  number_of_events[ich]++;
 	}
     }  
-
-  std::cout << "\rChecking the number of events per channel.. [Done]"<<std::endl;
-  std::cout << "\rCalculating Mean.. "<<std::flush;
+  if (!SILENCE)
+    {
+      std::cout << "\rChecking the number of events per channel.. [Done]"<<std::endl;
+      std::cout << "\rCalculating Mean.. "<<std::flush;
+    }
   for (int i = 0; i < t2->GetEntries(); i++)
     {
       if (useChargeTime) t->GetEntry(i);
       t2->GetEntry(i);
-      if (i != 0 && i%(t2->GetEntries()/100) == 0) std::cout << "\rCalculating Mean ... "<<floor(static_cast<float>(i)/static_cast<float>(t2->GetEntries())*100)<<"%"<<std::flush;
+      if (!SILENCE && i != 0 && i%(t2->GetEntries()/100) == 0) std::cout << "\rCalculating Mean ... "<<floor(static_cast<float>(i)/static_cast<float>(t2->GetEntries())*100)<<"%"<<std::flush;
       for (int ich = 0; ich < 128; ich++)
 	{
 	  double toa = -999;
@@ -1313,20 +1672,23 @@ void QA_MBDTimeCalibrations(const int runnumber, const int useChargeTime = 0)
 	    }
 	}
     }  
-  std::cout << "\rCalculating Mean ... [Done]"<<std::endl;
-  std::cout << "Mean TDC     : "<< center_tdc[8] << std::endl;
-  if (useChargeTime)
+  if (!SILENCE)
     {
-      std::cout << "Mean PeakTime: "<< center_peak_time[8] << std::endl;
-      std::cout << "Mean TOA     : "<< center_toa[8] << std::endl;
+      std::cout << "\rCalculating Mean ... [Done]"<<std::endl;
+      std::cout << "Mean TDC     : "<< center_tdc[8] << std::endl;
+      if (useChargeTime)
+	{
+	  std::cout << "Mean PeakTime: "<< center_peak_time[8] << std::endl;
+	  std::cout << "Mean TOA     : "<< center_toa[8] << std::endl;
+	}
+      
+      std::cout << "\rFilling Histograms.. "<<std::flush;
     }
-
-  std::cout << "\rFilling Histograms.. "<<std::flush;
   for (int i = 0; i < t2->GetEntries(); i++)
     {
       if (useChargeTime) t->GetEntry(i);
       t2->GetEntry(i);
-      if (i != 0 && i%(t2->GetEntries()/100) == 0) std::cout << "\rFilling Histograms ... "<<floor(static_cast<float>(i)/static_cast<float>(t2->GetEntries())*100)<<"%"<<std::flush;
+      if (!SILENCE &&i != 0 && i%(t2->GetEntries()/100) == 0) std::cout << "\rFilling Histograms ... "<<floor(static_cast<float>(i)/static_cast<float>(t2->GetEntries())*100)<<"%"<<std::flush;
       for (int ich = 0; ich < 128; ich++)
 	{
 
@@ -1350,38 +1712,39 @@ void QA_MBDTimeCalibrations(const int runnumber, const int useChargeTime = 0)
 	  h_tdc_channel[ich]->Fill(tdc);
 	}
     }  
-  
-  std::cout << "\rFilling Histograms ... [Done]"<<std::endl;
+  if (!SILENCE) std::cout << "\rFilling Histograms ... [Done]"<<std::endl;
   
   TFile *ftcalib = new TFile(Form("%s/calib/t0_calib_mbd_%d.root", env_p, runnumber),"recreate");
 
   TNtuple *t_calib = new TNtuple("ttree","time calib","channel:shift:scale:toa_shift");
-
-  std::cout << "\rFitting 1D Histograms.. "<<std::flush;
-  std::cout << __LINE__ << std::endl;
+  if (!SILENCE)
+    std::cout << "\rFitting 1D Histograms.. "<<std::flush;
+  
   double middle_fit_toa[128];
   double middle_fit_tdc[128];
 
   double scale_fit_toa[128];
   double scale_fit_tdc[128];
-
-  std::cout << "Tube \t TDC shift \t TDC scale \t TOA Shift"<<endl;
+  if (!SILENCE)
+    std::cout << "Tube \t TDC shift \t TDC scale \t TOA Shift"<<endl;
   for (int ich = 0; ich < 128; ich++)
     {
-      std::cout << "channel : "<<ich <<std::endl;
+      if (!SILENCE)
+	std::cout << "channel : "<<ich <<std::endl;
       TF1 *fit_toa = 0;
       TF1 *fit_tdc = 0;
       TH1D *hclone = nullptr;
       int nparams = 9;
       double params[9];
-std::cout << __LINE__ << std::endl;
       std::vector<std::pair<double, double>> fit_peak_heights;
-std::cout << __LINE__ << std::endl;
       if (useChargeTime)
 	{
-	  std::cout << " "<<std::endl;
-	  std::cout << "TOA "<<std::endl;
-	  std::cout << " "<<std::endl;
+	  if (!SILENCE)
+	    {
+	      std::cout << " "<<std::endl;
+	      std::cout << "TOA "<<std::endl;
+	      std::cout << " "<<std::endl;
+	    }
 	  std::pair<double, double> range = getFitFunction(h_toa_channel[ich], params);
 	  fit_toa = new TF1("triple_gaussian","gaus(0) + gaus(3) + gaus(6)",range.first, range.second);
 	  
@@ -1408,11 +1771,13 @@ std::cout << __LINE__ << std::endl;
 	  std::sort(fit_peak_heights.begin(), fit_peak_heights.end(), [](auto &left, auto &right) {
 	      return left.second > right.second;
 	    });
-	  std::cout <<" Peak heights: "<<std::flush;
-	  for (int i = 0; i < nparams/3 ; i++)
-	    {
-	      std::cout << " " <<fit_peak_heights.at(i).first<<","<<fit_peak_heights.at(i).second;
-	    }
+	  if (!SILENCE) {
+	    std::cout <<" Peak heights: "<<std::flush;
+	    for (int i = 0; i < nparams/3 ; i++)
+	      {
+		std::cout << " " <<fit_peak_heights.at(i).first<<","<<fit_peak_heights.at(i).second;
+	      }
+	  }
 	  middle_fit_toa[ich] = center_toa[ich] + fit_peak_heights.at(0).first;
 	  
 	  if (nparams == 6)
@@ -1421,66 +1786,67 @@ std::cout << __LINE__ << std::endl;
 	  scale_fit_toa[ich] = fabs(fit_peak_heights.at(1).first - fit_peak_heights.at(0).first);
 	}
       else scale_fit_toa[ich] = 1;
-      std::cout << __LINE__ << std::endl;
+      
       if (ich == 54 || ich == 56 || ich == 56+64 ){
 	middle_fit_tdc[ich] = 0;
 	scale_fit_tdc[ich] = -999;
       }
-
       else
-	{
-	  std::cout << __LINE__ << std::endl;
-	  std::cout << " "<<std::endl;
-	  std::cout << "TDC "<<std::endl;
-	  std::cout << " "<<std::endl;
-	  std::cout << __LINE__ << std::endl;
-	  std::pair<double, double> range = getFitFunction(h_tdc_channel[ich], params, -15., 15.);
-	  std::cout << __LINE__ << std::endl;
-	  fit_tdc = new TF1("triple_gaussian","gaus(0) + gaus(3) + gaus(6)",range.first, range.second);
-	  std::cout << __LINE__ << std::endl;
-	  nparams = 9;
-	  if (params[6] < 0)
+	{	  
+	  if (!SILENCE)
 	    {
-	      fit_tdc = new TF1("double_gaussian","gaus(0) + gaus(3)",range.first, range.second);
+	      std::cout << " "<<std::endl;
+	      std::cout << "TDC "<<std::endl;
+	      std::cout << " "<<std::endl;
+	    }
+	  std::pair<double, double> range = getFitFunction(h_tdc_channel[ich], params, -15., 15., !useChargeTime);
+	  
+	  if (params[3] < 0)
+	    {
+	      fit_tdc = new TF1("single_gaussian","gaus(0)",range.first, range.second);
+	      nparams = 3;
+	    }
+	  else if (params[6] < 0)
+	    {
+	      fit_tdc = new TF1("double_gaussian","gaus(0)+gaus(3)",range.first, range.second);
 	      nparams = 6;
 	    }
-	  std::cout << "TDC Guesses: "<<endl;
+	  else 
+	    {
+	      fit_tdc = new TF1("triple_gaussian","gaus(0)+gaus(3)+gaus(6)",range.first, range.second);
+	      nparams = 9;
+	    }
 	  for (int i = 0 ; i < nparams; i++)
 	    {
-	      std:: cout << params[i] << " ";
 	      fit_tdc->SetParameter(i, params[i]);
 	      if (i%3 == 2) fit_tdc->SetParLimits(i, 0, 100);
 	    }
-	  std::cout << " "<<endl;
 	  hclone = (TH1D*) h_tdc_channel[ich]->Clone();
 	  hclone->Rebin(20);
 	  hclone->Smooth();
 	  hclone->Fit(fit_tdc->GetName(), "Q","", range.first, range.second);
-	  std::cout << "TDC Guesses: "<<endl;
-	  for (int i = 0 ; i < nparams; i++)
-	    {
-	      std:: cout << fit_tdc->GetParameter(i) << " ";
-	    }
-	  std::cout << " "<<endl;
-	  
+	  h_tdc_channel[ich]->Rebin(20);
+	  h_tdc_channel[ich]->Fit(fit_tdc->GetName(), "Q+","", range.first, range.second);
+
 	  std::vector<std::pair<double, double>> fit_tdc_peak_heights;
 	  for (int i = 0; i < nparams/3 ; i++)
 	    {
 	      fit_tdc_peak_heights.push_back(std::make_pair(fit_tdc->GetParameter(i*3 + 1), fit_tdc->GetParameter(i*3)));
 	    }
-	  
+	      
 	  std::sort(fit_tdc_peak_heights.begin(), fit_tdc_peak_heights.end(), [](auto &left, auto &right) {
 	      return left.second > right.second;
 	    });
-	  
+	      
+	      
 	  middle_fit_tdc[ich] = center_tdc[ich] + fit_tdc_peak_heights.at(0).first;
+      
 	  scale_fit_tdc[ich] = 1;
 	  if (useChargeTime) scale_fit_tdc[ich] = scale_fit_toa[ich] / (fabs(fit_tdc_peak_heights.at(1).first - fit_tdc_peak_heights.at(0).first));
 	}
-      std::cout << ich <<" \t "<<middle_fit_tdc[ich] <<" \t "<<scale_fit_tdc[ich]<<" \t "<<middle_fit_toa[ich]<<endl;
       t_calib->Fill(ich, middle_fit_tdc[ich],scale_fit_tdc[ich], middle_fit_toa[ich]);
     }
-  std::cout << "\rFitting 1D Histograms.. [done]"<<std::endl;
+  if (!SILENCE)  std::cout << "\rFitting 1D Histograms.. [done]"<<std::endl;
   ftcalib->Write();
   ftcalib->Close();
 
@@ -1514,12 +1880,12 @@ std::cout << __LINE__ << std::endl;
 
     }
 
-  std::cout << "\rFilling Histograms Again.. "<<std::flush;
+  if (!SILENCE) std::cout << "\rFilling Histograms Again.. "<<std::flush;
   for (int i = 0; i < t2->GetEntries(); i++)
     {
       if (useChargeTime) t->GetEntry(i);
       t2->GetEntry(i);
-      if (i != 0 && i%(t2->GetEntries()/100) == 0) std::cout << "\rFilling Histograms ... "<<floor(static_cast<float>(i)/static_cast<float>(t2->GetEntries())*100)<<"%"<<std::flush;
+      if (!SILENCE && i != 0 && i%(t2->GetEntries()/100) == 0) std::cout << "\rFilling Histograms ... "<<floor(static_cast<float>(i)/static_cast<float>(t2->GetEntries())*100)<<"%"<<std::flush;
       for (int ich = 0; ich < 128; ich++)
 	{
 
@@ -1542,7 +1908,8 @@ std::cout << __LINE__ << std::endl;
 
 	}
     }  
-  std::cout << "\rFilling Histograms ... [Done]"<<std::endl;
+  if (!SILENCE)
+    std::cout << "\rFilling Histograms ... [Done]"<<std::endl;
 
 
   TFile *fout2 = new TFile(Form("%s/output/plots/histout_%d.root", env_p, runnumber),"recreate");
@@ -1564,14 +1931,14 @@ std::cout << __LINE__ << std::endl;
   fout2->Close();
 }
 
-std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx = -25., float maximumx = 25.){
+std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx = -25., float maximumx = 25., bool ForceSingle  = false){
 
   TF1 *f;
   TH1D *h_rebinned = (TH1D*) h->Clone();
   h_rebinned->Rebin(20);
   h_rebinned->Smooth();
   // finding the fit range   
-  std::cout << __LINE__ << std::endl;                
+  
   int bin_low = -1;
   double x_low = -999;
   int bin_high = -1;
@@ -1653,7 +2020,6 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
 	}
     }
 
-  std::cout << __LINE__ << std::endl;                
   if (bin_high == -1)
     {
       bin_high = h_rebinned->GetNbinsX() - 1;
@@ -1674,7 +2040,6 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
 	  return left.first < right.first;
 	});
     }
-  std::cout << __LINE__ << std::endl;                
   auto maxv = v_max.begin();
   while (maxv != v_max.end())
     {
@@ -1686,51 +2051,63 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
 	maxv++;
     }
 
-  std::cout << __LINE__ << std::endl;                
+
+
   if (v_max.size() == 0)
     {
-      std::cout << "nothing left" << std::endl;
       return std::make_pair(-20, 20);
     }
-  else if (v_max.size() == 1)
+  
+
+  if (ForceSingle)
+    {
+      std::sort(v_max.begin(), v_max.end(), [](auto &left, auto &right) {
+	  return left.second > right.second;
+	});
+      
+      params[0] = v_max.at(0).second;
+      params[1] = v_max.at(0).first;
+      params[2] = 1;
+      params[3] = -999.99;
+      params[4] = -999.99;
+      params[5] = -999.99;
+      params[6] = -999.99;
+      params[7] = -999.99;
+      params[8] = -999.99;
+
+      return std::make_pair( (x_low > v_max.at(0).first - 1 ? x_low :  v_max.at(0).first - 1), v_max.at(0).first + 1);
+    }
+
+  if (v_max.size() == 1)
     {
       if (v_minx.size())
 	{
-	  std::cout << __LINE__ << std::endl;                
-	  
 	  x_high = v_minx.at(0);
 	  
-	  std::cout << __LINE__ << std::endl;                
 	  while (v_minx.begin() != v_minx.end())
 	    {
 	      v_minx.erase(v_minx.begin());
 	    }
 	}
-      std::cout << __LINE__ << std::endl;                
     }
   else
     {
-      std::cout << __LINE__ << std::endl;                
       if(v_max.size() > 3 )
 	{
-	  std::cout << __LINE__ << std::endl;                
+
 	  std::sort(v_max.begin(), v_max.end(), [](auto &left, auto &right) {
 	      return left.second > right.second;
 	    });
-	  std::cout << __LINE__ << std::endl;                
-	  
 	  auto maxv = v_max.begin() + 3;
 	  while (maxv != v_max.end())
 	    {
 	      v_max.erase(maxv);
 	    }	  
-	  std::cout << __LINE__ << std::endl;                
 	  std::sort(v_max.begin(), v_max.end(), [](auto &left, auto &right) {
 	      return left.first < right.first;
 	    });
 	}
       
-      std::cout << __LINE__ << std::endl;                
       double last_x;
       bool first = false;
       bool last = false;
@@ -1758,21 +2135,9 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
 	}
 
     }  
-  std::cout << __LINE__ << std::endl;                
-
-  for (unsigned int i = 0; i < v_max.size(); i++)
-    {
-      std::cout << "Max: "<<v_max.at(i).first<<"/"<<v_max.at(i).second<<std::endl;
-    }
-  for (unsigned int i = 0; i < v_minx.size(); i++)
-    {
-      std::cout << "Min: "<<v_minx.at(i)<<std::endl;
-    }
-  std::cout << x_low<< "-->"<<x_high<<std::endl;
 
   if (v_max.size() == 3)
     {
-      std::cout << "Three"<<endl;
       params[0] = v_max.at(0).second;
       params[1] = v_max.at(0).first;
       params[2] = (v_minx.at(0) - x_low)/4.;
@@ -1786,7 +2151,6 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
 
   else if (v_max.size() == 2)
     {
-      std::cout << "Two"<<endl;
       f = new TF1("double_gaussian", "gaus(0) + gaus(3)", x_low, x_high);
       params[0] = v_max.at(0).second;
       params[1] = v_max.at(0).first;
@@ -1799,7 +2163,7 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
       params[8] = -999.99;
 
     }
-  std::cout << __LINE__ << std::endl;
+
 
   
   return std::make_pair(x_low, x_high);
@@ -2187,7 +2551,8 @@ void QA_MakeCentralityCalibrations(const int runnumber, const bool doVertexSelec
         centrality_high[j] << endl;
   }
 
-
+  cout << "mean data: " << hRealBBC->GetMean()<<endl;
+  cout << "mean sim : " << hSimBBCwTrig->GetMean()<<endl;
   ///////////// 
   TFile *fcalib = new TFile(Form("%s/calib/calib_centrality_%d.root", env_p, runnumber), "recreate");
   TNtuple *ts = new TNtuple("tn_centrality", "holds centrality divisions", "bin:low:high");

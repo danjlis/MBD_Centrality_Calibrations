@@ -4,8 +4,8 @@
 #include <calobase/TowerInfoContainer.h>
 #include <calobase/TowerInfoDefs.h>
 #include <bbc/BbcDefs.h>
-#include <bbc/BbcPmtInfoV1.h>
-#include <bbc/BbcPmtInfoContainerV1.h>
+#include <bbc/BbcPmtHitV1.h>
+#include <bbc/BbcPmtContainerV1.h>
 #include <bbc/BbcOutV1.h>
 #include <centrality/CentralityInfov2.h>
 #include <fun4all/Fun4AllHistoManager.h>
@@ -266,20 +266,21 @@ int CentralityAnalysis::FillVars()
     std::cout << __FILE__ << " :: " << __FUNCTION__ << std::endl;
   }
   
-  for ( int ipmt = 0; ipmt < BbcDefs::BBC_N_PMT; ipmt++)
+  for ( int ipmt = 0; ipmt < _pmts_mbd->get_npmt(); ipmt++)
     {
-      _tmp_pmt = _pmts_mbd->get_tower_at_channel(ipmt);
+      int index_pmt = _pmts_mbd->get_pmt(ipmt);
+
       _side = ipmt%64;
-      if (Verbosity()) _tmp_pmt->identify();      
-      _charge = _tmp_pmt->get_q();
-      _time_t = _tmp_pmt->get_tt();
-      _time_q = _tmp_pmt->get_tq();
+
+      _charge = _pmts_mbd->get_adc(ipmt);
+      _time_t = _pmts_mbd->get_tdc0(ipmt);
+      _time_q = _pmts_mbd->get_tdc1(ipmt);
 
       m_mbd_charge[ipmt] = _charge;
       m_mbd_time_q[ipmt] = _time_q;
       m_mbd_time_t[ipmt] = _time_t;
       m_mbd_side[ipmt] = _side;
-      m_mbd_ipmt[ipmt] = ipmt;
+      m_mbd_ipmt[ipmt] = index_pmt;
     }
 
   if (_use_ZDC)
@@ -315,7 +316,7 @@ int CentralityAnalysis::FillVars()
     }
   // centrality info
   
-  _isMinBias = _central->isMinBias();
+  //  _isMinBias = _central->isMinBias();
   
   _centile = (_central->has_centile(CentralityInfo::PROP::mbd_NS)?_central->get_centile(CentralityInfo::PROP::mbd_NS) : -999.99);
   
@@ -516,7 +517,7 @@ int CentralityAnalysis::GetNodes(PHCompositeNode *topNode)
     std::cout << __FILE__ << " :: " << __FUNCTION__ << " :: " << __LINE__ << std::endl;
   }
   
-  _pmts_mbd = findNode::getClass<BbcPmtInfoContainerV1>(topNode, "BbcPmtInfoContainer");
+  _pmts_mbd = findNode::getClass<BbcPmtContainerV1>(topNode, "BbcPmtContainer");
   
   if (!_pmts_mbd)
     {
