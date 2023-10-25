@@ -47,6 +47,7 @@ int DansSpecialVertex::Init(PHCompositeNode *topNode)
 
   h_vertex = new TH1D("h_vertex",";z[cm];counts", 3000, -300, 300);
   h_time_0 = new TH1D("h_time_0",";t0[ns];counts", 500, -25, 25);
+
   hm->registerHisto(h_vertex);
   hm->registerHisto(h_time_0);
 
@@ -195,14 +196,14 @@ void DansSpecialVertex::CalculateVertexAndTime()
     mean_south = sum_s/static_cast<float>(hits_s_t);
     
     // get rms
-    //    float rms_s = sqrt(sum_s2/static_cast<float>(hits_s_t) - TMath::Power(mean_south, 2));
+    float rms_s = sqrt(sum_s2/static_cast<float>(hits_s_t) - TMath::Power(mean_south, 2));
     int nhit_s_center = 0;
     float sum_s_center = 0.;
     
     // get rid of times outside of RMS*1.5 range
     for (unsigned int is = 0; is < time_sum_s.size(); is++)
       {
-	if (fabs(time_sum_s.at(is) - mean_south) < sigma_cut )
+	if (fabs(time_sum_s.at(is) - mean_south) < sigma_cut*rms_s )
 	  {
 	    sum_s_center += time_sum_s.at(is);
 	    nhit_s_center++;
@@ -228,13 +229,13 @@ void DansSpecialVertex::CalculateVertexAndTime()
     
     mean_north = sum_n/static_cast<float>(hits_n_t);
     
-    //    float rms_n = sqrt(sum_n2/static_cast<float>(hits_n_t) - TMath::Power(mean_north, 2));
+    float rms_n = sqrt(sum_n2/static_cast<float>(hits_n_t) - TMath::Power(mean_north, 2));
     int nhit_n_center = 0;
     float sum_n_center = 0.;
     
     for (unsigned int ino = 0; ino < time_sum_n.size(); ino++)
       {
-	if (fabs(time_sum_n.at(ino) - mean_north) < sigma_cut )
+	if (fabs(time_sum_n.at(ino) - mean_north) < sigma_cut*rms_n )
 	  {
 	    sum_n_center += time_sum_n.at(ino);
 	    nhit_n_center++;
