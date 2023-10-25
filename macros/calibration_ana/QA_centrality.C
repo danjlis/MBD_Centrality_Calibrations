@@ -38,7 +38,7 @@ std::pair<int, string> tokenize_path(string path);
 void QA_MBDCalibrations(const int runnumber, const int doPerRunCalibration, const int makeNewHistograms);
 void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration = 1, const int shift_runnumber = 0);
 void QA_MBDTimeCalibrations(const int runnumber, const int useChargeTime = 0);
-void QA_MakeCentralityCalibrations(const int runnumber, const bool doVertexSelection = 1);
+void QA_MakeCentralityCalibrations(const int runnumber, const bool doVertexSelection = 1, const bool use_shifted = false);
 void QA_MakeCentralityComparison();
 void QA_CentralityCheck(const int runnumber, const int centrality_runnumber = 21813);
 
@@ -51,8 +51,10 @@ void QA_centrality(
 		   )
 {
   //QA_MBDCalibrations(runnumber, doPerRunCalibration, 1);  
-  QA_MBDTimeCalibrations(runnumber);  
-  //QA_MakeChargeSum(runnumber, loadRunCalibration);
+  //  QA_MBDTimeCalibrations(runnumber);  
+  //QA_MakeChargeSum(runnumber, loadRunCalibration, 21813);
+  QA_MakeChargeSum(runnumber, 1, 21813);
+  QA_CentralityCheck(runnumber, 21813);
   return;
 }
 
@@ -204,7 +206,7 @@ void QA_CentralityCheck(const int runnumber, const int centrality_runnumber = 21
       cout << "No file exists for this charge sum plot... exiting" << endl;
       return;
     } 
-
+  TH1D *h_charge_sum_shifted = (TH1D*) fchargesum->Get("h_charge_sum_min_bias_w_vertex_30_shifted");
   TH1D *h_charge_sum = (TH1D*) fchargesum->Get("h_charge_sum_min_bias_w_vertex_30");
   if (!h_charge_sum)
     {
@@ -246,18 +248,11 @@ void QA_CentralityCheck(const int runnumber, const int centrality_runnumber = 21
 
       centrality_bins[i] = low;
     }
-  cout << "Bin\tLow" <<endl;
-  cout << "--------------------" <<endl;
-  for (int i = 0; i <= 20; i++)
-    {
-      cout << i << "\t" << centrality_bins[i] << endl;
-    }
-  cout << "--------------------" <<endl;
-  
 
   // now we go through the charge sum and get a percent of the run that is in each of the bins;
 
   TH1D *h_cent_bin = new TH1D("hcent_bins","", 20, -0.5, 19.5);
+  TH1D *h_cent_bin_shifted = new TH1D("hcent_bins_shifted","", 20, -0.5, 19.5);
 
   int nbins = h_charge_sum->GetNbinsX();
   int i_cent_bin = 0;
@@ -267,18 +262,45 @@ void QA_CentralityCheck(const int runnumber, const int centrality_runnumber = 21
       h_cent_bin->Fill(i_cent_bin, h_charge_sum->GetBinContent(i));
     }
 
+  nbins = h_charge_sum_shifted->GetNbinsX();
+  i_cent_bin = 0;
+  for (int i = nbins; i > 0; i--)
+    {
+      while (h_charge_sum_shifted->GetBinCenter(i) < centrality_bins[i_cent_bin]) i_cent_bin++;
+      h_cent_bin_shifted->Fill(i_cent_bin, h_charge_sum_shifted->GetBinContent(i));
+    }
+  for (int i = 1; i <= 20; i++)
+    {
+      h_cent_bin->SetBinError(i, sqrt(h_cent_bin->GetBinContent(i)));
+      h_cent_bin_shifted->SetBinError(i, sqrt(h_cent_bin_shifted->GetBinContent(i)));
+    }
+
+  TF1 *flatline = new TF1("flatline","[0]",-0.5, 19.5);
+  flatline->SetParameter(0,0.05);
 
   h_cent_bin->Scale(1./h_cent_bin->Integral());
-  cout << "Bin\tPercent" <<endl;
-  cout << "--------------------" <<endl;
-  for (int i = 1; i <= h_cent_bin->GetNbinsX(); i++)
-    {
-      cout << i - 1 << "\t" << h_cent_bin->GetBinContent(i) <<endl;
-    }
-  cout << "--------------------" <<endl;
+  h_cent_bin->Fit(flatline,"NDORQ","");
+
+  float chi2 = flatline->GetChisquare()/flatline->GetNDF();
+
+  flatline->SetParameter(0,0.05);
+
+  h_cent_bin_shifted->Scale(1./h_cent_bin_shifted->Integral());
+  h_cent_bin_shifted->Fit(flatline,"QNDOR","");
+
+  float chi2_shifted = flatline->GetChisquare()/flatline->GetNDF();
+
+
+  cout << " ************************** " <<endl;
+  cout << "  Run "<< runnumber<<endl;
+  cout << "    Cent Chi2       =  "<< chi2<<endl;
+  cout << "    Cent Chi2 shift =  "<< chi2_shifted<<endl;
+
+  cout << " ************************** " <<endl;
 
   TFile *fout = new TFile(Form("%s/output/plots/centrality_check_%d.root", env_p, runnumber), "recreate");
   h_cent_bin->Write();
+  h_cent_bin_shifted->Write();
   fout->Close();
 
   return;
@@ -363,7 +385,7 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration = 1, con
  	{
 	  ts->GetEntry(i);
 	  int ich = static_cast<int>(ch);
-	  std::cout <<ich<<"\t"<<sh<<"\t"<<sc<<std::endl;
+	  
 	  time_shift_corr[ich] = sh;
 	  toa_shift_corr[ich] = toa_sh;
 	  time_scale_corr[ich] = sc;
@@ -871,6 +893,17 @@ void QA_MakeChargeSum(const int runnumber, const int loadRunCalibration = 1, con
   h_charge_sum_min_bias->Write();
   h_charge_sum_min_bias_w_vertex_30->Write();
   if (shift_runnumber)   h_charge_sum_min_bias_w_vertex_30_shifted->Write();
+
+  std::cout << " ******************************* " << std::endl;
+  std::cout << "  Run " << runnumber <<std::endl;
+  std::cout << "    Mean Charge Sum = " << h_charge_sum_min_bias_w_vertex_30->GetMean() << std::endl;
+  if (shift_runnumber) std::cout << "    Mean Shifted    = " << h_charge_sum_min_bias_w_vertex_30_shifted->GetMean() << std::endl;
+  h_vertex->Fit("gaus","Q","", -30, 30);
+  std::cout << "    Vertex Mean     = " << h_vertex->GetFunction("gaus")->GetParameter(1) << std::endl;
+  std::cout << "    Vertex std.     = " << h_vertex->GetFunction("gaus")->GetParameter(2) << std::endl;
+  
+  std::cout << " ******************************* " << std::endl;
+
   h_vertex->Write();
   h_vertex_w_center->Write();
   h_vertex_w_mean->Write();
@@ -1423,48 +1456,15 @@ void QA_ZDCCheck(const int runnumber)
 
   TH1D *h_zdc_energy[6];
   TH1D *h_zdc_energy_prime[6];
-  TH1D *h_zdc_energy_log[6];
-  TH1D *h_zdc_energy_log_prime[6];
   for (int i = 0; i < 6;i++) 
     {
       h_zdc_energy[i] = new TH1D(Form("h_zdc_energy_%d", i), ";ZDC Energy [GeV]; Counts", 500, 0, 5000);
       h_zdc_energy_prime[i] = new TH1D(Form("h_zdc_energy_prime_%d", i), ";ZDC Energy [GeV]; Counts", 500, 0, 5000);
-      h_zdc_energy_log[i] = new TH1D(Form("h_zdc_energy_log_%d", i), ";ZDC Energy [GeV]; Counts", 500, 1, 4);
-      h_zdc_energy_log_prime[i] = new TH1D(Form("h_zdc_energy_log_prime_%d", i), ";ZDC Energy [GeV]; Counts", 500, 1, 4);
     }
-  TH1D *h_zdc_sum_n = new TH1D("h_zdc_sum_n", ";ZDC sum [GeV]; Counts", 400, 1, 4);
-  TH1D *h_zdc_sum_s = new TH1D("h_zdc_sum_s", ";ZDC sum [GeV]; Counts", 400, 1, 4);
-  TH1D *h_zdc_sum_n_prime = new TH1D("h_zdc_sum_n_prime", ";ZDC sum [GeV]; Counts", 400, 1, 4);
-  TH1D *h_zdc_sum_s_prime = new TH1D("h_zdc_sum_s_prime", ";ZDC sum [GeV]; Counts", 400, 1, 4);
-
-  TAxis *axis_n = h_zdc_sum_n->GetXaxis();
-  TAxis *axis_s = h_zdc_sum_s->GetXaxis();
-  TAxis *axis_np = h_zdc_sum_n_prime->GetXaxis();
-  TAxis *axis_sp = h_zdc_sum_s_prime->GetXaxis();
-
-  const int bins = axis_n->GetNbins();
-
-  Axis_t from = axis_n->GetXmin();
-  Axis_t to = axis_n->GetXmax();
-  Axis_t width = (to - from) / bins;
-  Axis_t *new_bins = new Axis_t[bins + 1];
-
-  for (int i = 0; i <= bins; i++) {
-    new_bins[i] = TMath::Power(10, from + i * width);
-  }
-
-  axis_n->Set(bins, new_bins);
-  axis_s->Set(bins, new_bins);
-  axis_np->Set(bins, new_bins);
-  axis_sp->Set(bins, new_bins);
-
-  for (int i = 0 ; i < 6; i++) 
-    {
-      h_zdc_energy_log[i]->GetXaxis()->Set(bins, new_bins);
-      h_zdc_energy_log_prime[i]->GetXaxis()->Set(bins, new_bins);
-    }
-
-  delete[] new_bins;
+  TH1D *h_zdc_sum_n = new TH1D("h_zdc_sum_n", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+  TH1D *h_zdc_sum_s = new TH1D("h_zdc_sum_s", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+  TH1D *h_zdc_sum_n_prime = new TH1D("h_zdc_sum_n_prime", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
+  TH1D *h_zdc_sum_s_prime = new TH1D("h_zdc_sum_s_prime", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
 
   float zdc_sum[2];
   float zdc_energy[6];
@@ -1494,9 +1494,7 @@ void QA_ZDCCheck(const int runnumber)
       for (int j= 0; j < 6; j++)
 	{
 	  h_zdc_energy[j]->Fill(zdc_energy[j]);
-	  h_zdc_energy_log[j]->Fill(zdc_energy[j]);
 	  h_zdc_energy_prime[j]->Fill(zdc_energy_prime[j]);
-	  h_zdc_energy_log_prime[j]->Fill(zdc_energy_prime[j]);
 
 	}
     }  
@@ -1513,9 +1511,7 @@ void QA_ZDCCheck(const int runnumber)
   for (int i = 0; i < 6; i++)
     {
       h_zdc_energy[i]->Write();
-      h_zdc_energy_log[i]->Write();
       h_zdc_energy_prime[i]->Write();
-      h_zdc_energy_log_prime[i]->Write();
     }
   fout21->Close();
 }
@@ -2170,7 +2166,7 @@ std::pair<double, double> getFitFunction(TH1D* h, double *params, float minimumx
 
 }
 
-void QA_MakeCentralityCalibrations(const int runnumber, const bool doVertexSelection = 1)
+void QA_MakeCentralityCalibrations(const int runnumber, const bool doVertexSelection = 1, const bool use_shifted = false)
 {
 
  
@@ -2202,7 +2198,7 @@ void QA_MakeCentralityCalibrations(const int runnumber, const bool doVertexSelec
   bool sphenix = true;
   int vtxflag = 1;
   std::string name = Form("%s/glauber/lemon_glauber_auau200_100k_histo.root", env_p);
-  int lowfit = 700; // lowest end of standard fit range, was 30 in PHENIX
+  int lowfit = 300; // lowest end of standard fit range, was 30 in PHENIX
   // utyy
   //===============================================================================================
 
@@ -2232,7 +2228,11 @@ void QA_MakeCentralityCalibrations(const int runnumber, const bool doVertexSelec
   int which = 0;
   TH1D *hRealBBC;
   //if (which==0) hRealBBC = (TH1D *) fdata->Get("h_mbd_charge_ns_w_zdc_cut_w_mbd_cut_and_vertex_10"); // a particular z-vertex range
-  if (which==0) hRealBBC = (TH1D *) fdata->Get("h_charge_sum_min_bias_w_vertex_30"); // a particular z-vertex range
+  if (which==0) 
+    {
+      if (!use_shifted) hRealBBC = (TH1D *) fdata->Get("h_charge_sum_min_bias_w_vertex_30"); // a particular z-vertex range
+      else hRealBBC = (TH1D *) fdata->Get("h_charge_sum_min_bias_w_vertex_30_shifted"); // a particular z-vertex range
+    }
   if (which==1) hRealBBC = (TH1D *) fdata->Get("hmbdchargesouth"); // a particular z-vertex range
   if (which==2) hRealBBC = (TH1D *) fdata->Get("hmbdchargenorth"); // a particular z-vertex range  
   if (!hRealBBC)   hRealBBC = (TH1D *) fdata->Get("hbbcQs6"); // a particular z-vertex range (old PHENIX style)
@@ -2562,7 +2562,19 @@ void QA_MakeCentralityCalibrations(const int runnumber, const bool doVertexSelec
     }
   fcalib->Write();
   fcalib->Close();
-  
+
+
+  TFile *fout = new TFile(Form("%s/output/plots/mbd_centrality_trigeff_%d.root", env_p, runnumber),"recreate");
+
+  hSimBBCwTrig->Write();
+  hSimBBC->Write();
+  hRealBBC->Write();
+  hRatio->Write();
+  trigeffcurve->Write();
+
+  fout->Close();
+
+			  
 } // end routine
 
 // with parameters (mu, k) and for given n.

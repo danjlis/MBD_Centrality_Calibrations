@@ -59,8 +59,8 @@ void nbd_check(int runnumber = 21813,
   double biased_mu = mu * biasfactor; // larger number of hits
   double biased_k  =  k * biasfactor;
 
-  int lowfit = 100; // lowest end of standard fit range, was 30 in PHENIX
-  
+  int lowfit = 700; // lowest end of standard fit range, was 30 in PHENIX
+  // utyy
   //===============================================================================================
 
   //===============================================================================================
@@ -82,7 +82,7 @@ void nbd_check(int runnumber = 21813,
   //=======================================================
   char *fdataname = new char[100];
   if (!sphenix) sprintf(fdataname,"./fout_run14auau200gev_dist.root");
-  if (sphenix) sprintf(fdataname,"../plots/mbd_charge_sum_%d.root", runnumber);  
+  if (sphenix) sprintf(fdataname,"../..//output/run%d/plots/mbd_charge_sum_%d.root", runnumber, runnumber);  
 //  if (sphenix) sprintf(fdataname,"../output/run%d/trees_%d.root", runnumber, runnumber);
   //if (sphenix) fdataname = "./fout_sphenix2023_auau200_23722_both_z20.root";
   //  if (sphenix) fdataname = "./fout_sphenix2023_auau200_22979_both_z20.root";
