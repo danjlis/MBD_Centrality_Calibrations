@@ -1,8 +1,8 @@
 #!/bin/bash
 
 if (( $# < 1 )); then
-    readarray -t a < submit_file.txt
-    njobs=$(cat submit_file.txt | wc -l)
+    readarray -t a < good_runs_with_mbd.txt
+    njobs=$(cat good_runs_with_mbd.txt | wc -l)
 else
     njobs=1
     runnumber=$1

@@ -11,7 +11,7 @@ R__LOAD_LIBRARY(libfun4all.so)
 // cppcheck-suppress unknownMacro
 R__LOAD_LIBRARY(libphnodedump.so)
 
-void BigDumper(const std::string &infile, const int evts=100)
+void BigDumper(const std::string &infile = "/sphenix/lustre01/sphnxpro/commissioning/DSTv3/DST_CALOR-00021199-0000.root", const int evts=5)
 {
   gSystem->Load("libg4dst.so");
   Fun4AllServer* se = Fun4AllServer::instance();

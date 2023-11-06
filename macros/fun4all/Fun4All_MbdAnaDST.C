@@ -1,48 +1,35 @@
 #pragma once
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,00,0)
-#include <nodedump/Dumper.h>
+
 #include <fun4all/SubsysReco.h>
 #include <fun4all/Fun4AllServer.h>
 #include <fun4all/Fun4AllInputManager.h>
-#include <fun4allraw/Fun4AllPrdfInputManager.h>
+#include <fun4all/Fun4AllDstInputManager.h>
 #include <vector>
 #include <phool/recoConsts.h>
 #include <fun4all/Fun4AllRunNodeInputManager.h>
 
 
 // #include <calotowerbuilder/CaloTowerBuilder.h>
-#include <caloreco/CaloTowerBuilder.h>
-#include <caloreco/CaloWaveformProcessing.h>
-#include <caloreco/CaloTowerCalib.h>
-#include <caloreco/RawClusterBuilderTemplate.h>
-#include <caloreco/RawClusterPositionCorrection.h>
 
 #include <ffamodules/FlagHandler.h>
 #include <ffamodules/HeadReco.h>
 #include <ffamodules/SyncReco.h>
 #include <ffamodules/CDBInterface.h>
 
-#include <fun4all/Fun4AllDstOutputManager.h>
-#include <caloreco/DeadHotMapLoader.h>
-
-#include <caloreco/TowerInfoDeadHotMask.h>
-
-#include <caloreco/RawClusterDeadHotMask.h>
-
-#include <mbd/MbdReco.h>
-
 #include <centrality/MbdAna.h>
 
 R__LOAD_LIBRARY(libcalo_reco.so) 
 R__LOAD_LIBRARY(libmbd_io.so) 
-R__LOAD_LIBRARY(libmbd.so) 
+//R__LOAD_LIBRARY(libmbd.so) 
 R__LOAD_LIBRARY(libmbdana.so) 
 R__LOAD_LIBRARY(libfun4allraw.so)
 R__LOAD_LIBRARY(libfun4all.so)
 R__LOAD_LIBRARY(libffamodules.so)
+R__LOAD_LIBRARY(libphool.so)
 #endif
 
-void Fun4All_MbdAna(const int runnumber, const int rollover = -1)
+void Fun4All_MbdAnaDST(const int runnumber, const int rollover = -1)
 {
   gSystem->Load("libg4dst");
   gSystem->Load("libcalo_reco");
@@ -81,25 +68,18 @@ void Fun4All_MbdAna(const int runnumber, const int rollover = -1)
 
   const char *tree_outfile = Form("%s/%s/mbd_ana_tree_%s_%s.root", env_p, dir, rstr.str().c_str(), ostr.str().c_str());
 
-  std::string fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
-
+  std::string fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/DSTv3/DST_CALOR-%s-%s.root", rstr.str().c_str(), ostr.str().c_str());
+  
+  
   if (FILE *file = fopen(fname1.c_str(),"r")){
     fclose(file);
   }
   else
-  {
-    fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
-
-
-    if (FILE *file = fopen(fname1.c_str(),"r")){
-      fclose(file);
+    {
+      std::cout << "NOOOOO ... no "<< fname1 <<std::endl;
+      return;
     }
-    else
-      {
-	std::cout << "NOOOOO ... no "<< fname1 <<std::endl;
-	return;
-      }
-  }
+
 
   Fun4AllServer *se = Fun4AllServer::instance();
   recoConsts *rc = recoConsts::instance();
@@ -114,26 +94,13 @@ void Fun4All_MbdAna(const int runnumber, const int rollover = -1)
   rc->set_uint64Flag("TIMESTAMP",runnumber);
 
 
-  Fun4AllInputManager *in = new Fun4AllPrdfInputManager("in");
+  Fun4AllInputManager *in = new Fun4AllDstInputManager("in");
   in->fileopen(fname1);
   se->registerInputManager(in);
 
-  MbdReco *mbdreco = new MbdReco();
-  se->registerSubsystem( mbdreco );
-
-  CaloTowerBuilder *ca_2 = new CaloTowerBuilder();
-  ca_2->set_detector_type(CaloTowerDefs::ZDC);
-  ca_2->set_nsamples(31);
-  ca_2->set_processing_type(CaloWaveformProcessing::FAST);
-  se->registerSubsystem(ca_2);
-
-  CaloTowerCalib *calibZDC = new CaloTowerCalib("ZDC");
-  calibZDC -> set_detector_type(CaloTowerDefs::ZDC);
-  calibZDC->Verbosity(verbosity);
-  se -> registerSubsystem(calibZDC);
-
 
   MbdAna *mbdana = new MbdAna("MbdAna", tree_outfile);
+  mbdana->Verbosity(verbosity);
   se->registerSubsystem(mbdana);
 
   se->run(nevents);

@@ -1,42 +1,25 @@
 #include "dlUtility.h"
 #include "sPhenixStyle.C"
-#include <string>
-#include <string.h>
-#include <iostream>
-#include <filesystem>
-#include <vector>
-#include "TMath.h"
-#include "TF1.h"
-#include "TPad.h"
 
-#include "TCanvas.h"
-#include "TFile.h"
-#include "TTree.h"
-#include "TNtuple.h"
-#include "TH1.h"
-#include "TH2.h"
-
-void DrawMBDChargeSum(const int runnumber);
-void DrawMBDChannels(const int runnumber);
+void DrawMBDChargeChannels(const int runnumber);
+void DrawMBDTimeChannels(const int runnumber);
 void DrawMBDVertex(const int runnumber);
-void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false, bool use_balanced = false, bool flag = false);
+void DrawMBDCentralityCalibrations(const int runnumber);
 void DrawMBDCentralityCheck(const int runnumber);
 void DrawZDCCheck(const int runnumber);
 
 void Draw_QA_Centrality(const int runnumber){
-  DrawMBDChannels(runnumber);
-  DrawZDCCheck(runnumber);
-  DrawMBDChargeSum(runnumber);
+  DrawMBDChargeChannels(runnumber);
+  DrawMBDTimeChannels(runnumber);
   DrawMBDVertex(runnumber);
   DrawMBDCentralityCalibrations(runnumber);
-  DrawMBDCentralityCalibrations(runnumber,1);
-  DrawMBDCentralityCalibrations(runnumber,1,0,1);
   DrawMBDCentralityCheck(runnumber);
+  DrawZDCCheck(runnumber);
   return;
 }
 
 
-void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false, bool use_balanced = false, bool flag = false)
+void DrawMBDCentralityCalibrations(const int runnumber)
 {
 
   const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
@@ -50,37 +33,25 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
   gStyle->SetOptStat(0);
   SetyjPadStyle();
 
-  TString extra = Form("%s%s%s_", (use_shifted ? "sca" :""), (use_balanced ? "bal":""), (flag ? "forc":""));
-  if (!use_shifted && !use_balanced && !flag) extra = "";
-  TFile *file = new TFile(Form("%s/output/plots/mbdana_centrality_trigeff_%s%d.root", env_p, extra.Data(), runnumber), "r");
+  TFile *file = new TFile(Form("%s/output/plots/mbd_centrality_trigeff_%d.root", env_p, runnumber), "r");
 
   if (!file)
     {
+
       cout<< "NOFILE" <<endl;
+
       return;
     }
 
   int maxcentbins = 19;
   TH1D *hSimBBCwTrig = (TH1D*) file->Get("hSimBBCwTrig");
   TH1D *hSimBBC = (TH1D*) file->Get("hSimBBC");
-  TH1D *hRealBBC;
-
-  if (use_balanced && use_shifted) hRealBBC = (TH1D*) file->Get("h_charge_sum_min_bias_w_vertex_cut_balanced_scaled");
-  else if (use_balanced) hRealBBC = (TH1D*) file->Get("h_charge_sum_min_bias_w_vertex_cut_balanced");
-  else if (use_shifted) hRealBBC = (TH1D*) file->Get("h_charge_sum_min_bias_w_vertex_cut_scaled");
-  else  hRealBBC = (TH1D*) file->Get("h_charge_sum_min_bias_w_vertex_cut");
+  TH1D *hRealBBC = (TH1D*) file->Get("h_charge_sum_min_bias_w_vertex_30");
   TH1D *hRatio = (TH1D*) file->Get("hRatio");
   TF1 *trigeffcurve = (TF1*) file->Get("trigeffcurve");
 
-  TString calib_file_name = Form("%s/calib/mbdana_centrality_%d.root", env_p, runnumber);
-
-  if (flag && use_balanced && use_shifted) calib_file_name = Form("%s/calib/mbdana_sca_bal_centrality_%d.root", env_p, 23696);
-  else if (flag && use_balanced) calib_file_name = Form("%s/calib/mbdana_bal_centrality_%d.root", env_p, 23696);
-  else if (flag && use_shifted) calib_file_name = Form("%s/calib/mbdana_sca_centrality_%d.root", env_p, 23696); 
-  else if (use_balanced && use_shifted) calib_file_name = Form("%s/calib/mbdana_sca_bal_centrality_%d.root", env_p, runnumber);
-  else if (use_balanced) calib_file_name = Form("%s/calib/mbdana_bal_centrality_%d.root", env_p, runnumber);
-  else if (use_shifted) calib_file_name = Form("%s/calib/mbdana_sca_centrality_%d.root", env_p, runnumber); 
-  TFile *calibfile = new TFile(calib_file_name, "r");
+  
+  TFile *calibfile = new TFile(Form("%s/calib/calib_centrality_%d.root", env_p, runnumber), "r");
 
   if (!calibfile)
     {
@@ -144,17 +115,13 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
   hSimBBC->SetLineColor(1);
   
   hSimBBC->DrawCopy("l,same");
-  int nhistbins = hRealBBC->GetNbinsX();
-  double err_real; double err_sim;
-  double trigeff = hRealBBC->IntegralAndError(1, nhistbins, err_real)/hSimBBC->IntegralAndError(1, nhistbins, err_sim);
-  double trigeff_err = trigeff*sqrt(TMath::Power(err_real/hRealBBC->Integral(1, nhistbins), 2) + TMath::Power(err_sim/hSimBBC->Integral(1, nhistbins), 2));
   //  drawText("8/30/2023", 0.8, 0.92, 0, kBlack, 0.07);
   TLatex l;
   l.SetNDC();
   l.SetTextSize(0.04);
   
   DrawSPHENIX(0.65, 0.8, 1, 0, 0.06);
-  drawText("|z_{MBD}| < 30 + Sum Cut", 0.65, 0.64, 0, kBlack, 0.06);
+  drawText("|z_{MBD}| < 30 cm", 0.65, 0.64, 0, kBlack, 0.06);
 
   // now do the trigger efficiency fitting
   c1->cd(2);
@@ -177,7 +144,7 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
   hRatio->GetYaxis()->SetLabelSize(.05);
 
   hRatio->Draw("p,e");
-  drawText(Form("Trigger Efficiency = %2.1f #pm %1.1f%%", trigeff*100, trigeff_err*100), 0.37, 0.8, 0, kBlack, 0.07);
+  
   TLine *tl = new TLine(0.0,1.0,700,1.0);
   SetLineAtt(tl, kBlue, 2, 4);
   tl->Draw();
@@ -187,8 +154,8 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
   gPad->SetLogy(1);
 
   hSimBBCwTrig->DrawCopy("same");
-  float maxrange = 2500.;
-  nhistbins = hRealBBC->GetNbinsX();
+  int maxrange = 2500;
+  int nhistbins = hRealBBC->GetNbinsX();
   TH1D *hslice = new TH1D("hslice","hslice",nhistbins,-0.5,maxrange - 0.5); 
   for (int j=0; j<maxcentbins; j++) {
     hslice->Reset();
@@ -207,8 +174,8 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
   // redraw real data to be on top
   hRealBBC->DrawCopy("p,e,l,same");
   
-  c1->SaveAs(Form("%s/output/centplots/run%d_%scharge_sum.pdf", env_p, runnumber, extra.Data()));
-  c1->SaveAs(Form("%s/output/centplots/run%d_%scharge_sum.png", env_p, runnumber, extra.Data()));
+  c1->SaveAs(Form("%s/output/web_plots/run%d_charge_sum.pdf", env_p, runnumber));
+  c1->SaveAs(Form("%s/output/web_plots/run%d_charge_sum.png", env_p, runnumber));
   //===============================================================================
 
   return;
@@ -288,8 +255,8 @@ void DrawMBDTimeChannels(const int runnumber)
       drawText(Form("S Ch. %d", i),0.1, 0.88, 0, kBlack, 0.07);
     }
 
-  c->Print(Form("%s/output/centplots/run%d_time.pdf(", env_p, runnumber));
-  c->SaveAs(Form("%s/output/centplots/run%d_time_south.png", env_p, runnumber));
+  c->Print(Form("%s/output/web_plots/run%d_time.pdf(", env_p, runnumber));
+  c->SaveAs(Form("%s/output/web_plots/run%d_time_south.png", env_p, runnumber));
 
   c = new TCanvas("c1","c1", 1000, 1200);
   DrawSPHENIX(0.05, 0.95, 1, 1, 0.03, 0);
@@ -320,8 +287,8 @@ void DrawMBDTimeChannels(const int runnumber)
       drawText(Form("N Ch. %d", i),0.1, 0.88, 0, kBlack, 0.07);
     }
 
-  c->SaveAs(Form("%s/output/centplots/run%d_time_north.png", env_p, runnumber));
-  c->Print(Form("%s/output/centplots/run%d_time.pdf)", env_p, runnumber));
+  c->SaveAs(Form("%s/output/web_plots/run%d_time_north.png", env_p, runnumber));
+  c->Print(Form("%s/output/web_plots/run%d_time.pdf)", env_p, runnumber));
 
 }
  
@@ -383,7 +350,7 @@ void DrawMBDVertex(const int runnumber)
   
   DrawSPHENIX(0.2, 0.87, 1, 0, 0.04);
   drawText(Form("Run %d", runnumber), 0.2, 0.76, 0, kBlack, 0.04);
-  c_time->SaveAs(Form("%s/output/centplots/run%d_time_0.png", env_p, runnumber));
+  c_time->SaveAs(Form("%s/output/web_plots/run%d_time_0.png", env_p, runnumber));
 
   max = 1.3 * h_vertex->GetBinContent(h_vertex->GetMaximumBin());
   TCanvas *c_vertex = new TCanvas("vertex","vertex", 600, 300);
@@ -409,9 +376,9 @@ void DrawMBDVertex(const int runnumber)
   drawText(Form("<z_{vtx}> = %2.2f", mean), 0.87, 0.87, 1, kBlack, 0.04);
   drawText(Form("#sigma(z_{vtx}) = %2.2f", std), 0.87, 0.82, 1, kBlack, 0.04);
   drawText(Form("#Chi^{2}/NDF = %2.2f", chi2ndf), 0.87, 0.77, 1, kBlack, 0.04);
-  c_vertex->SaveAs(Form("%s/output/centplots/run%d_zvtx.png", env_p, runnumber));
+  c_vertex->SaveAs(Form("%s/output/web_plots/run%d_zvtx.png", env_p, runnumber));
   gPad->SetLogy();
-  c_vertex->SaveAs(Form("%s/output/centplots/run%d_zvtx_log.png", env_p, runnumber));
+  c_vertex->SaveAs(Form("%s/output/web_plots/run%d_zvtx_log.png", env_p, runnumber));
   
   TCanvas *c3 = new TCanvas("c3","c3");
 
@@ -466,84 +433,7 @@ void DrawMBDVertex(const int runnumber)
   DrawSPHENIX(0.15, 0.87, 1, 0, 0.04);
   drawText(Form("Run %d", runnumber), 0.15, 0.76, 0, kBlack, 0.04);
   l_v->Draw("same");
-  c_vtx_c->SaveAs(Form("%s/output/centplots/run%d_zvtx_cent.png", env_p, runnumber));
-}
-
-void DrawMBDChargeSum(const int runnumber)
-{
-  gStyle->SetOptStat(0);
-  SetyjPadStyle();
-
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
-
-  if(!env_p)
-    {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
-      return;
-    }
-
-
-  TFile *file = new TFile(Form("%s/output/plots/mbdana_charge_sum_%d.root", env_p, runnumber), "r");
-
-  TH1D *h_charge_sum = (TH1D*) file->Get("h_charge_sum");
-  TH1D *h_charge_sum_vtx = (TH1D*) file->Get("h_charge_sum_vtx");
-  TH1D *h_charge_sum_mb_vtx = (TH1D*) file->Get("h_charge_sum_min_bias_w_vertex_cut");
-
-  TH1D *h_charge_sum_sca = (TH1D*) file->Get("h_charge_sum_scaled");
-  TH1D *h_charge_sum_sca_vtx = (TH1D*) file->Get("h_charge_sum_vtx_scaled");
-  TH1D *h_charge_sum_sca_mb_vtx = (TH1D*) file->Get("h_charge_sum_min_bias_w_vertex_cut_scaled");
-  
-
-  SetLineAtt(h_charge_sum, kBlack, 2, 1);
-  SetLineAtt(h_charge_sum_vtx, kBlue, 2, 1);
-  SetLineAtt(h_charge_sum_mb_vtx, kSpring + 2, 2, 1);
-  SetLineAtt(h_charge_sum_sca, kBlack, 2, 1);
-  SetLineAtt(h_charge_sum_sca_vtx, kBlue, 2, 1);
-  SetLineAtt(h_charge_sum_sca_mb_vtx, kViolet + 2, 2, 1);
-
-
-  TCanvas *c = new TCanvas("c1","c1", 500, 500);
-
-  SetyjPadStyle();
-  gPad->SetLogy();
-  h_charge_sum->SetTitle(";MBD Charge Sum; Counts");
-  h_charge_sum->SetMaximum(10*h_charge_sum->GetBinContent(h_charge_sum->GetMaximumBin()));
-  h_charge_sum->Draw("");
-  h_charge_sum_vtx->Draw("same");
-  h_charge_sum_mb_vtx->Draw("same");
-  DrawSPHENIX(0.22, 0.85, 1, 0, 0.04);
-  drawText(Form("Run %d", runnumber), 0.22, 0.74, 0, kBlack, 0.04);
-
-  TLegend *l = new TLegend(0.6, 0.7, 0.8, 0.9);
-  SetLegendStyle(l);
-  l->SetHeader("MBD Charge Dist.");
-  l->AddEntry(h_charge_sum, "No cuts");
-  l->AddEntry(h_charge_sum_vtx, "|z_{mbd} < 60|");
-  l->AddEntry(h_charge_sum_mb_vtx, "ZDC and MBD sum cut");
-  l->Draw("same");
-
-  c->SaveAs(Form("%s/output/centplots/run%d_chargesum.png", env_p, runnumber));
-
-
-  c = new TCanvas("c2","c2", 500, 500);
-
-  gPad->SetLogy();
-  h_charge_sum->SetTitle(";MBD Charge Sum; Counts");
-  h_charge_sum_mb_vtx->SetMaximum(10*h_charge_sum_mb_vtx->GetBinContent(h_charge_sum_mb_vtx->GetMaximumBin()));
-  h_charge_sum_mb_vtx->Draw("");
-  h_charge_sum_sca_mb_vtx->Draw("same");
-  DrawSPHENIX(0.22, 0.85, 1, 0, 0.04);
-  drawText(Form("Run %d", runnumber), 0.22, 0.74, 0, kBlack, 0.04);
-  drawText("ZDC_{N,S} >= 40 GeV", 0.88, 0.77, 1, kBlack, 0.02);
-  drawText("!(Q_{MBD,N} < 10 && Q_{MBD,S} > 150)", 0.88, 0.73, 1, kBlack, 0.02);
-  l = new TLegend(0.6, 0.8, 0.8, 0.9);
-  SetLegendStyle(l);
-  l->AddEntry(h_charge_sum_mb_vtx, "not scaled");
-  l->AddEntry(h_charge_sum_sca_mb_vtx, "Scaled to run 23696");
-  l->Draw("same");
-
-  c->SaveAs(Form("%s/output/centplots/run%d_chargesum_scaled.png", env_p, runnumber));
-
+  c_vtx_c->SaveAs(Form("%s/output/web_plots/run%d_zvtx_cent.png", env_p, runnumber));
 }
 
 
@@ -561,7 +451,7 @@ void DrawMBDCentralityCheck(const int runnumber)
     }
 
 
-  TFile *file = new TFile(Form("%s/output/plots/mbdana_centrality_check_%d.root", env_p, runnumber), "r");
+  TFile *file = new TFile(Form("%s/output/plots/centrality_check_%d.root", env_p, runnumber), "r");
 
   if (!file)
     {
@@ -571,7 +461,7 @@ void DrawMBDCentralityCheck(const int runnumber)
   TH1D *h_cent_bin_shifted;
   TH1D *h_cent_bin;
   h_cent_bin = (TH1D*) file->Get("hcent_bins");
-  h_cent_bin_shifted = (TH1D*) file->Get("hcent_bins_sca");
+  h_cent_bin_shifted = (TH1D*) file->Get("hcent_bins_shifted");
 
   bool use_shifted = true;
   if (!h_cent_bin_shifted) use_shifted = false;
@@ -580,7 +470,7 @@ void DrawMBDCentralityCheck(const int runnumber)
   SetMarkerAtt(h_cent_bin, kSpring + 2, 2, 90);
   if (use_shifted)  SetLineAtt(h_cent_bin_shifted, kViolet + 2, 2, 1);
   SetLineAtt(h_cent_bin, kSpring-1, 2, 1);
-  const char* hist_labels[18] = {"0-5%","5-10%", "10-15%", "15-20%", "20-25%","25-30%", "30-35%", "35-40%","40-45%", "45-50%", "50-55%", "55-60%", "60-65%", "65-70%", "70-75", "75-80%", "80-85%","85-100%"}; 
+  const char* hist_labels[20] = {"0-5%","5-10%", "10-15%", "15-20%", "20-25%","25-30%", "30-35%", "35-40%","40-45%", "45-50%", "50-55%", "55-60%", "60-65%", "65-70%", "70-75", "75-80%", "80-85%","85-90%", "90-100%", "95-100%"}; 
 
   
   int nb = h_cent_bin->GetNbinsX();
@@ -589,15 +479,15 @@ void DrawMBDCentralityCheck(const int runnumber)
       h_cent_bin->GetXaxis()->SetBinLabel(i+1, hist_labels[i]);
     }
   
-  h_cent_bin->SetMaximum(0.08);
+  h_cent_bin->SetMaximum(0.07);
   h_cent_bin->SetMinimum(0.04);
   h_cent_bin->Draw();
   if (use_shifted) h_cent_bin_shifted->Draw("same");
-  TLine *l = new TLine(-0.5, 0.05, 17.5, 0.05);
+  TLine *l = new TLine(-0.5, 0.05, 18.5, 0.05);
   SetLineAtt(l, kBlack, 2, 7);
   l->Draw("same");
 
-  TF1 *flatline = new TF1("flatline","[0]",-0.5, 17.5);
+  TF1 *flatline = new TF1("flatline","[0]",-0.5, 19.5);
   flatline->SetParameter(0,0.05);
 
   h_cent_bin->Fit(flatline,"NDORQ","");
@@ -610,7 +500,7 @@ void DrawMBDCentralityCheck(const int runnumber)
 
   if (use_shifted)
     {
-      //      h_cent_bin_shifted->Scale(1./h_cent_bin_shifted->Integral());
+      h_cent_bin_shifted->Scale(1./h_cent_bin_shifted->Integral());
       h_cent_bin_shifted->Fit(flatline,"QNDOR","");
 
       chi2_shifted = flatline->GetChisquare()/flatline->GetNDF();;
@@ -626,7 +516,7 @@ void DrawMBDCentralityCheck(const int runnumber)
   lg->AddEntry(h_cent_bin,Form("Not Shifted: %2.2f ; %1.4f", chi2, yy));
   if (use_shifted)   lg->AddEntry(h_cent_bin_shifted,Form("Shifted: %2.2f ; %1.4f", chi2_shifted, yy_shifted)); 
   lg->Draw("same");
-  c->SaveAs(Form("%s/output/centplots/run%d_centrality.png", env_p, runnumber));
+  c->SaveAs(Form("%s/output/web_plots/run%d_centrality.png", env_p, runnumber));
   
 }
 
@@ -714,12 +604,12 @@ void DrawZDCCheck(const int runnumber)
   SetLegendStyle(lg);
   lg->Draw("same");
 
-  c->SaveAs(Form("%s/output/centplots/run%d_zdc.png", env_p, runnumber));
-  c->SaveAs(Form("%s/output/centplots/run%d_zdc.pdf", env_p, runnumber));
+  c->SaveAs(Form("%s/output/web_plots/run%d_zdc.png", env_p, runnumber));
+  c->SaveAs(Form("%s/output/web_plots/run%d_zdc.pdf", env_p, runnumber));
 
 }
 
-void DrawMBDChannels(const int runnumber)
+void DrawMBDChargeChannels(const int runnumber)
 {
   
   const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
@@ -731,39 +621,29 @@ void DrawMBDChannels(const int runnumber)
     }
 
   gStyle->SetOptStat(0);
-  TFile *fout = new TFile(Form("%s/output/plots/mbdana_channels_%d.root", env_p, runnumber), "r");
-  TH1D *hpeaks_fit = new TH1D("hpeaks_fit",";MPV_{calib};Tubes", 41, 0.795, 1.205);
+  TFile *fout = new TFile(Form("%s/output/plots/mbd_calib_plots_%d.root", env_p, runnumber), "r");
 
-  TH1D *h_charge[128];
-  TH1D *h_time[128];
-  TH1D *h_charge_mb[128];
-  TH1D *h_time_mb[128];
-
+  TH1D *h_charge_raw[128];
   for (int i = 0; i < 128; i++)
     {
-      h_charge_mb[i] = (TH1D*) fout->Get(Form("h_mbd_charge_ch%d", i));
-      h_time[i] = (TH1D*) fout->Get(Form("h_mbd_time_ch%d", i));
-      h_charge[i] = (TH1D*) fout->Get(Form("h_mbd_charge_min_bias_ch%d", i));
-      h_time_mb[i] = (TH1D*) fout->Get(Form("h_mbd_time_min_bias_ch%d", i));
-
+      h_charge_raw[i] = (TH1D*) fout->Get(Form("h_mbd_charge_raw_ch%d", i));
     }
 
   TCanvas *c = new TCanvas("c","c", 1000, 1200);
 
   c->Print(Form("fits_%d.pdf[", runnumber));
-  int colorline_mb = kSpring + 4;
-  int colorfill_mb = kSpring + 2;
-  int colorline = kBlack;
+  int colorline = kSpring + 4;
+  int colorfill = kSpring + 2;
+  int colorfit = kBlack;
 
   TPad *pads[64];
   float xi = 0.05;
   float yi = .9 - xi;
   float dpx = (1. - 2*xi)/8.;
   float dpy = (.9 - 2*xi)/8.;
-
   DrawSPHENIX(0.05, 0.95, 1, 1, 0.03, 0);
   drawText(Form("Run - %d", runnumber), 0.05, 0.91, 0, kBlack, 0.03);
-  drawText("Dotted Line at 1", 0.05, 0.87, 0, kBlack, 0.03);
+  drawText("Dotted Line at 0.4 #times MPV_{fit}", 0.05, 0.87, 0, kBlack, 0.03);
   drawText("South MBD Charge Distributions", 0.95, 0.91, 1, kBlack, 0.03);
   for (int i = 0; i < 64; i++)
     {
@@ -778,47 +658,41 @@ void DrawMBDChannels(const int runnumber)
       pads[i]->Draw();
     }
 
-  TH1D *hh = (TH1D*) h_charge[0]->Clone();
-  hh->Reset();
-  hh->Fill(1);
-  int binpeak = hh->GetMaximumBin();
   for (int i = 0 ; i < 64; i++)
     {
       pads[i]->cd();
-
-      TF1 *f_lan_w_gausexp = new TF1("lan_w_gausexp","[0]*TMath::Landau(x,[1],[2],3) + [3]*TMath::Exp(-1*(x - [4])/[5])+gaus(6)", 0.5, 3);
-      f_lan_w_gausexp->SetParameters(500, 1, .1, 2000, .07, 4, 80000, .05, .04);
-      f_lan_w_gausexp->SetParLimits(8, 0, .2);
-      f_lan_w_gausexp->SetParLimits(7, -.1, .2);
-      f_lan_w_gausexp->SetParLimits(6, 0, 1000000);
-      h_charge[i]->Fit("lan_w_gausexp","","", .2, 3);
-      h_charge[i]->GetFunction("lan_w_gausexp")->SetLineColor(kBlack);
-      float peakfit =h_charge[i]->GetBinContent(binpeak);
-      h_charge[i]->SetMaximum(peakfit * 1.3);
-
-      h_charge[i]->GetXaxis()->SetRangeUser(.1, 3);
-      SetLineAtt(h_charge[i], colorline, 2, 1);
-      h_charge[i]->SetFillColorAlpha(colorfill_mb, 0.3);
-      
-      h_charge[i]->Draw();
-      TLine *tl = new TLine(1, 0,1, peakfit*1.3);
+      std::cout << i << std::endl;
+      TF1 *fitfunc = h_charge_raw[i]->GetFunction("lan_w_gausexp");
+      if (!fitfunc)
+	{
+	  fitfunc = h_charge_raw[i]->GetFunction("lan_w_exp");
+	}
+      if (!fitfunc) continue;
+      float peakfit = fitfunc->Eval(fitfunc->GetParameter(1));
+      h_charge_raw[i]->SetMaximum(peakfit * 1.3);
+      h_charge_raw[i]->GetXaxis()->SetRangeUser(0, fitfunc->GetParameter(1)*2);
+      SetLineAtt(h_charge_raw[i], colorline, 2, 1);
+      h_charge_raw[i]->SetFillColorAlpha(colorfill, 0.3);
+      SetLineAtt(fitfunc, colorfit, 3, 1);
+      h_charge_raw[i]->Draw();
+      TLine *tl = new TLine(fitfunc->GetParameter(1)*0.4, 0,fitfunc->GetParameter(1)*0.4, peakfit*1.3);
       tl->SetLineColor(kBlue + 2);
       tl->SetLineStyle(2);
       tl->Draw();
       drawText(Form("S Ch. %d", i),0.5, 0.88, 0, kBlack, 0.07);
-      drawText(Form("#Chi^2 = %4.4f", f_lan_w_gausexp->GetChisquare()/f_lan_w_gausexp->GetNDF()), 0.5, 0.8, 0, kBlack, 0.07);
-      drawText(Form("MPV = %4.2f", f_lan_w_gausexp->GetParameter(1)), 0.5, 0.72, 0, kBlack, 0.07);
-      hpeaks_fit->Fill(f_lan_w_gausexp->GetParameter(1));
+      drawText(Form("#Chi^2 = %4.4f", fitfunc->GetChisquare()/fitfunc->GetNDF()), 0.5, 0.8, 0, kBlack, 0.07);
+      drawText(Form("MPV = %4.2f", fitfunc->GetParameter(1)), 0.5, 0.72, 0, kBlack, 0.07);
     }
 
-  c->Print(Form("%s/output/centplots/run%d_charge.pdf(", env_p, runnumber));
-  c->SaveAs(Form("%s/output/centplots/run%d_charge_south.png", env_p, runnumber));
+  c->Print(Form("%s/output/web_plots/run%d_charge.pdf(", env_p, runnumber));
+  c->SaveAs(Form("%s/output/web_plots/run%d_charge_south.png", env_p, runnumber));
 
   c = new TCanvas("c1","c1", 1000, 1200);
   DrawSPHENIX(0.05, 0.95, 1, 1, 0.03, 0);
   drawText(Form("Run - %d", runnumber), 0.05, 0.91, 0, kBlack, 0.03);
-  drawText("Dotted Line at 1", 0.05, 0.87, 0, kBlack, 0.03);
+  drawText("Dotted Line at 0.4 #times MPV_{fit}", 0.05, 0.87, 0, kBlack, 0.03);
   drawText("North MBD Charge Distributions", 0.95, 0.91, 1, kBlack, 0.03);
+
   TPad *pads1[64];
   for (int i = 0; i < 64; i++)
     {
@@ -832,126 +706,33 @@ void DrawMBDChannels(const int runnumber)
       pads1[i]->SetTicks(1,1);
       pads1[i]->Draw();
     }
+
   for (int i = 0 ; i < 64; i++)
     {
       pads1[i]->cd();
-
-      TF1 *f_lan_w_gausexp = new TF1("lan_w_gausexp","[0]*TMath::Landau(x,[1],[2],3) + [3]*TMath::Exp(-1*(x - [4])/[5])+gaus(6)", 0.5, 3);
-      f_lan_w_gausexp->SetParameters(500, 1, .1, 2000, .07, 4, 80000, .05, .04);
-      f_lan_w_gausexp->SetParLimits(8, 0, .2);
-      f_lan_w_gausexp->SetParLimits(7, -.1, .2);
-      f_lan_w_gausexp->SetParLimits(6, 0, 1000000);
-      h_charge[i+64]->Fit("lan_w_gausexp","Q","", .2, 3);
-      h_charge[i+64]->GetFunction("lan_w_gausexp")->SetLineColor(kBlack);
-      float peakfit =h_charge[i+64]->GetBinContent(binpeak);
-      h_charge[i+64]->SetMaximum(peakfit * 1.3);
-
-      h_charge[i+64]->GetXaxis()->SetRangeUser(.1, 3);
-      SetLineAtt(h_charge[i+64], colorline, 2, 1);
-      h_charge[i+64]->SetFillColorAlpha(colorfill_mb, 0.3);
-      
-      h_charge[i+64]->Draw();
-
-      TLine *tl = new TLine(1, 0,1, peakfit*1.3);
+      TF1 *fitfunc = h_charge_raw[i+64]->GetFunction("lan_w_gausexp");
+      if (!fitfunc)
+	{
+	  fitfunc = h_charge_raw[i+64]->GetFunction("lan_w_exp");
+	}
+      if (!fitfunc) continue;
+      float peakfit = fitfunc->Eval(fitfunc->GetParameter(1));
+      h_charge_raw[i+64]->SetMaximum(peakfit * 1.3);
+      h_charge_raw[i+64]->GetXaxis()->SetRangeUser(0, fitfunc->GetParameter(1)*2);
+      SetLineAtt(h_charge_raw[i+64], colorline, 1, 1);
+      h_charge_raw[i+64]->SetFillColorAlpha(colorfill, 0.3);
+      SetLineAtt(fitfunc, colorfit, 3, 1);
+      h_charge_raw[i+64]->Draw();
+      TLine *tl = new TLine(fitfunc->GetParameter(1)*0.4, 0,fitfunc->GetParameter(1)*0.4, peakfit*1.3);
       tl->SetLineColor(kBlue + 2);
       tl->SetLineStyle(2);
       tl->Draw();
       drawText(Form("N Ch. %d", i),0.5, 0.88, 0, kBlack, 0.07);
-      drawText(Form("#Chi^2 = %4.4f", f_lan_w_gausexp->GetChisquare()/f_lan_w_gausexp->GetNDF()), 0.5, 0.8, 0, kBlack, 0.07);
-      drawText(Form("MPV = %4.2f", f_lan_w_gausexp->GetParameter(1)), 0.5, 0.72, 0, kBlack, 0.07);
-      hpeaks_fit->Fill(f_lan_w_gausexp->GetParameter(1));
+      drawText(Form("#Chi^2 = %4.4f", fitfunc->GetChisquare()/fitfunc->GetNDF()), 0.5, 0.8, 0, kBlack, 0.07);
+      drawText(Form("MPV = %4.2f", fitfunc->GetParameter(1)), 0.5, 0.72, 0, kBlack, 0.07);
     }
 
-  c->Print(Form("%s/output/centplots/run%d_charge.pdf)", env_p, runnumber));
-  c->SaveAs(Form("%s/output/centplots/run%d_charge_north.png", env_p, runnumber));
-
-  TCanvas *cc = new TCanvas("cc","cc", 500, 500);
-  SetyjPadStyle();
-  hpeaks_fit->Draw();
-  cc->SetTicks(1,1);
-  DrawSPHENIX(0.5, 0.8, 1, 0, 0.04);
-  drawText(Form("Run %d", runnumber), 0.5, 0.7, 0, kBlack, 0.04);
-  drawText("Official MBD Calibrations", 0.5, 0.65, 0, kBlack, 0.04);
-  cc->SaveAs(Form("%s/output/centplots/run%d_charge_fits.png", env_p, runnumber));
-
-  c = new TCanvas("c2","c2", 1000, 1200);
-  colorline_mb = kViolet+1;
-  colorfill_mb = kViolet - 1;
-
-  DrawSPHENIX(0.05, 0.95, 1, 1, 0.03, 0);
-  drawText(Form("Run - %d", runnumber), 0.05, 0.91, 0, kBlack, 0.03);
-  drawText("Dotted Line at 0", 0.05, 0.87, 0, kBlack, 0.03);
-  drawText("South MBD Time Distributions", 0.95, 0.91, 1, kBlack, 0.03);
-  TPad *pads2[64];
-  for (int i = 0; i < 64; i++) {
-      float x = (i%8);
-      float y = (i/8);
-      pads2[i] = new TPad(Form("pad%d", i), Form("pad%d", i),xi + x*dpx, yi - (y+1)*dpy, xi + (x+1)*dpx, yi - (y)*dpy);
-      pads2[i]->SetTopMargin(0);
-      pads2[i]->SetRightMargin(0);
-      pads2[i]->SetBottomMargin(0);
-      pads2[i]->SetLeftMargin(0);
-      pads2[i]->SetTicks(1,1);
-      pads2[i]->Draw();
-    }
-
-  for (int i = 0 ; i < 64; i++)
-    {
-      pads2[i]->cd();
-      h_time_mb[i]->GetXaxis()->SetRangeUser(-12, 12);
-      h_time[i]->Scale(h_time_mb[i]->Integral()/h_time[i]->Integral());
-      SetLineAtt(h_time[i], colorline, 2, 1);
-      SetLineAtt(h_time_mb[i], colorline_mb, 2, 1);
-      h_time_mb[i]->SetFillColorAlpha(colorfill_mb, 0.3);
-      
-      h_time_mb[i]->Draw();
-      h_time[i]->Draw("same");
-      TLine *tl = new TLine(0.4, 0,0.4, h_time_mb[i]->GetBinContent(h_time_mb[i]->GetMaximumBin()));
-      tl->SetLineColor(kBlue + 2);
-      tl->SetLineStyle(2);
-      tl->Draw();
-      drawText(Form("S Ch. %d", i),0.5, 0.88, 0, kBlack, 0.07);
-    }
-
-  c->Print(Form("%s/output/centplots/run%d_time.pdf(", env_p, runnumber));
-  c->SaveAs(Form("%s/output/centplots/run%d_time_south.png", env_p, runnumber));
-
-  c = new TCanvas("c3","c3", 1000, 1200);
-  DrawSPHENIX(0.05, 0.95, 1, 1, 0.03, 0);
-  drawText(Form("Run - %d", runnumber), 0.05, 0.91, 0, kBlack, 0.03);
-  drawText("Dotted Line at 0", 0.05, 0.87, 0, kBlack, 0.03);
-  drawText("North MBD Time Distributions", 0.95, 0.91, 1, kBlack, 0.03);
-  TPad *pads3[64];
-  for (int i = 0; i < 64; i++)
-    {
-      float x = (i%8);
-      float y = (i/8);
-      pads3[i] = new TPad(Form("pad%d", i), Form("pad%d", i),xi + x*dpx, yi - (y+1)*dpy, xi + (x+1)*dpx, yi - (y)*dpy);
-      pads3[i]->SetTopMargin(0);
-      pads3[i]->SetRightMargin(0);
-      pads3[i]->SetBottomMargin(0);
-      pads3[i]->SetLeftMargin(0);
-      pads3[i]->SetTicks(1,1);
-      pads3[i]->Draw();
-    }
-  for (int i = 0 ; i < 64; i++)
-    {
-      pads3[i]->cd();
-      h_time_mb[i+64]->GetXaxis()->SetRangeUser(-12, 12);
-      h_time[i+64]->Scale(h_time_mb[i+64]->Integral()/h_time[i+64]->Integral());
-      SetLineAtt(h_time[i+64], colorline, 2, 1);
-      SetLineAtt(h_time_mb[i+64], colorline_mb, 2, 1);
-      h_time_mb[i+64]->SetFillColorAlpha(colorfill_mb, 0.3);
-      
-      h_time_mb[i+64]->Draw();
-      h_time[i+64]->Draw("same");
-      TLine *tl = new TLine(0.4, 0,0.4, h_time_mb[i+64]->GetBinContent(h_time_mb[i+64]->GetMaximumBin()));
-      tl->SetLineColor(kBlue + 2);
-      tl->SetLineStyle(2);
-      tl->Draw();
-      drawText(Form("N Ch. %d", i),0.5, 0.88, 0, kBlack, 0.07);
-    }
-  c->Print(Form("%s/output/centplots/run%d_time.pdf)", env_p, runnumber));
-  c->SaveAs(Form("%s/output/centplots/run%d_time_north.png", env_p, runnumber));
+  c->Print(Form("%s/output/web_plots/run%d_charge.pdf)", env_p, runnumber));
+  c->SaveAs(Form("%s/output/web_plots/run%d_charge_north.png", env_p, runnumber));
 
 }

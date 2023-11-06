@@ -1,18 +1,12 @@
 #!/usr/bin/bash                                                                 
 id=$1
-runnumber=$2
+runnumber=RUN
 
 source /opt/sphenix/core/bin/sphenix_setup.sh -n new
 source /opt/sphenix/core/bin/setup_local.sh /sphenix/user/dlis/Projects/install/
 
 source setup_env.sh
 
-readarray -t a < submit_file.txt
-
-if (( runnumber == 0 )); then
-    runnumber=${a[id]} 
-fi
-
-root -b -q "/sphenix/user/dlis/Projects/centrality/macros/calibration_ana/mainQA.C(${runnumber})"
+root -b -q "/sphenix/user/dlis/Projects/centrality/macros/fun4all/Fun4All_MbdAnaDST.C(${runnumber},${id})"
 
 echo "JOB COMPLETE!"
