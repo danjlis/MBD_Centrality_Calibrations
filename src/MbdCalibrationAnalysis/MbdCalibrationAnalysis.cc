@@ -53,6 +53,7 @@ int MbdCalibrationAnalysis::Init(PHCompositeNode * /*unused*/)
   // ttree
   ttree = new TTree("T", "a perservering date tree");
 
+  ttree->Branch("mbd_clock", &m_mbd_clock, "mbd_clock/S");
   ttree->Branch("mbd_charge_raw", m_mbd_charge_raw, "mbd_charge_raw[128]/F");
   ttree->Branch("mbd_time_raw", m_mbd_time_raw, "mbd_time_raw[128]/F");
   ttree->Branch("mbd_side", m_mbd_side, "mbd_side[128]/I");
@@ -80,6 +81,8 @@ void MbdCalibrationAnalysis::ResetVars()
   {
     std::cout << __FILE__ << " :: " << __FUNCTION__ << std::endl;
   }
+
+  m_mbd_clock = 70000;
   for (int i = 0; i < 128; i++)
   {
     m_mbd_charge_raw[i] = 0.;
@@ -122,7 +125,9 @@ int MbdCalibrationAnalysis::FillVars()
       short type = (ich%16)/8;
 
       _energy = _tmp_tower->get_energy();
-      
+
+      m_mbd_clock = (0xffff & _tmp_tower->get_time());
+
       if (type)
 	{
 	  m_mbd_charge_raw[ipmt] = _energy;

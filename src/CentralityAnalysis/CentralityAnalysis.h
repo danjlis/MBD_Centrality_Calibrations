@@ -17,9 +17,9 @@ class TowerInfo;
 class TowerInfoContainer;
 class TH1;
 class TH2;
-class BbcOutV1;
-class BbcPmtHitV1;
-class BbcPmtContainerV1;
+class MbdOutV1;
+class MbdPmtHitV1;
+class MbdPmtContainerV1;
 class CentralityInfov2;
 class CentralityAnalysis : public SubsysReco
 {
@@ -51,7 +51,7 @@ class CentralityAnalysis : public SubsysReco
   void useZDC(bool use_zdc) { _use_ZDC = use_zdc; }
  protected:
 
-  enum Bbc
+  enum Mbd
   {
     South = 0,
     North = 1
@@ -63,11 +63,11 @@ class CentralityAnalysis : public SubsysReco
   TFile *outfile = nullptr;
   TTree *ttree = nullptr;
   TowerInfo *_tmp_tower = nullptr;
-  BbcPmtHitV1 *_tmp_pmt;
+  MbdPmtHitV1 *_tmp_pmt;
 
-  BbcOutV1 *_bbc_out = nullptr;
+  MbdOutV1 *_mbd_out = nullptr;
 
-  BbcPmtContainerV1 *_pmts_mbd = nullptr;
+  MbdPmtContainerV1 *_pmts_mbd = nullptr;
   TowerInfoContainer *_towers_zdc = nullptr;
   CentralityInfov2 *_central = nullptr;
   // Histograms

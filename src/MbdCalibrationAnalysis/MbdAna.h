@@ -49,6 +49,7 @@ class MbdAna : public SubsysReco
     North = 1
   };
 
+  bool useZDC;
   TFile *outfile = nullptr;
   TTree *ttree = nullptr;
   TowerInfo *_tmp_tower = nullptr;  

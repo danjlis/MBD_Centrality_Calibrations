@@ -60,6 +60,8 @@ class MbdCalibrationAnalysis : public SubsysReco
   int _tubes_hit_n = std::numeric_limits<int>::signaling_NaN();;
 
   float _energy = std::numeric_limits<float>::signaling_NaN();
+
+  unsigned int m_mbd_clock;;
   float m_mbd_charge_raw[128]{};
   float m_mbd_time_raw[128]{};
   

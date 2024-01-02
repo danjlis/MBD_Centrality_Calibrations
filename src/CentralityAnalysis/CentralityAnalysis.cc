@@ -3,10 +3,10 @@
 #include <calobase/TowerInfo.h>
 #include <calobase/TowerInfoContainer.h>
 #include <calobase/TowerInfoDefs.h>
-#include <bbc/BbcDefs.h>
-#include <bbc/BbcPmtHitV1.h>
-#include <bbc/BbcPmtContainerV1.h>
-#include <bbc/BbcOutV1.h>
+#include <mbd/MbdDefs.h>
+#include <mbd/MbdPmtHitV1.h>
+#include <mbd/MbdPmtContainerV1.h>
+#include <mbd/MbdOutV1.h>
 #include <centrality/CentralityInfov2.h>
 #include <fun4all/Fun4AllHistoManager.h>
 #include <fun4all/Fun4AllReturnCodes.h>
@@ -36,27 +36,6 @@
 CentralityAnalysis::CentralityAnalysis(const std::string &name, const std::string &hist_name, const std::string &tree_name)
   : SubsysReco(name)
 {
-  _zdc_gain_factors[0] = 1.37;
-  _zdc_gain_factors[1] = 0.64;
-  _zdc_gain_factors[2] = 0.44;
-  _zdc_gain_factors[3] = 1.39;
-  _zdc_gain_factors[4] = 0.78;
-  _zdc_gain_factors[5] = 0.29;
-
-  const int centrality_map[20] = {1999, 1499, 1291, 1102, 937, 790, 660, 547, 449, 363, 289, 227, 174, 130, 94, 66, 45, 0, 0, 0};
-  for (int i = 0; i < 20; i++)
-  {
-    _centrality_map[i] = centrality_map[i];
-  }
-
-  _offset = 28.52;
-
-  const float mbd_vertex_cuts[5] = {50, 30, 20, 10, 5};
-  for (int i = 0; i < 5; i++)
-  {
-    _mbd_vertex_cuts[i] = mbd_vertex_cuts[i];
-  }
-
   _hist_filename = hist_name;
   _tree_filename = tree_name;
 }
@@ -74,8 +53,8 @@ int CentralityAnalysis::Init(PHCompositeNode * /*unused*/)
   ttree = new TTree("T", "a perservering date tree");
 
   ttree->Branch("z_vertex", &_z_vertex);
-  ttree->Branch("isMinBias", &_isMinBias);
   ttree->Branch("centile", &_centile);
+
   ttree->Branch("mbd_charge_sum", &_mbd_charge_sum);
   ttree->Branch("mbd_charge_sum_n", &_mbd_charge_sum_n);
   ttree->Branch("mbd_charge_sum_s", &_mbd_charge_sum_s);
@@ -320,21 +299,21 @@ int CentralityAnalysis::FillVars()
   
   _centile = (_central->has_centile(CentralityInfo::PROP::mbd_NS)?_central->get_centile(CentralityInfo::PROP::mbd_NS) : -999.99);
   
-  // bbc vertex
+  // mbd vertex
   
-  _z_vertex = _bbc_out->get_zvtx();
-  _tubes_hit_s = _bbc_out->get_npmt(Bbc::South);
-  _tubes_hit_n = _bbc_out->get_npmt(Bbc::North);
+  _z_vertex = _mbd_out->get_zvtx();
+  _tubes_hit_s = _mbd_out->get_npmt(Mbd::South);
+  _tubes_hit_n = _mbd_out->get_npmt(Mbd::North);
 
-  _mbd_charge_sum_s = _bbc_out->get_q(Bbc::South);
-  _mbd_charge_sum_n = _bbc_out->get_q(Bbc::North);
+  _mbd_charge_sum_s = _mbd_out->get_q(Mbd::South);
+  _mbd_charge_sum_n = _mbd_out->get_q(Mbd::North);
 
   _mbd_charge_sum = _mbd_charge_sum_n + _mbd_charge_sum_s;
 
-  _mbd_time_s = _bbc_out->get_time(Bbc::South);
-  _mbd_time_n = _bbc_out->get_time(Bbc::North);
+  _mbd_time_s = _mbd_out->get_time(Mbd::South);
+  _mbd_time_n = _mbd_out->get_time(Mbd::North);
 
-  _mbd_time_0 = _bbc_out->get_t0();
+  _mbd_time_0 = _mbd_out->get_t0();
 
   if (_use_ZDC)
     {
@@ -372,7 +351,7 @@ int CentralityAnalysis::FillVars()
       std::cout << "   IsMinBias : "<< _isMinBias << std::endl;
       std::cout << "   Centile  : "<< _centile << std::endl;
       
-      std::cout << "--------- BbcOut: ----------" << std::endl;
+      std::cout << "--------- MbdOut: ----------" << std::endl;
       std::cout << "   z-vertex   : "<< _z_vertex << std::endl;
       std::cout << "  nPmt S -- N : "<< _tubes_hit_s <<" -- "<< _tubes_hit_n << std::endl;
       std::cout << "  Charge Sum  : "<< _mbd_charge_sum_s <<"(S) + "<< _mbd_charge_sum_n <<" (N) = "<< _mbd_charge_sum <<  std::endl;
@@ -517,7 +496,7 @@ int CentralityAnalysis::GetNodes(PHCompositeNode *topNode)
     std::cout << __FILE__ << " :: " << __FUNCTION__ << " :: " << __LINE__ << std::endl;
   }
   
-  _pmts_mbd = findNode::getClass<BbcPmtContainerV1>(topNode, "BbcPmtContainer");
+  _pmts_mbd = findNode::getClass<MbdPmtContainerV1>(topNode, "MbdPmtContainer");
   
   if (!_pmts_mbd)
     {
@@ -525,14 +504,14 @@ int CentralityAnalysis::GetNodes(PHCompositeNode *topNode)
       return Fun4AllReturnCodes::ABORTRUN;
     }
 
-  _bbc_out = findNode::getClass<BbcOutV1>(topNode, "BbcOut");
+  _mbd_out = findNode::getClass<MbdOutV1>(topNode, "MbdOut");
   
-  if (!_bbc_out)
+  if (!_mbd_out)
     {
       std::cout << "no mbd out node " << std::endl;
       return Fun4AllReturnCodes::ABORTRUN;
     }
-  if (Verbosity()) _bbc_out->identify();
+  if (Verbosity()) _mbd_out->identify();
   if (_use_ZDC)
     {
       _towers_zdc = findNode::getClass<TowerInfoContainer>(topNode, "TOWERS_ZDC");

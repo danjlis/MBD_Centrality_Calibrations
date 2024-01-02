@@ -56,6 +56,31 @@ void Fun4All_MbdAnaDST(const int runnumber, const int rollover = -1)
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
       return;
     }
+
+  const char* env_dst = std::getenv("DST_SOURCE_PATH");
+
+  if(!env_dst)
+    {
+      std::cout << "no env DST_SOURCE_PATH set."<<endl;
+      return;
+    }
+
+  const char* env_dstname = std::getenv("DST_NAME");
+
+  if(!env_dstname)
+    {
+      std::cout << "no env DST_NAME set."<<endl;
+      return;
+    }
+
+  const char* env_cdb = std::getenv("CDB_TAG");
+
+  if(!env_cdb)
+    {
+      std::cout << "no env CDB_TAG set."<<endl;
+      return;
+    }
+
   char *dir = new char[100];
   if (rollover == -1)
     {
@@ -68,7 +93,7 @@ void Fun4All_MbdAnaDST(const int runnumber, const int rollover = -1)
 
   const char *tree_outfile = Form("%s/%s/mbd_ana_tree_%s_%s.root", env_p, dir, rstr.str().c_str(), ostr.str().c_str());
 
-  std::string fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/DSTv3/DST_CALOR-%s-%s.root", rstr.str().c_str(), ostr.str().c_str());
+  std::string fname1 = Form("%s/%s-%s-%s.root", env_dst, env_dstname, rstr.str().c_str(), ostr.str().c_str());
   
   
   if (FILE *file = fopen(fname1.c_str(),"r")){
@@ -89,7 +114,7 @@ void Fun4All_MbdAnaDST(const int runnumber, const int rollover = -1)
   //===============
   // ENABLE::CDB = true;
   // global tag
-  rc->set_StringFlag("CDB_GLOBALTAG","2023p002");
+  rc->set_StringFlag("CDB_GLOBALTAG",env_cdb);
   // // 64 bit timestamp
   rc->set_uint64Flag("TIMESTAMP",runnumber);
 

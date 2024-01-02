@@ -1,0 +1,636 @@
+Processing QA_centrality.C(21199)...
+ ************************** 
+  Run 21199
+    Cent Chi2       =  1.96861
+    Cent Chi2 shift =  2.94222
+ ************************** 
+
+Processing QA_centrality.C(23696)...
+ ************************** 
+  Run 23696
+    Cent Chi2       =  22.7879
+    Cent Chi2 shift =  8.86433
+ ************************** 
+
+Processing QA_centrality.C(21739)...
+ ************************** 
+  Run 21739
+    Cent Chi2       =  2.41991
+    Cent Chi2 shift =  2.69209
+ ************************** 
+
+Processing QA_centrality.C(21798)...
+ ************************** 
+  Run 21798
+    Cent Chi2       =  2.04955
+    Cent Chi2 shift =  2.08192
+ ************************** 
+
+Processing QA_centrality.C(22982)...
+ ************************** 
+  Run 22982
+    Cent Chi2       =  3.14939
+    Cent Chi2 shift =  11.0099
+ ************************** 
+
+Processing QA_centrality.C(20869)...
+ ************************** 
+  Run 20869
+    Cent Chi2       =  643.326
+    Cent Chi2 shift =  188.523
+ ************************** 
+
+Processing QA_centrality.C(20877)...
+ ************************** 
+  Run 20877
+    Cent Chi2       =  287.873
+    Cent Chi2 shift =  11.3958
+ ************************** 
+
+Processing QA_centrality.C(20888)...
+ ************************** 
+  Run 20888
+    Cent Chi2       =  67.6479
+    Cent Chi2 shift =  61.0797
+ ************************** 
+
+Processing QA_centrality.C(21796)...
+ ************************** 
+  Run 21796
+    Cent Chi2       =  1.85926
+    Cent Chi2 shift =  2.28118
+ ************************** 
+
+Processing QA_centrality.C(21599)...
+ ************************** 
+  Run 21599
+    Cent Chi2       =  1.86334
+    Cent Chi2 shift =  1.74562
+ ************************** 
+
+Processing QA_centrality.C(21615)...
+ ************************** 
+  Run 21615
+    Cent Chi2       =  1.58224
+    Cent Chi2 shift =  1.48586
+ ************************** 
+
+Processing QA_centrality.C(21704)...
+ ************************** 
+  Run 21704
+    Cent Chi2       =  2.49606
+    Cent Chi2 shift =  2.1184
+ ************************** 
+
+Processing QA_centrality.C(21774)...
+ ************************** 
+  Run 21774
+    Cent Chi2       =  2.43581
+    Cent Chi2 shift =  2.15378
+ ************************** 
+
+Processing QA_centrality.C(21776)...
+ ************************** 
+  Run 21776
+    Cent Chi2       =  1.93583
+    Cent Chi2 shift =  1.76583
+ ************************** 
+
+Processing QA_centrality.C(21783)...
+ ************************** 
+  Run 21783
+    Cent Chi2       =  1.568
+    Cent Chi2 shift =  1.651
+ ************************** 
+
+Processing QA_centrality.C(23547)...
+ ************************** 
+  Run 23547
+    Cent Chi2       =  1693.4
+    Cent Chi2 shift =  1372.07
+ ************************** 
+
+Processing QA_centrality.C(20864)...
+ ************************** 
+  Run 20864
+    Cent Chi2       =  0.466667
+    Cent Chi2 shift =  1.6
+ ************************** 
+
+Processing QA_centrality.C(21598)...
+ ************************** 
+  Run 21598
+    Cent Chi2       =  2.4734
+    Cent Chi2 shift =  2.34786
+ ************************** 
+
+Processing QA_centrality.C(21616)...
+ ************************** 
+  Run 21616
+    Cent Chi2       =  1.95208
+    Cent Chi2 shift =  1.95491
+ ************************** 
+
+Processing QA_centrality.C(21626)...
+ ************************** 
+  Run 21626
+    Cent Chi2       =  2.87203
+    Cent Chi2 shift =  2.68618
+ ************************** 
+
+Processing QA_centrality.C(21772)...
+ ************************** 
+  Run 21772
+    Cent Chi2       =  2.27897
+    Cent Chi2 shift =  2.17871
+ ************************** 
+
+Processing QA_centrality.C(21785)...
+ ************************** 
+  Run 21785
+    Cent Chi2       =  2.47391
+    Cent Chi2 shift =  2.28348
+ ************************** 
+
+Processing QA_centrality.C(23059)...
+ ************************** 
+  Run 23059
+    Cent Chi2       =  2361.2
+    Cent Chi2 shift =  2410.01
+ ************************** 
+
+Processing QA_centrality.C(23724)...
+ ************************** 
+  Run 23724
+    Cent Chi2       =  21.2357
+    Cent Chi2 shift =  6.46932
+ ************************** 
+
+Processing QA_centrality.C(20859)...
+ ************************** 
+  Run 20859
+    Cent Chi2       =  2169.28
+    Cent Chi2 shift =  2323.55
+ ************************** 
+
+Processing QA_centrality.C(20885)...
+ ************************** 
+  Run 20885
+    Cent Chi2       =  318.314
+    Cent Chi2 shift =  14.0453
+ ************************** 
+
+Processing QA_centrality.C(21748)...
+ ************************** 
+  Run 21748
+    Cent Chi2       =  2.49263
+    Cent Chi2 shift =  2.48362
+ ************************** 
+
+Processing QA_centrality.C(21788)...
+ ************************** 
+  Run 21788
+    Cent Chi2       =  1.48543
+    Cent Chi2 shift =  1.5244
+ ************************** 
+
+Processing QA_centrality.C(21793)...
+ ************************** 
+  Run 21793
+    Cent Chi2       =  2.52876
+    Cent Chi2 shift =  1.94488
+ ************************** 
+
+Processing QA_centrality.C(23058)...
+ ************************** 
+  Run 23058
+    Cent Chi2       =  1528.88
+    Cent Chi2 shift =  1338.85
+ ************************** 
+
+Processing QA_centrality.C(23566)...
+ ************************** 
+  Run 23566
+    Cent Chi2       =  2359.95
+    Cent Chi2 shift =  2191.46
+ ************************** 
+
+Processing QA_centrality.C(20867)...
+ ************************** 
+  Run 20867
+    Cent Chi2       =  5.33333
+    Cent Chi2 shift =  5.98889
+ ************************** 
+
+Processing QA_centrality.C(20868)...
+ ************************** 
+  Run 20868
+    Cent Chi2       =  1924.84
+    Cent Chi2 shift =  2124.38
+ ************************** 
+
+Processing QA_centrality.C(21609)...
+ ************************** 
+  Run 21609
+    Cent Chi2       =  2.50918
+    Cent Chi2 shift =  2.28442
+ ************************** 
+
+Processing QA_centrality.C(21705)...
+ ************************** 
+  Run 21705
+    Cent Chi2       =  2.35046
+    Cent Chi2 shift =  1.90388
+ ************************** 
+
+Processing QA_centrality.C(21707)...
+ ************************** 
+  Run 21707
+    Cent Chi2       =  0
+    Cent Chi2 shift =  0
+ ************************** 
+
+Processing QA_centrality.C(21733)...
+ ************************** 
+  Run 21733
+    Cent Chi2       =  2.7608
+    Cent Chi2 shift =  2.2796
+ ************************** 
+
+Processing QA_centrality.C(21740)...
+ ************************** 
+  Run 21740
+    Cent Chi2       =  2.48482
+    Cent Chi2 shift =  2.03477
+ ************************** 
+
+Processing QA_centrality.C(21745)...
+ ************************** 
+  Run 21745
+    Cent Chi2       =  3.1165
+    Cent Chi2 shift =  2.61702
+ ************************** 
+
+Processing QA_centrality.C(21747)...
+ ************************** 
+  Run 21747
+    Cent Chi2       =  2.57283
+    Cent Chi2 shift =  2.64944
+ ************************** 
+
+Processing QA_centrality.C(21750)...
+ ************************** 
+  Run 21750
+    Cent Chi2       =  2.09143
+    Cent Chi2 shift =  2.37299
+ ************************** 
+
+Processing QA_centrality.C(21770)...
+ ************************** 
+  Run 21770
+    Cent Chi2       =  1.28328
+    Cent Chi2 shift =  1.32179
+ ************************** 
+
+Processing QA_centrality.C(21778)...
+ ************************** 
+  Run 21778
+    Cent Chi2       =  1.81519
+    Cent Chi2 shift =  1.14357
+ ************************** 
+
+Processing QA_centrality.C(21782)...
+ ************************** 
+  Run 21782
+    Cent Chi2       =  2.27874
+    Cent Chi2 shift =  2.34753
+ ************************** 
+
+Processing QA_centrality.C(21792)...
+ ************************** 
+  Run 21792
+    Cent Chi2       =  2.45034
+    Cent Chi2 shift =  1.91943
+ ************************** 
+
+Processing QA_centrality.C(23563)...
+ ************************** 
+  Run 23563
+    Cent Chi2       =  2325.05
+    Cent Chi2 shift =  2402.32
+ ************************** 
+
+Processing QA_centrality.C(23572)...
+ ************************** 
+  Run 23572
+    Cent Chi2       =  2346.29
+    Cent Chi2 shift =  2405.26
+ ************************** 
+
+Processing QA_centrality.C(23697)...
+ ************************** 
+  Run 23697
+    Cent Chi2       =  33.5799
+    Cent Chi2 shift =  7.87846
+ ************************** 
+
+Processing QA_centrality.C(23726)...
+ ************************** 
+  Run 23726
+    Cent Chi2       =  30.7054
+    Cent Chi2 shift =  6.48151
+ ************************** 
+
+Processing QA_centrality.C(23745)...
+ ************************** 
+  Run 23745
+    Cent Chi2       =  2195.25
+    Cent Chi2 shift =  1528.87
+ ************************** 
+
+Processing QA_centrality.C(23746)...
+ ************************** 
+  Run 23746
+    Cent Chi2       =  13.364
+    Cent Chi2 shift =  12.385
+ ************************** 
+
+Processing QA_centrality.C(20876)...
+ ************************** 
+  Run 20876
+    Cent Chi2       =  102.925
+    Cent Chi2 shift =  11.4925
+ ************************** 
+
+Processing QA_centrality.C(21200)...
+ ************************** 
+  Run 21200
+    Cent Chi2       =  4.24832
+    Cent Chi2 shift =  11.0775
+ ************************** 
+
+Processing QA_centrality.C(22026)...
+ ************************** 
+  Run 22026
+    Cent Chi2       =  4.88381
+    Cent Chi2 shift =  20.5935
+ ************************** 
+
+Processing QA_centrality.C(23052)...
+ ************************** 
+  Run 23052
+    Cent Chi2       =  1697.2
+    Cent Chi2 shift =  1329.74
+ ************************** 
+
+Processing QA_centrality.C(23053)...
+ ************************** 
+  Run 23053
+    Cent Chi2       =  1966.24
+    Cent Chi2 shift =  1377.74
+ ************************** 
+
+Processing QA_centrality.C(23055)...
+ ************************** 
+  Run 23055
+    Cent Chi2       =  1633.39
+    Cent Chi2 shift =  1337.56
+ ************************** 
+
+Processing QA_centrality.C(23060)...
+ ************************** 
+  Run 23060
+    Cent Chi2       =  1587.81
+    Cent Chi2 shift =  1341.44
+ ************************** 
+
+Processing QA_centrality.C(23550)...
+ ************************** 
+  Run 23550
+    Cent Chi2       =  2324.77
+    Cent Chi2 shift =  2402.6
+ ************************** 
+
+Processing QA_centrality.C(23558)...
+ ************************** 
+  Run 23558
+    Cent Chi2       =  1618.17
+    Cent Chi2 shift =  1342.85
+ ************************** 
+
+Processing QA_centrality.C(23562)...
+ ************************** 
+  Run 23562
+    Cent Chi2       =  1593.73
+    Cent Chi2 shift =  1333.98
+ ************************** 
+
+Processing QA_centrality.C(23582)...
+ ************************** 
+  Run 23582
+    Cent Chi2       =  2316.26
+    Cent Chi2 shift =  2397.83
+ ************************** 
+
+Processing QA_centrality.C(23594)...
+ ************************** 
+  Run 23594
+    Cent Chi2       =  1583.22
+    Cent Chi2 shift =  1349.77
+ ************************** 
+
+Processing QA_centrality.C(20880)...
+ ************************** 
+  Run 20880
+    Cent Chi2       =  1669.79
+    Cent Chi2 shift =  575.925
+ ************************** 
+
+Processing QA_centrality.C(21581)...
+ ************************** 
+  Run 21581
+    Cent Chi2       =  1.7337
+    Cent Chi2 shift =  1.50465
+ ************************** 
+
+Processing QA_centrality.C(21608)...
+ ************************** 
+  Run 21608
+    Cent Chi2       =  2.4192
+    Cent Chi2 shift =  1.73847
+ ************************** 
+
+Processing QA_centrality.C(22034)...
+ ************************** 
+  Run 22034
+    Cent Chi2       =  4.5068
+    Cent Chi2 shift =  21.5672
+ ************************** 
+
+Processing QA_centrality.C(23543)...
+ ************************** 
+  Run 23543
+    Cent Chi2       =  2295.28
+    Cent Chi2 shift =  2398.14
+ ************************** 
+
+Processing QA_centrality.C(23574)...
+ ************************** 
+  Run 23574
+    Cent Chi2       =  2318.85
+    Cent Chi2 shift =  2369.11
+ ************************** 
+
+Processing QA_centrality.C(23617)...
+ ************************** 
+  Run 23617
+    Cent Chi2       =  1789.95
+    Cent Chi2 shift =  1359.48
+ ************************** 
+
+Processing QA_centrality.C(23671)...
+ ************************** 
+  Run 23671
+    Cent Chi2       =  50.4027
+    Cent Chi2 shift =  14.3884
+ ************************** 
+
+Processing QA_centrality.C(23693)...
+ ************************** 
+  Run 23693
+    Cent Chi2       =  24.8226
+    Cent Chi2 shift =  11.5409
+ ************************** 
+
+Processing QA_centrality.C(23694)...
+ ************************** 
+  Run 23694
+    Cent Chi2       =  39.2043
+    Cent Chi2 shift =  11.3801
+ ************************** 
+
+Processing QA_centrality.C(23702)...
+ ************************** 
+  Run 23702
+    Cent Chi2       =  15.3855
+    Cent Chi2 shift =  11.0546
+ ************************** 
+
+Processing QA_centrality.C(23714)...
+ ************************** 
+  Run 23714
+    Cent Chi2       =  29.9218
+    Cent Chi2 shift =  5.36853
+ ************************** 
+
+Processing QA_centrality.C(21584)...
+ ************************** 
+  Run 21584
+    Cent Chi2       =  1.96407
+    Cent Chi2 shift =  1.95075
+ ************************** 
+
+Processing QA_centrality.C(21744)...
+ ************************** 
+  Run 21744
+    Cent Chi2       =  7.30861
+    Cent Chi2 shift =  4.01187
+ ************************** 
+
+Processing QA_centrality.C(21751)...
+ ************************** 
+  Run 21751
+    Cent Chi2       =  34.4068
+    Cent Chi2 shift =  2.56422
+ ************************** 
+
+Processing QA_centrality.C(21769)...
+ ************************** 
+  Run 21769
+    Cent Chi2       =  2.50207
+    Cent Chi2 shift =  2.38756
+ ************************** 
+
+Processing QA_centrality.C(22027)...
+ ************************** 
+  Run 22027
+    Cent Chi2       =  6.41244
+    Cent Chi2 shift =  16.6406
+ ************************** 
+
+Processing QA_centrality.C(23049)...
+ ************************** 
+  Run 23049
+    Cent Chi2       =  2121.28
+    Cent Chi2 shift =  2383.94
+ ************************** 
+
+Processing QA_centrality.C(23050)...
+ ************************** 
+  Run 23050
+    Cent Chi2       =  2159.36
+    Cent Chi2 shift =  2370.58
+ ************************** 
+
+Processing QA_centrality.C(23051)...
+ ************************** 
+  Run 23051
+    Cent Chi2       =  1561.16
+    Cent Chi2 shift =  1314.77
+ ************************** 
+
+Processing QA_centrality.C(23568)...
+ ************************** 
+  Run 23568
+    Cent Chi2       =  1616.76
+    Cent Chi2 shift =  1341.26
+ ************************** 
+
+Processing QA_centrality.C(23590)...
+ ************************** 
+  Run 23590
+    Cent Chi2       =  1713.5
+    Cent Chi2 shift =  1329.41
+ ************************** 
+
+Processing QA_centrality.C(23592)...
+ ************************** 
+  Run 23592
+    Cent Chi2       =  1553.9
+    Cent Chi2 shift =  1308.68
+ ************************** 
+
+Processing QA_centrality.C(23618)...
+ ************************** 
+  Run 23618
+    Cent Chi2       =  2129.17
+    Cent Chi2 shift =  1415.24
+ ************************** 
+
+Processing QA_centrality.C(23672)...
+ ************************** 
+  Run 23672
+    Cent Chi2       =  43.4907
+    Cent Chi2 shift =  8.23823
+ ************************** 
+
+Processing QA_centrality.C(23718)...
+ ************************** 
+  Run 23718
+    Cent Chi2       =  1698.16
+    Cent Chi2 shift =  808.939
+ ************************** 
+
+Processing QA_centrality.C(23727)...
+ ************************** 
+  Run 23727
+    Cent Chi2       =  29.41
+    Cent Chi2 shift =  6.73105
+ ************************** 
+
+Processing QA_centrality.C(23743)...
+ ************************** 
+  Run 23743
+    Cent Chi2       =  22.2064
+    Cent Chi2 shift =  13.7837
+ ************************** 

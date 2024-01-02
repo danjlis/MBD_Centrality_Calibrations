@@ -28,9 +28,10 @@
 #include <caloreco/TowerInfoDeadHotMask.h>
 
 #include <caloreco/RawClusterDeadHotMask.h>
-
+#include <centrality/MBDdecoder.h>
 #include <centrality/MbdCalibrationAnalysis.h>
 R__LOAD_LIBRARY(libcalo_reco.so) 
+R__LOAD_LIBRARY(libmbddecoder.so) 
 R__LOAD_LIBRARY(libmbdcalibrationanalysis.so) 
 R__LOAD_LIBRARY(libfun4allraw.so)
 R__LOAD_LIBRARY(libfun4all.so)
@@ -84,14 +85,22 @@ void Fun4All_MbdCalibrationAnalysis(const int runnumber, const int rollover = 0)
   {
     fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
 
-
     if (FILE *file = fopen(fname1.c_str(),"r")){
+
       fclose(file);
+    
     }
     else
       {
-	std::cout << "NOOOOO ... no "<< fname1 <<std::endl;
-	return;
+	fname1 = Form("/sphenix/user/dlis/Projects/zdc_fix/output/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
+	if (FILE *file = fopen(fname1.c_str(),"r")){
+	  fclose(file);
+	}
+	else{
+	  std::cout << "NOOOOO ... no "<< fname1 <<std::endl;
+	  return;
+	  
+	}
       }
   }
   Fun4AllServer *se = Fun4AllServer::instance();
@@ -111,21 +120,26 @@ void Fun4All_MbdCalibrationAnalysis(const int runnumber, const int rollover = 0)
   in->fileopen(fname1);
   se->registerInputManager(in);
 
-  CaloTowerBuilder *ca_1 = new CaloTowerBuilder();
-  ca_1->set_detector_type(CaloTowerBuilder::MBD);
-  ca_1->set_nsamples(31);
-  ca_1->set_processing_type(CaloWaveformProcessing::FAST);
-  se->registerSubsystem(ca_1);
+  // CaloTowerBuilder *ca_1 = new CaloTowerBuilder();
+  // ca_1->set_detector_type(CaloTowerBuilder::MBD);
+  // ca_1->set_nsamples(31);
+  // ca_1->set_processing_type(CaloWaveformProcessing::FAST);
+  // se->registerSubsystem(ca_1);
 
+  MBDdecoder *mbddecoder = new MBDdecoder();
+  mbddecoder->set_nsamples(31);
+  mbddecoder->set_processing_type(CaloWaveformProcessing::FAST);
+  se->registerSubsystem(mbddecoder);
 
   CaloTowerBuilder *ca_2 = new CaloTowerBuilder();
-  ca_2->set_detector_type(CaloTowerBuilder::ZDC);
+  ca_2->set_detector_type(CaloTowerDefs::ZDC);
   ca_2->set_nsamples(31);
   ca_2->set_processing_type(CaloWaveformProcessing::FAST);
+  ca_2->set_builder_type(CaloTowerDefs::kPRDFWaveform);
   se->registerSubsystem(ca_2);
 
   CaloTowerCalib *calibZDC = new CaloTowerCalib("ZDC");
-  calibZDC -> set_detector_type(CaloTowerCalib::ZDC);
+  calibZDC -> set_detector_type(CaloTowerDefs::ZDC);
   calibZDC->Verbosity(verbosity);
   se -> registerSubsystem(calibZDC);
 

@@ -6,24 +6,22 @@ AM_CPPFLAGS = \
   -isystem`root-config --incdir`
 
 lib_LTLIBRARIES = \
-   libcentralityanalysis.la
+   libcdbsavegetter.la
 
 AM_LDFLAGS = \
   -L$(libdir) \
   -L$(OFFLINE_MAIN)/lib \
   -L$(ROOTSYS)/lib
 
-libcentralityanalysis_la_LIBADD = \
+libdbsavegetter_la_LIBADD = \
   -lfun4all \
-  -lcalo_io \
-  -lcentrality \
-  -lmbd_io
+  -phool
 
 pkginclude_HEADERS = \
-  CentralityAnalysis.h
+  CdbSaveGetter.h
 
-libcentralityanalysis_la_SOURCES = \
-  CentralityAnalysis.cc
+libcdbsavegetter_la_SOURCES = \
+  CdbSaveGetter.cc
 
 # Rule for generating table CINT dictionaries.
 %_Dict.cc: %.h %LinkDef.h
@@ -37,10 +35,10 @@ libcentralityanalysis_la_SOURCES = \
 BUILT_SOURCES = testexternals.cc
 
 noinst_PROGRAMS = \
-  testexternals_centralityanalysis
+  testexternals_cdbsavegetter
 
-testexternals_centralityanalysis_SOURCES = testexternals.cc
-testexternals_centralityanalysis_LDADD = libcentralityanalysis.la
+testexternals_cdbsavegetter_SOURCES = testexternals.cc
+testexternals_cdbsavegetter_LDADD = libcdbsavegetter.la
 
 testexternals.cc:
 	echo "//*** this is a generated file. Do not commit, do not edit" > $@

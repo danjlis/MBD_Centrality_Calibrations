@@ -1,0 +1,6 @@
+g++ -c -o QA_centrality.o QA_centrality.C $(root-config --glibs --cflags --libs) -fPIC
+g++ QA_centrality.o -shared -o libQA_centrality.so -fPIC
+g++ QA_centrality.o -shared -o $MYINSTALL/lib/libQA_centrality.so -fPIC
+
+cp QA_centrality.h $MYINSTALL/include/
+cp QA_centrality.h $MYINSTALL/include/qa_centrality/

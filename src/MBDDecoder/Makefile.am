@@ -6,24 +6,32 @@ AM_CPPFLAGS = \
   -isystem`root-config --incdir`
 
 lib_LTLIBRARIES = \
-   libcentralityanalysis.la
+   libmbddecoder.la
 
 AM_LDFLAGS = \
   -L$(libdir) \
   -L$(OFFLINE_MAIN)/lib \
   -L$(ROOTSYS)/lib
 
-libcentralityanalysis_la_LIBADD = \
-  -lfun4all \
-  -lcalo_io \
-  -lcentrality \
-  -lmbd_io
+
+libmbddecoder_la_LIBADD = \
+  -lcdbobjects \
+  -lCLHEP \
+  -lffamodules \
+  -lgsl \
+  -lgslcblas \
+  -lglobalvertex_io \
+  -lsph_onnx \
+  -lphparameter \
+  -lphool \
+  -lSubsysReco \
+  -lcalo_reco
 
 pkginclude_HEADERS = \
-  CentralityAnalysis.h
+  MBDdecoder.h
 
-libcentralityanalysis_la_SOURCES = \
-  CentralityAnalysis.cc
+libmbddecoder_la_SOURCES = \
+  MBDdecoder.cc
 
 # Rule for generating table CINT dictionaries.
 %_Dict.cc: %.h %LinkDef.h
@@ -37,10 +45,11 @@ libcentralityanalysis_la_SOURCES = \
 BUILT_SOURCES = testexternals.cc
 
 noinst_PROGRAMS = \
-  testexternals_centralityanalysis
+  testexternals_mbddecoder
 
-testexternals_centralityanalysis_SOURCES = testexternals.cc
-testexternals_centralityanalysis_LDADD = libcentralityanalysis.la
+testexternals_mbddecoder_SOURCES = testexternals.cc
+testexternals_mbddecoder_LDADD = libmbddecoder.la
+
 
 testexternals.cc:
 	echo "//*** this is a generated file. Do not commit, do not edit" > $@

@@ -79,27 +79,29 @@ void Fun4All_MbdAna(const int runnumber, const int rollover = -1)
       sprintf(dir, "output/run%d/mbdana", runnumber);
     }
 
-  const char *tree_outfile = Form("%s/%s/mbd_ana_tree_%s_%s.root", env_p, dir, rstr.str().c_str(), ostr.str().c_str());
+  const char *tree_outfile = Form("%s/%s/mbd_test_tree_%s_%s.root", env_p, dir, rstr.str().c_str(), ostr.str().c_str());
 
-  std::string fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
+  std::string fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/mbd/beam/beam_seb18-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
+  //  std::string fname1 = Form("/sphenix/user/dlis/Projects/zdc_fix/output/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
 
   if (FILE *file = fopen(fname1.c_str(),"r")){
     fclose(file);
   }
-  else
-  {
-    fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
+  else return;
+  // else
+  // {
+  //   fname1 = Form("/sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/beam-%s-%s.prdf", rstr.str().c_str(), ostr.str().c_str());
 
 
-    if (FILE *file = fopen(fname1.c_str(),"r")){
-      fclose(file);
-    }
-    else
-      {
-	std::cout << "NOOOOO ... no "<< fname1 <<std::endl;
-	return;
-      }
-  }
+  //   if (FILE *file = fopen(fname1.c_str(),"r")){
+  //     fclose(file);
+  //   }
+  //   else
+  //     {
+  // 	std::cout << "NOOOOO ... no "<< fname1 <<std::endl;
+  // 	return;
+  //     }
+  // }
 
   Fun4AllServer *se = Fun4AllServer::instance();
   recoConsts *rc = recoConsts::instance();
@@ -109,7 +111,7 @@ void Fun4All_MbdAna(const int runnumber, const int rollover = -1)
   //===============
   // ENABLE::CDB = true;
   // global tag
-  rc->set_StringFlag("CDB_GLOBALTAG","2023p002");
+  rc->set_StringFlag("CDB_GLOBALTAG","2023p003");
   // // 64 bit timestamp
   rc->set_uint64Flag("TIMESTAMP",runnumber);
 
@@ -121,21 +123,21 @@ void Fun4All_MbdAna(const int runnumber, const int rollover = -1)
   MbdReco *mbdreco = new MbdReco();
   se->registerSubsystem( mbdreco );
 
-  CaloTowerBuilder *ca_2 = new CaloTowerBuilder();
-  ca_2->set_detector_type(CaloTowerDefs::ZDC);
-  ca_2->set_nsamples(31);
-  ca_2->set_processing_type(CaloWaveformProcessing::FAST);
-  se->registerSubsystem(ca_2);
+  // CaloTowerBuilder *ca_2 = new CaloTowerBuilder();
+  // ca_2->set_detector_type(CaloTowerDefs::ZDC);
+  // ca_2->set_nsamples(31);
+  // ca_2->set_processing_type(CaloWaveformProcessing::FAST);
+  // se->registerSubsystem(ca_2);
 
-  CaloTowerCalib *calibZDC = new CaloTowerCalib("ZDC");
-  calibZDC -> set_detector_type(CaloTowerDefs::ZDC);
-  calibZDC->Verbosity(verbosity);
-  se -> registerSubsystem(calibZDC);
+  // CaloTowerCalib *calibZDC = new CaloTowerCalib("ZDC");
+  // calibZDC -> set_detector_type(CaloTowerDefs::ZDC);
+  // calibZDC->Verbosity(verbosity);
+  // se -> registerSubsystem(calibZDC);
 
 
   MbdAna *mbdana = new MbdAna("MbdAna", tree_outfile);
   se->registerSubsystem(mbdana);
 
-  se->run(nevents);
+  se->run(10000);
   se->End();
 }

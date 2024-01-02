@@ -35,6 +35,7 @@
 MbdAna::MbdAna(const std::string &name, const std::string &tree_name)
   : SubsysReco(name)
 {
+  useZDC = true;
   _tree_filename = tree_name;
 }
 
@@ -91,23 +92,23 @@ void MbdAna::ResetVars()
   for (int i = 0; i < 2; i ++)
     m_mbd_charge_sum[i] = 0.;
   for (int i = 0; i < 128; i++)
-  {
-    m_mbd_charge[i] = 0.;
-    m_mbd_time[i] = 0.;
-    m_mbd_time_t[i] = 0.;
-    m_mbd_time_q[i] = 0.;
-    m_mbd_side[i] = -999;
-    m_mbd_ipmt[i] = -999;
-  }
+    {
+      m_mbd_charge[i] = 0.;
+      m_mbd_time[i] = 0.;
+      m_mbd_time_t[i] = 0.;
+      m_mbd_time_q[i] = 0.;
+      m_mbd_side[i] = -999;
+      m_mbd_ipmt[i] = -999;
+    }
 
   for (int i = 0; i < 6; i++)
-  {
-    m_zdc_energy[i] = 0;
-  }
+    {
+      m_zdc_energy[i] = 0;
+    }
   for (int i = 0; i < 2; i++)
-  {
-    m_zdc_sum[i]  = 0;
-  }
+    {
+      m_zdc_sum[i]  = 0;
+    }
   return;
 }
 
@@ -115,9 +116,9 @@ int MbdAna::FillVars()
 {
 
   if (Verbosity())
-  {
-    std::cout << __FILE__ << " :: " << __FUNCTION__ << std::endl;
-  }
+    {
+      std::cout << __FILE__ << " :: " << __FUNCTION__ << std::endl;
+    }
   
   int npmt = _pmts_mbd->get_npmt();
   for ( int ipmt = 0; ipmt < npmt; ipmt++)
@@ -153,49 +154,52 @@ int MbdAna::FillVars()
     {
       std::cout << "MBD stuff:"<<m_mbd_vertex <<" +/- "<<m_mbd_vertex_err<<std::endl;
     }
-  int j  = 0;
-  for (unsigned int i = 0; i < _towers_zdc->size(); i++)
-  {
-    _tmp_tower = _towers_zdc->get_tower_at_channel(i);
-    _energy = _tmp_tower->get_energy();
-    if (_energy!=0) {
-      m_zdc_energy[j] = _energy;
-      m_zdc_sum[j/3] += _energy;
-      j++;
-    }
-    if (Verbosity())
+
+  if (useZDC){
+    int j  = 0;
+    for (unsigned int i = 0; i < _towers_zdc->size(); i++)
       {
-	std::cout << i <<"\t"<<j<<"t"<<_energy<<std::endl; 
+	_tmp_tower = _towers_zdc->get_tower_at_channel(i);
+	_energy = _tmp_tower->get_energy();
+	if (_energy!=0) {
+	  m_zdc_energy[j] = _energy;
+	  m_zdc_sum[j/3] += _energy;
+	  j++;
+	}
+	if (Verbosity())
+	  {
+	    std::cout << i <<"\t"<<j<<"t"<<_energy<<std::endl; 
+	  }
       }
   }
+  
 
-
-
+  
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
 int MbdAna::process_event(PHCompositeNode *topNode)
 {
   if (Verbosity())
-  {
-    std::cout << __FILE__ << " :: " << __FUNCTION__ << " :: " << __LINE__ << std::endl;
-  }
+    {
+      std::cout << __FILE__ << " :: " << __FUNCTION__ << " :: " << __LINE__ << std::endl;
+    }
 
   // Get Nodes from the Tree
   if (GetNodes(topNode))
-  {
-    std::cout << " get nodes didn't wrk " << std::endl;
-    return Fun4AllReturnCodes::ABORTRUN;
-  }
+    {
+      std::cout << " get nodes didn't wrk " << std::endl;
+      return Fun4AllReturnCodes::ABORTRUN;
+    }
 
   // Reset Arrays
   ResetVars();
 
   // Fill Arrays
   if (FillVars())
-  {
-    return Fun4AllReturnCodes::ABORTEVENT;
-  }
+    {
+      return Fun4AllReturnCodes::ABORTEVENT;
+    }
 
   ttree->Fill();
   
@@ -230,7 +234,9 @@ int MbdAna::GetNodes(PHCompositeNode *topNode)
   if (!_towers_zdc)
     {
       std::cout << "no zdc towers node " << std::endl;
-      return Fun4AllReturnCodes::ABORTRUN;
+
+      useZDC = false;
+      //      return Fun4AllReturnCodes::ABORTRUN;
     }
 
   return Fun4AllReturnCodes::EVENT_OK;
