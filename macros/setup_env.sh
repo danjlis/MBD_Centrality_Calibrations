@@ -1,11 +1,15 @@
-#!/bin/bash 
+#!/bin/bash
 
 export MBD_CENTRALITY_CALIB_PATH=/sphenix/user/dlis/Projects/centrality/
 
-export DST_SOURCE_PATH=/sphenix/lustre01/sphnxpro/commissioning/DST_ana393_2023p006/
+export MBDTREELOC=/sphenix/user/dlis/Projects/centrality/output/
 
-export DST_NAME=DST_CALO_run1auau_ana393_2023p006
+export MC_GENERATOR=hijing
 
-export CDB_TAG=2023p006
+export DST_SOURCE_PATH=/sphenix/lustre01/sphnxpro/production/
 
-#export NOPAYLOADCLIENT_CONF=/sphenix/user/dlis/Projects/centrality/cdb/macros/CDBTest/mycdb.json
+export DST_NAME=DST_CALO_run1auau_ana412_2023p015
+
+export CDB_TAG=2023p015
+
+export NOPAYLOADCLIENT_CONF=/sphenix/user/dlis/Projects/centrality/cdb/macros/CDBTest/mycdb.json

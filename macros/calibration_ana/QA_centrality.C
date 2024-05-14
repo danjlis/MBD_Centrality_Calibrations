@@ -30,6 +30,14 @@ QA_centrality::QA_centrality(int silent, int debugger)
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
     }
 
+  env_tree = new char[200];
+  sprintf(env_tree,"%s",std::getenv("MBDTREELOC"));
+  
+  if(!env_tree)
+    {
+      std::cout << "no env MBDTREELOC set."<<endl;
+    }
+
 /* struct initialization */
 
   qa_info.runnumber = 0;	  
@@ -395,6 +403,11 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
       return;
     }
+  if(!env_tree)
+    {
+      std::cout << "no env MBDTREELOC set."<<endl;
+      return;
+    }
  
  
   // Get the mbd charge sum plot to shift to.
@@ -500,7 +513,7 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
       sprintf(path, "run%d/mbdana/mbd_trees_%d.root" ,runnumber, runnumber);
     }
   
-  TFile *file = new TFile(Form("%s/output/%s", env_p, path), "r");
+  TFile *file = new TFile(Form("%s/output/%s", env_tree, path), "r");
 
   if (!file)
     {
@@ -830,6 +843,11 @@ void QA_centrality::QA_MakeDivisions(const int runnumber)
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
       return;
     }
+  if(!env_tree)
+    {
+      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      return;
+    }
  
  
   char *path = new char[100];
@@ -842,7 +860,7 @@ void QA_centrality::QA_MakeDivisions(const int runnumber)
       sprintf(path, "run%d/mbdana/mbd_trees_%d.root" ,runnumber, runnumber);
     }
   
-  TFile *file = new TFile(Form("%s/output/%s", env_p, path), "r");
+  TFile *file = new TFile(Form("%s/output/%s", env_tree, path), "r");
 
   if (!file)
     {
@@ -937,6 +955,11 @@ void QA_centrality::QA_MBDChannels(const int runnumber)
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
       return;
     }
+  if(!env_tree)
+    {
+      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      return;
+    }
   
   // Output from the centrality module.
 
@@ -950,7 +973,7 @@ void QA_centrality::QA_MBDChannels(const int runnumber)
       sprintf(path, "run%d/mbdana/mbd_trees_%d.root" ,runnumber, runnumber);
     }
   
-  TFile *file = new TFile(Form("%s/output/%s", env_p, path), "r");
+  TFile *file = new TFile(Form("%s/output/%s", env_tree, path), "r");
   
   if (!file)
     {
@@ -1042,8 +1065,13 @@ void QA_centrality::QA_ZDCCheck(const int runnumber)
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
       return;
     }
+   if(!env_tree)
+    {
+      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      return;
+    }
 
-  TFile *f = new TFile(Form("%s/output/run%d/mbdana/mbd_trees_%d.root", env_p, runnumber, runnumber), "r");
+  TFile *f = new TFile(Form("%s/output/run%d/mbdana/mbd_trees_%d.root", env_tree, runnumber, runnumber), "r");
   TTree *t = (TTree*) f->Get("T");
 
   TH1D *h_zdc_sum_n = new TH1D("h_zdc_sum_n", ";ZDC sum [GeV]; Counts", 1000, 0, 10000);
