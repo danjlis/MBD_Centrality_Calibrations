@@ -57,12 +57,14 @@ class QA_centrality{
   };
 
   void QA_ReferenceRun(int runnumber);
+  void QA_MC(std::string mc_generator);
   void Start_QA_Centrality(int runnumber);
   double NBD_getValue(int n, double mu, double k);
 
   void QA_MBDChannels(const int runnumber);
   void QA_ZDCCheck(const int runnumber);
   void QA_MakeChargeSum(const int runnumber);
+  void QA_MakeDivisions(const int runnumber);
   void QA_MakeCentralityCalibrations(const int runnumber, const bool doVertexSelection = 1, const bool use_shifted = false, const bool use_balanced = false);
   void QA_CentralityCheck(const int runnumber);
 
@@ -72,6 +74,7 @@ class QA_centrality{
   void SetReferenceRun(int ref_run) { reference_run = ref_run ; }
   void SetChargeCut(int cut) { cthresh = cut;}
   void SetVertexCut(int cut) { z_cut = cut;}
+  void SetNDivs(int nd) { ndivs = nd;}
   void SetZDCCut(int cut) { zdc_cut = cut;}
   void SetMbdNSCut(int south_cut, int north_cut) { charge_sum_south_cut = south_cut; charge_sum_north_cut = north_cut; }
   void SetTrigEffMUK(double te, double mu, double k ) { trigeff = te; set_mu = mu; set_k = k; }
@@ -85,6 +88,8 @@ class QA_centrality{
 
   bool hasZDC = true;
   int reference_run = 23696;
+  bool isSim = false;
+  int ndivs = 20;
   double cthresh = 0.25;
   double z_cut = 60.;
   double charge_sum_north_cut = 10.;
@@ -94,5 +99,7 @@ class QA_centrality{
   double set_mu = 0.0;
   double set_k = 0.0;
   int mbd_hit_cut = 2;
+
+  std::map<int, std::string> mc_map{};
 };
 #endif
