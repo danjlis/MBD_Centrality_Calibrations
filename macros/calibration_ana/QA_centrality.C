@@ -28,6 +28,7 @@ QA_centrality::QA_centrality(int silent, int debugger)
   if(!env_p)
     {
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      return;
     }
 
   env_tree = new char[200];
@@ -36,6 +37,7 @@ QA_centrality::QA_centrality(int silent, int debugger)
   if(!env_tree)
     {
       std::cout << "no env MBDTREELOC set."<<endl;
+      return;
     }
 
 /* struct initialization */
@@ -145,24 +147,26 @@ void QA_centrality::QA_ReferenceRun(
 
   qa_info.runnumber = runnumber;
 // ZDC Check for percentage that meets certain cuts.
-//  QA_ZDCCheck(runnumber);
+  QA_ZDCCheck(runnumber);
 // Go through and make distributions for MBD channels (charge and time)
-  // QA_MBDChannels(runnumber);
+  QA_MBDChannels(runnumber);
 // Charge sum plots are made here with scaled and with all cuts
-  //QA_MakeChargeSum(runnumber);
+  QA_MakeChargeSum(runnumber);
 // Centrality Calibrations + NBD+Glauber Fit is here
-  //QA_MakeDivisions(runnumber);
-
+  
   QA_MakeCentralityCalibrations(runnumber, 1);
+
+  QA_MakeDivisions(runnumber);  
   //CentralityCalibrations(runnumber, 1);
-  //QA_CentralityCheck(runnumber);
+  SetReferenceRun(runnumber);
+  QA_CentralityCheck(runnumber);
   return;
 }
 void QA_centrality::QA_MC(
 			  const std::string mc_generator
 		   )
 {
-  cthresh = 60;
+  cthresh = 0.25;
   isSim = true;
   if (strcmp(mc_generator.c_str(), "hijing") == 0)
     qa_info.runnumber = 0;
@@ -184,7 +188,7 @@ void QA_centrality::QA_MC(
   QA_MakeChargeSum(runnumber);
 // Centrality Calibrations + NBD+Glauber Fit is here
   //QA_MakeCentralityCalibrations(runnumber, 1);
-  //QA_CentralityCheck(runnumber);
+  QA_MakeDivisions(runnumber);
 
   return;
 }
@@ -205,8 +209,8 @@ void QA_centrality::Start_QA_Centrality(
 // Centrality Calibrations + NBD+Glauber Fit is here
 //  QA_MakeCentralityCalibrations(runnumber, 1);
 //  QA_MakeCentralityCalibrations(runnumber, 1, true, false);
-//  SetTrigEffMUK(.90, 4.47, 1.22);
-//  QA_MakeCentralityCalibrations(runnumber, 1, false, false);
+  SetTrigEffMUK(.91, 4.39375, 0.859025);
+  QA_MakeCentralityCalibrations(runnumber, 1, true, false);
 //  QA_MakeCentralityCalibrations(runnumber, 1, true, false);
 // Check the centrality bins
 
@@ -227,58 +231,103 @@ void QA_centrality::QA_CentralityCheck(const int runnumber)
       cout << "No file exists for this charge sum plot... exiting" << endl;
       return;
     } 
+  TFile *fchargesumref = new TFile(Form("%s/output/plots/mbdana_charge_sum_%d.root", env_p, reference_run), "r");
+  if (!fchargesumref)
+    {
+      cout << "No file exists for this charge sum plot... exiting" << endl;
+      return;
+    } 
+
+  TH1D *h_run_charge_sum = (TH1D*) fchargesum->Get("h_charge_sum_min_bias_w_vertex_cut");
+  if (!h_run_charge_sum)
+    {
+      std::cout << "nah fam" << std::endl;
+    }
+  TH1D *h_run_charge_sum_ref = (TH1D*) fchargesumref->Get("h_charge_sum_min_bias_w_vertex_cut");
+  if (!h_run_charge_sum_ref)
+    {
+      std::cout << "nah fam no ref" << std::endl;
+    }
+
+  float scale_factor = h_run_charge_sum_ref->GetMean()/h_run_charge_sum->GetMean();
   if (debug) std::cout << __LINE__ << std::endl;
-  TH1D *h_charge_sum_bal = (TH1D*) fchargesum->Get("h_charge_sum_min_bias_w_vertex_cut_balanced");
-  TH1D *h_charge_sum_sca = (TH1D*) fchargesum->Get("h_charge_sum_min_bias_w_vertex_cut_scaled");
-  TH1D *h_charge_sum_bal_sca = (TH1D*) fchargesum->Get("h_charge_sum_min_bias_w_vertex_cut_balanced_scaled");
-  TH1D *h_charge_sum = (TH1D*) fchargesum->Get("h_charge_sum_min_bias_w_vertex_cut");
-  TH1D *h_charge_sum_fine_bal = (TH1D*) fchargesum->Get("h_charge_sum_fine_min_bias_w_vertex_cut_balanced");
-  TH1D *h_charge_sum_fine_sca = (TH1D*) fchargesum->Get("h_charge_sum_fine_min_bias_w_vertex_cut_scaled");
-  TH1D *h_charge_sum_fine_bal_sca = (TH1D*) fchargesum->Get("h_charge_sum_fine_min_bias_w_vertex_cut_balanced_scaled");
-  TH1D *h_charge_sum_fine = (TH1D*) fchargesum->Get("h_charge_sum_fine_min_bias_w_vertex_cut");
 
-  if (!h_charge_sum)
+  char *path = new char[100];
+  if (isSim)
     {
-      cout << "No histogram exists for this charge sum plot... exiting" << endl;
-      return;
-    } 
-  if (!h_charge_sum_bal)
+      sprintf(path, "%s/mbdana/mbd_trees_%s.root" , mc_map[runnumber].c_str(), mc_map[runnumber].c_str());
+    }
+  else
     {
-      cout << "No histogram exists for this charge sum plot... exiting" << endl;
-      return;
-    } 
-  if (!h_charge_sum_sca)
-    {
-      cout << "No histogram exists for this charge sum plot... exiting" << endl;
-      return;
-    } 
-  if (!h_charge_sum_bal_sca)
-    {
-      cout << "No histogram exists for this charge sum plot... exiting" << endl;
-      return;
-    } 
+      sprintf(path, "run%d/mbdana/mbd_trees_%d.root" ,runnumber, runnumber);
+    }
+  
+  TFile *file = new TFile(Form("%s/output/%s", env_tree, path), "r");
 
-  if (!h_charge_sum_fine)
+  if (!file)
     {
-      cout << "No histogram exists for this charge sum_fine plot... exiting" << endl;
+      std::cout << " No Tree File found " <<std::endl;
       return;
-    } 
-  if (!h_charge_sum_fine_bal)
-    {
-      cout << "No histogram exists for this charge sum_fine plot... exiting" << endl;
-      return;
-    } 
-  if (!h_charge_sum_fine_sca)
-    {
-      cout << "No histogram exists for this charge sum_fine plot... exiting" << endl;
-      return;
-    } 
-  if (!h_charge_sum_fine_bal_sca)
-    {
-      cout << "No histogram exists for this charge sum_fine plot... exiting" << endl;
-      return;
-    } 
+    }
 
+  // Making fresh histograms
+
+
+  float zdc_sum[2];
+  float mbd_vertex;
+  float mbd_charge_sum[2];
+  float mbd_charge[128];
+  float mbd_time[128];
+
+
+  std::vector<float> v_mbd_charge_sum{};
+  TTree *t = (TTree*)file->Get("T");
+
+  t->SetBranchAddress("zdc_sum",zdc_sum);
+  t->SetBranchAddress("mbd_charge_sum",mbd_charge_sum);
+  t->SetBranchAddress("mbd_charge",mbd_charge);
+  t->SetBranchAddress("mbd_time",mbd_time);
+  t->SetBranchAddress("mbd_vertex",&mbd_vertex);
+
+  //// vertex
+  int hits_n = 0;
+  int hits_s = 0;      
+  float nsum = 0;
+  float ssum = 0;
+  if (!silence)   cout <<"NEvents = "<<t->GetEntries()<<std::endl;
+
+  for (int i = 0 ; i < (debug ? 10 : t->GetEntries()); i++)
+    {
+      bool minbias = false;
+      hits_n = 0;
+      hits_s = 0;
+      ssum = 0;
+      nsum = 0;
+      t->GetEntry(i);
+
+      if (!silence) if (i%20000 == 0) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
+      if (!silence) if (i%20000 == 0) std::cout <<" ---------   " << mbd_charge_sum[0] << " + " <<mbd_charge_sum[1]<< "    ----"<<std::endl;
+      for (int ich = 0 ; ich < 64; ich++)
+	{
+	  if (mbd_time[ich] < 25. && mbd_charge[ich] > cthresh)
+	    {
+	      hits_s++;
+	      ssum+=mbd_charge[ich];
+	    }
+	  if (mbd_time[ich+64] < 25. && mbd_charge[ich+64] > cthresh)
+	    {
+	      hits_n++;
+	      nsum += mbd_charge[ich + 64];
+	    } 
+	}
+      if (hits_s < 2 || hits_n < 2) continue; 
+      if (fabs(mbd_vertex) > z_cut) continue;
+      if (!isSim && ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
+      if (hasZDC && !isSim && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) continue;
+      v_mbd_charge_sum.push_back(ssum + nsum);
+    }
+  int size = v_mbd_charge_sum.size();
+  std::sort(v_mbd_charge_sum.begin(), v_mbd_charge_sum.end());
   // Load in centrality calibrations
 
   TFile *fcentralitycalib = new TFile(Form("%s/calib/mbdana_centrality_%d.root", env_p, reference_run), "r");
@@ -309,8 +358,6 @@ void QA_centrality::QA_CentralityCheck(const int runnumber)
   int cent_divs = tn_centrality->GetEntries();
   for (int i = 0; i < cent_divs; i++)
     {
-
-
       tn_centrality->GetEntry(i);
       std::cout <<" Calib Entry " << i <<" : "<<  low << std::endl;
       centrality_bins[i] = low;
@@ -320,31 +367,38 @@ void QA_centrality::QA_CentralityCheck(const int runnumber)
   TH1D *h_cent_bin = new TH1D("hcent_bins","", ndivs, -0.5, (float) ndivs - 0.5);
   TH1D *h_cent_bin_sca = new TH1D("hcent_bins_sca","", ndivs, -0.5, (float) ndivs - 0.5);
 
-  int nbins = h_charge_sum_fine->GetNbinsX();
+
   int i_cent_bin = 0;
-  for (int i = nbins; i > 0; i--)
+  int count = 0;
+  int i_cent_bin_sca = 0;
+  int count_sca = 0;
+  std::reverse(v_mbd_charge_sum.begin(), v_mbd_charge_sum.end());
+  std::cout << "scale factor " << scale_factor<<std::endl;
+  for (auto &sum : v_mbd_charge_sum)
     {
-      if (h_charge_sum_fine->GetBinCenter(i) > 2100.) continue;
-      while (h_charge_sum_fine->GetBinCenter(i) < centrality_bins[i_cent_bin]) i_cent_bin++;
-      h_cent_bin->Fill(i_cent_bin, h_charge_sum_fine->GetBinContent(i));
+      if (sum*scale_factor < centrality_bins[i_cent_bin_sca])
+	{
+	  h_cent_bin_sca->SetBinContent(i_cent_bin_sca, count_sca);
+	  h_cent_bin_sca->SetBinError(i_cent_bin_sca, sqrt(count_sca));
+	  std::cout << i_cent_bin_sca << " Found "<<count_sca <<std::endl;
+	  count_sca = 0;
+	  i_cent_bin_sca++;
+	}
+      count_sca++;
     }
 
-
-  nbins = h_charge_sum_fine_sca->GetNbinsX();
-  i_cent_bin = 0;
-  for (int i = nbins; i > 0; i--)
+  for (auto &sum : v_mbd_charge_sum)
     {
-      if (h_charge_sum_fine_sca->GetBinCenter(i) > 2100.) continue;
-      while (h_charge_sum_fine_sca->GetBinCenter(i) < centrality_bins[i_cent_bin]) i_cent_bin++;
-      h_cent_bin_sca->Fill(i_cent_bin, h_charge_sum_fine_sca->GetBinContent(i));
+      if (sum < centrality_bins[i_cent_bin])
+	{
+	  h_cent_bin->SetBinContent(i_cent_bin, count);
+	  h_cent_bin->SetBinError(i_cent_bin, sqrt(count));
+	  std::cout << i_cent_bin << " Found "<<count <<std::endl;
+	  count = 0;
+	  i_cent_bin++;
+	}
+      count++;	  
     }
-
-  for (int i = 1; i <= ndivs; i++)
-    {
-      h_cent_bin->SetBinError(i, sqrt(h_cent_bin->GetBinContent(i)));
-      h_cent_bin_sca->SetBinError(i, sqrt(h_cent_bin_sca->GetBinContent(i)));
-    }
-
 
   TF1 *flatline = new TF1("flatline","[0]",-0.5, (float) ndivs - .5);
   float match = 1./((float)ndivs);
@@ -414,7 +468,6 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
   float mbd_charge_factor = 1.;
   float mbd_charge_factor_bal = 1.;
   
-  if (!silence) cout << "reference_run: " <<reference_run<< std::endl;
   if (reference_run)
     {
       if (!silence) cout << "reference_run: " <<reference_run<< std::endl;
@@ -424,11 +477,10 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
       if (!h_shift) return;
       h_shift->SetName("h_charge_sum_shift");
       mbd_charge_factor = h_shift->GetMean();
-      TH1D *h_shift2 = (TH1D*) fout->Get("h_charge_sum_min_bias_w_vertex_cut_balanced");
-      if (!h_shift2) return;
-      h_shift2->SetName("h_charge_sum_bal");
-      mbd_charge_factor_bal = h_shift2->GetMean();
-      
+      if (!silence) std::cout << "MBD Scale Factor: "<<mbd_charge_factor<<std::endl;
+      TH1D *h_shift2_n = (TH1D*) fout->Get("h_charge_sum_min_bias_w_vertex_cut_n");
+      TH1D *h_shift2_s = (TH1D*) fout->Get("h_charge_sum_min_bias_w_vertex_cut_s");
+      mbd_charge_factor_bal = h_shift2_n->GetMean() / h_shift2_s->GetMean();
     }
   
   float low_t = -20.;
@@ -542,7 +594,8 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
   //// vertex
   int hits_n = 0;
   int hits_s = 0;      
-
+  float nsum = 0;
+  float ssum = 0;
   if (!silence)   cout <<"NEvents = "<<t->GetEntries()<<std::endl;
 
   for (int i = 0 ; i < (debug ? 10 : t->GetEntries()); i++)
@@ -550,98 +603,112 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
       minbias = false;
       hits_n = 0;
       hits_s = 0;      
+      nsum = 0;
+      ssum = 0;
       t->GetEntry(i);
 
       if (!silence) if (i%20000 == 0) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
       if (!silence) if (i%20000 == 0) std::cout <<" ---------   " << mbd_charge_sum[0] << " + " <<mbd_charge_sum[1]<< "    ----"<<std::endl;
       for (int ich = 0 ; ich < 64; ich++)
 	{
-	  if (mbd_charge[ich] > cthresh)
-	    hits_s++;
-	  if (mbd_charge[ich+64] > cthresh)
-	    hits_n++;
-	  
+	  if (mbd_time[ich] < 25. && mbd_charge[ich] > cthresh)
+	    {
+	      hits_s++;
+	      ssum += mbd_charge[ich];
+	    }
+	  if (mbd_time[ich+64] < 25. && mbd_charge[ich+64] > cthresh)
+	    {
+	      hits_n++;
+	      nsum += mbd_charge[ich+64];
+	    }
 	} 
       if (!silence) if (i%20000 == 0) std::cout <<" ---------   " << hits_s<< " + " <<hits_n<< "    ----"<<std::endl;
       // don't continue if this does not work.
       if (hits_s < 2 || hits_n < 2) continue; 
 
-      h2_charge_sum_ns->Fill(mbd_charge_sum[0], mbd_charge_sum[1]);
-      h_charge_sum->Fill(mbd_charge_sum[0] + mbd_charge_sum[1]);
-      h_charge_sum_fine->Fill(mbd_charge_sum[0] + mbd_charge_sum[1]);
+      h2_charge_sum_ns->Fill(ssum, nsum);
+      h_charge_sum->Fill(ssum + nsum);
+      h_charge_sum_fine->Fill(ssum + nsum);
 
       for (int j = 0; j < 2; j++) h_charge_sum_ns[j]->Fill(mbd_charge_sum[j]);
       if (!silence) if (i%20000 == 0) std::cout <<" ---------   " << mbd_vertex<< "          ----"<<std::endl;		      
 
-      if (!(mbd_charge_sum[0] > charge_sum_south_cut && mbd_charge_sum[1] < charge_sum_north_cut))
+      if (!(ssum > charge_sum_south_cut && nsum < charge_sum_north_cut))
 	{
-	  h_charge_sum_min_bias->Fill(mbd_charge_sum[0] + mbd_charge_sum[1]);
+	  h_charge_sum_min_bias->Fill(ssum + nsum);
 	}
       if (fabs(mbd_vertex) > z_cut) continue;
 
       if (hasZDC && !isSim) 
 	{
-	  h2_charge_sum_v_zdc->Fill(mbd_charge_sum[0]+mbd_charge_sum[1], zdc_sum[0] + zdc_sum[1]);
-	  hp_charge_sum_v_zdc->Fill(mbd_charge_sum[0]+mbd_charge_sum[1], zdc_sum[0] + zdc_sum[1]);
+	  h2_charge_sum_v_zdc->Fill(ssum+nsum, zdc_sum[0] + zdc_sum[1]);
+	  hp_charge_sum_v_zdc->Fill(ssum+nsum, zdc_sum[0] + zdc_sum[1]);
 	}
 
-      h_charge_sum_vtx->Fill(mbd_charge_sum[0] + mbd_charge_sum[1]);
-      h_charge_sum_fine_vtx->Fill(mbd_charge_sum[0] + mbd_charge_sum[1]);
+      h_charge_sum_vtx->Fill(ssum + nsum);
+      h_charge_sum_fine_vtx->Fill(ssum + nsum);
       for (int j = 0; j < 2; j++) h_charge_sum_vtx_ns[j]->Fill(mbd_charge_sum[j]);      
 
-      if (!isSim && mbd_charge_sum[0] > charge_sum_south_cut && mbd_charge_sum[1] < charge_sum_north_cut) continue;
+      if (!isSim && ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
 
-      h2_charge_sum_ns_cut->Fill(mbd_charge_sum[0], mbd_charge_sum[1]);
+      h2_charge_sum_ns_cut->Fill(ssum, nsum);
 
       if (hasZDC && !isSim && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) continue;
       if (hasZDC && !isSim) 
 	{
-	  h2_charge_sum_v_zdc_mb->Fill(mbd_charge_sum[0]+mbd_charge_sum[1], zdc_sum[0] + zdc_sum[1]);
-	  hp_charge_sum_v_zdc_mb->Fill(mbd_charge_sum[0]+mbd_charge_sum[1], zdc_sum[0] + zdc_sum[1]);
+	  h2_charge_sum_v_zdc_mb->Fill(ssum+nsum, zdc_sum[0] + zdc_sum[1]);
+	  hp_charge_sum_v_zdc_mb->Fill(ssum+nsum, zdc_sum[0] + zdc_sum[1]);
 	}
-      h_charge_sum_min_bias_w_vertex_cut->Fill(mbd_charge_sum[0] + mbd_charge_sum[1]);
-      h_charge_sum_fine_min_bias_w_vertex_cut->Fill(mbd_charge_sum[0] + mbd_charge_sum[1]);
-      for (int j = 0; j < 2; j++) h_charge_sum_min_bias_w_vertex_cut_ns[j]->Fill(mbd_charge_sum[j]);      
-      if (!silence) if (i%20000 == 0) std::cout <<" ---------   " << mbd_charge_sum[0] + mbd_charge_sum[1] << "          ----"<<std::endl;		      
+      h_charge_sum_min_bias_w_vertex_cut->Fill(ssum + nsum);
+      h_charge_sum_fine_min_bias_w_vertex_cut->Fill(ssum + nsum);
+      for (int j = 0; j < 2; j++) h_charge_sum_min_bias_w_vertex_cut_ns[j]->Fill((j?nsum:ssum));      
+      if (!silence) if (i%20000 == 0) std::cout <<" ---------   " << ssum + nsum << "          ----"<<std::endl;		      
     }
 
 
   float ns_scale = h_charge_sum_ns[1]->GetMean()/h_charge_sum_ns[0]->GetMean();
+
   float ns_scale_vtx = h_charge_sum_vtx_ns[1]->GetMean()/h_charge_sum_vtx_ns[0]->GetMean();
   float ns_scale_min_bias_w_vertex_cut = h_charge_sum_min_bias_w_vertex_cut_ns[1]->GetMean()/h_charge_sum_min_bias_w_vertex_cut_ns[0]->GetMean();
-
+  ns_scale_min_bias_w_vertex_cut /= mbd_charge_factor_bal; 
   for (int i = 0 ; i < (debug ? 10 : t->GetEntries()); i++)
     {
       minbias = false;
       hits_n = 0;
       hits_s = 0;      
+      nsum = 0;
+      ssum = 0;
       t->GetEntry(i);
 
       if (!silence) if (i%20000 == 0) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
-
+      if (!silence) if (i%20000 == 0) std::cout <<" ---------   " << mbd_charge_sum[0] << " + " <<mbd_charge_sum[1]<< "    ----"<<std::endl;
       for (int ich = 0 ; ich < 64; ich++)
 	{
-	  if (mbd_charge[ich] > cthresh)
-	    hits_s++;
-	  if (mbd_charge[ich+64] > cthresh)
-	    hits_n++;
-	      mbd_charge[ich];	      	      
+	  if (mbd_time[ich] < 25. && mbd_charge[ich] > cthresh)
+	    {
+	      hits_s++;
+	      ssum += mbd_charge[ich];
+	    }
+	  if (mbd_time[ich+64] < 25. && mbd_charge[ich+64] > cthresh)
+	    {
+	      hits_n++;
+	      nsum += mbd_charge[ich+64];
+	    }
 	} 
-
-      // don't continue if this does not work.
+// don't continue if this does not work.
       if (hits_s < 2 || hits_n < 2) continue; 
       
-      h_charge_sum_balanced->Fill(mbd_charge_sum[1] + mbd_charge_sum[0]*ns_scale);
-      h_charge_sum_fine_balanced->Fill(mbd_charge_sum[1] + mbd_charge_sum[0]*ns_scale);
+      h_charge_sum_balanced->Fill(nsum + ssum*ns_scale);
+      h_charge_sum_fine_balanced->Fill(nsum + ssum*ns_scale);
 		      
       if (fabs(mbd_vertex) > z_cut) continue;
 
-      h_charge_sum_vtx_balanced->Fill(mbd_charge_sum[1] + mbd_charge_sum[0]*ns_scale_vtx);
-      h_charge_sum_fine_vtx_balanced->Fill(mbd_charge_sum[1] + mbd_charge_sum[0]*ns_scale_vtx);
+      h_charge_sum_vtx_balanced->Fill(nsum + ssum*ns_scale_vtx);
+      h_charge_sum_fine_vtx_balanced->Fill(nsum + ssum*ns_scale_vtx);
       if (hasZDC && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) continue;
-      if (mbd_charge_sum[0] > charge_sum_south_cut && mbd_charge_sum[1] < charge_sum_north_cut) continue;
-      h_charge_sum_min_bias_w_vertex_cut_balanced->Fill(mbd_charge_sum[1] + mbd_charge_sum[0]*ns_scale_min_bias_w_vertex_cut);
-      h_charge_sum_fine_min_bias_w_vertex_cut_balanced->Fill(mbd_charge_sum[1] + mbd_charge_sum[0]*ns_scale_min_bias_w_vertex_cut);
+      if (ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
+      h_charge_sum_min_bias_w_vertex_cut_balanced->Fill(nsum + ssum*ns_scale_min_bias_w_vertex_cut);
+      h_charge_sum_fine_min_bias_w_vertex_cut_balanced->Fill(nsum + ssum*ns_scale_min_bias_w_vertex_cut);
     }
 
   float scale;
@@ -653,51 +720,66 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
 
   if (reference_run && !isSim)
     {
+      std::cout << "Scaling charge sum."<< std::endl;
+
       scale = mbd_charge_factor/(h_charge_sum->GetMean());
       scale_bal = mbd_charge_factor_bal/(h_charge_sum_balanced->GetMean());
       scale_vtx = mbd_charge_factor/(h_charge_sum_vtx->GetMean());
       scale_vtx_bal = mbd_charge_factor_bal/(h_charge_sum_vtx_balanced->GetMean());
       scale_mb_vtx = mbd_charge_factor/(h_charge_sum_min_bias_w_vertex_cut->GetMean());
       scale_mb_vtx_bal = mbd_charge_factor_bal/(h_charge_sum_min_bias_w_vertex_cut_balanced->GetMean());
-
+      int count[4] = {0};
+      std::cout << "Scaling by " << scale_mb_vtx << std::endl;
       for (int i = 0 ; i < (debug ? 10 : t->GetEntries()); i++)
 	{
 	  hits_n = 0;
 	  hits_s = 0;      
+	  ssum=0;
+	  nsum=0;
+
 	  t->GetEntry(i);
 
 	  if (!silence) if (i%20000 == 0) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
 
 	  for (int ich = 0 ; ich < 64; ich++)
 	    {
-	      if (mbd_charge[ich] > cthresh)
-		hits_s++;
-	      if (mbd_charge[ich+64] > cthresh)
-		hits_n++;
-	      mbd_charge[ich];	      	      
+	      if (mbd_time[ich] < 25. && mbd_charge[ich] > cthresh)
+		{
+		  ssum+=mbd_charge[ich];
+		  hits_s++;
+		}
+	      if (mbd_time[ich+64] < 25. && mbd_charge[ich+64] > cthresh)
+		{
+		  nsum += mbd_charge[ich+64];
+		  hits_n++;
+		}	
+
 	    } 
 
 	  // don't continue if this does not work.
-	  if (hits_s < mbd_hit_cut || hits_n < mbd_hit_cut) continue; 
-      
-	  h_charge_sum_scaled->Fill(scale*(mbd_charge_sum[0] + mbd_charge_sum[1]));
-	  h_charge_sum_fine_scaled->Fill(scale*(mbd_charge_sum[0] + mbd_charge_sum[1]));
-	  h_charge_sum_balanced_scaled->Fill(scale_bal*(mbd_charge_sum[0] + mbd_charge_sum[1]*ns_scale));
-	  h_charge_sum_fine_balanced_scaled->Fill(scale_bal*(mbd_charge_sum[0] + mbd_charge_sum[1]*ns_scale));
+	  if (hits_s < 2 || hits_n < 2) continue; 
+	  count[0]++;
+	  h_charge_sum_scaled->Fill(scale*(ssum + nsum));
+	  h_charge_sum_fine_scaled->Fill(scale*(ssum + nsum));
+	  h_charge_sum_balanced_scaled->Fill(scale_bal*(ssum + nsum*ns_scale));
+	  h_charge_sum_fine_balanced_scaled->Fill(scale_bal*(ssum + nsum*ns_scale));
 		      
 	  if (fabs(mbd_vertex) > z_cut) continue;
+	  count[1]++;
+	  h_charge_sum_vtx_scaled->Fill(scale_vtx*(ssum + nsum));
+	  h_charge_sum_fine_vtx_scaled->Fill(scale_vtx*(ssum + nsum));
+	  h_charge_sum_vtx_balanced_scaled->Fill(scale_vtx_bal*(ssum + nsum*ns_scale_vtx));
+	  h_charge_sum_fine_vtx_balanced_scaled->Fill(scale_vtx_bal*(ssum + nsum*ns_scale_vtx));
 
-	  h_charge_sum_vtx_scaled->Fill(scale_vtx*(mbd_charge_sum[0] + mbd_charge_sum[1]));
-	  h_charge_sum_fine_vtx_scaled->Fill(scale_vtx*(mbd_charge_sum[0] + mbd_charge_sum[1]));
-	  h_charge_sum_vtx_balanced_scaled->Fill(scale_vtx_bal*(mbd_charge_sum[0] + mbd_charge_sum[1]*ns_scale_vtx));
-	  h_charge_sum_fine_vtx_balanced_scaled->Fill(scale_vtx_bal*(mbd_charge_sum[0] + mbd_charge_sum[1]*ns_scale_vtx));
-
-	  if (mbd_charge_sum[0] > charge_sum_south_cut && mbd_charge_sum[1] < charge_sum_north_cut) continue;
+	  if (ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
+	  count[2]++;
 	  if (hasZDC && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) continue;
-	  h_charge_sum_min_bias_w_vertex_cut_scaled->Fill(scale_mb_vtx*(mbd_charge_sum[0] + mbd_charge_sum[1]));
-	  h_charge_sum_fine_min_bias_w_vertex_cut_scaled->Fill(scale_mb_vtx*(mbd_charge_sum[0] + mbd_charge_sum[1]));
-	  h_charge_sum_min_bias_w_vertex_cut_balanced_scaled->Fill(scale_mb_vtx_bal*(mbd_charge_sum[0] + mbd_charge_sum[1]*ns_scale_min_bias_w_vertex_cut));
+	  count[3]++;
+	  h_charge_sum_min_bias_w_vertex_cut_scaled->Fill(scale_mb_vtx*(ssum + nsum));
+	  h_charge_sum_fine_min_bias_w_vertex_cut_scaled->Fill(scale_mb_vtx*(ssum + nsum));
+	  h_charge_sum_min_bias_w_vertex_cut_balanced_scaled->Fill(scale_mb_vtx_bal*(ssum + nsum*ns_scale_min_bias_w_vertex_cut));
 	}
+      std::cout << " Cuts passed : " << count[0] << " -- > " <<count[1] << " -- > " <<count[2] << " -- > " <<count[3] << " "<<std::endl;
 
  
     }
@@ -784,21 +866,20 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
       h_charge_sum_min_bias_w_vertex_cut_ns[j]->Write();
     }
 
-  if (reference_run)
-    {
-      h_charge_sum_fine_balanced_scaled->Write();
-      h_charge_sum_fine_vtx_balanced_scaled->Write();
-      h_charge_sum_fine_min_bias_w_vertex_cut_balanced_scaled->Write();
-      h_charge_sum_fine_scaled->Write();
-      h_charge_sum_fine_vtx_scaled->Write();
-      h_charge_sum_fine_min_bias_w_vertex_cut_scaled->Write();
-      h_charge_sum_balanced_scaled->Write();
-      h_charge_sum_vtx_balanced_scaled->Write();
-      h_charge_sum_min_bias_w_vertex_cut_balanced_scaled->Write();
-      h_charge_sum_scaled->Write();
-      h_charge_sum_vtx_scaled->Write();
-      h_charge_sum_min_bias_w_vertex_cut_scaled->Write();
-    }
+
+  h_charge_sum_fine_balanced_scaled->Write();
+  h_charge_sum_fine_vtx_balanced_scaled->Write();
+  h_charge_sum_fine_min_bias_w_vertex_cut_balanced_scaled->Write();
+  h_charge_sum_fine_scaled->Write();
+  h_charge_sum_fine_vtx_scaled->Write();
+  h_charge_sum_fine_min_bias_w_vertex_cut_scaled->Write();
+  h_charge_sum_balanced_scaled->Write();
+  h_charge_sum_vtx_balanced_scaled->Write();
+  h_charge_sum_min_bias_w_vertex_cut_balanced_scaled->Write();
+  h_charge_sum_scaled->Write();
+  h_charge_sum_vtx_scaled->Write();
+  h_charge_sum_min_bias_w_vertex_cut_scaled->Write();
+
   fout->Close();
   delete h_charge_sum;
   delete h_charge_sum_vtx;
@@ -890,32 +971,45 @@ void QA_centrality::QA_MakeDivisions(const int runnumber)
   //// vertex
   int hits_n = 0;
   int hits_s = 0;      
-
+  float nsum = 0;
+  float ssum = 0;
   if (!silence)   cout <<"NEvents = "<<t->GetEntries()<<std::endl;
 
   for (int i = 0 ; i < (debug ? 10 : t->GetEntries()); i++)
     {
       bool minbias = false;
       hits_n = 0;
-      hits_s = 0;      
+      hits_s = 0;
+      ssum = 0;
+      nsum = 0;
       t->GetEntry(i);
 
       if (!silence) if (i%20000 == 0) std::cout <<" ------------------------------- Event: "<<i<< " -------------------------------"<<std::endl;
       if (!silence) if (i%20000 == 0) std::cout <<" ---------   " << mbd_charge_sum[0] << " + " <<mbd_charge_sum[1]<< "    ----"<<std::endl;
+      if (isSim)
+	{
+	  v_mbd_charge_sum.push_back(mbd_charge_sum[0] + mbd_charge_sum[1]);
+	}
+
       for (int ich = 0 ; ich < 64; ich++)
 	{
-	  if (mbd_charge[ich] > cthresh)
-	    hits_s++;
-	  if (mbd_charge[ich+64] > cthresh)
-	    hits_n++;
-	  
-	} 
+	  if (mbd_time[ich] < 25. && mbd_charge[ich] > cthresh)
+	    {
+	      hits_s++;
+	      ssum+=mbd_charge[ich];
+	    }
+	  if (mbd_time[ich+64] < 25. && mbd_charge[ich+64] > cthresh)
+	    {
+	      hits_n++;
+	      nsum += mbd_charge[ich + 64];
+	    } 
+	}
       if (hits_s < 2 || hits_n < 2) continue; 
       if (fabs(mbd_vertex) > z_cut) continue;
-      if (!isSim && mbd_charge_sum[0] > charge_sum_south_cut && mbd_charge_sum[1] < charge_sum_north_cut) continue;
+      if (!isSim && ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
 
       if (hasZDC && !isSim && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) continue;
-      v_mbd_charge_sum.push_back(mbd_charge_sum[0] + mbd_charge_sum[1]);
+      v_mbd_charge_sum.push_back(ssum + nsum);
     }
   int size = v_mbd_charge_sum.size();
   std::cout << " Starting Sort " << size << " events.";
@@ -929,19 +1023,21 @@ void QA_centrality::QA_MakeDivisions(const int runnumber)
 
   TFile *fcalib = new TFile(calib_file_name, "recreate");
   TNtuple *ts = new TNtuple("tn_centrality", "holds centrality divisions", "bin:low:high");
-  for (int i = 1; i < 99 ; i++)
+  int divs = 100;
+  if (!isSim) divs = 91;
+  for (int i = 1; i < 100 ; i++)
     {
-      int bin = floor(i*size/91);
-      int bin1 = floor((i-1)*size/91);
+      int bin = floor(i*size/divs);
+      int bin1 = floor((i-1)*size/divs);
       ts->Fill(i, v_mbd_charge_sum[size - 1 - bin], v_mbd_charge_sum[size - 1 - bin1]);
     }
 
   fcalib->Write();
   fcalib->Close();
 
-  for (int i = 0; i < 91;i++)
+  for (int i = 0; i < divs;i++)
     {
-      int bin = floor(i*size/91);
+      int bin = floor(i*size/divs);
       std::cout << " Division " << i+1 <<": " << v_mbd_charge_sum[size - 1 - bin]<<std::endl;
     }
   return;
@@ -955,6 +1051,7 @@ void QA_centrality::QA_MBDChannels(const int runnumber)
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
       return;
     }
+
   if(!env_tree)
     {
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
@@ -1093,11 +1190,14 @@ void QA_centrality::QA_ZDCCheck(const int runnumber)
   float mbd_sum[2];
   float zdc_energy[6];
   float mbd_charge[128];
+  float mbd_time[128];
+
   float mbd_vertex;
   float mbd_time_zero;
   t->SetBranchAddress("zdc_sum", zdc_sum);
   t->SetBranchAddress("zdc_energy", zdc_energy);
   t->SetBranchAddress("mbd_charge", mbd_charge);
+  t->SetBranchAddress("mbd_time", mbd_time);
   t->SetBranchAddress("mbd_charge_sum", mbd_sum);
   t->SetBranchAddress("mbd_vertex", &mbd_vertex);
   t->SetBranchAddress("mbd_time_zero", &mbd_time_zero);
@@ -1132,9 +1232,9 @@ void QA_centrality::QA_ZDCCheck(const int runnumber)
 
       for (int j = 0; j < 64; j++)
 	{
-	  if (mbd_charge[j] > 0.4)
+	  if (mbd_charge[j] > 0. && mbd_time[j] < 25.)
 	    hits_s++;
-	  if (mbd_charge[j+64] > 0.4)
+	  if (mbd_charge[j+64] > 0. && mbd_time[j+64] < 25.)
 	    hits_n++;
 	}
 
@@ -1228,7 +1328,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   int vtxflag = 1;
   std::string name = Form("%s/glauber/lime_glauber_auau200_100k_histo.root", env_p);
   //  std::string name = Form("%s/glauber/lemon_glauber_auau200_100k_histo.root", env_p);
-  int lowfit = 200; // lowest end of standard fit range, was 30 in PHENIX
+  int lowfit = 100; // lowest end of standard fit range, was 30 in PHENIX
   int highfit = 2000; // lowest end of standard fit range, was 30 in PHENIX
   if (isSim)
     {
@@ -1273,14 +1373,14 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   TH1D *hRealBBC_fine;
   //if (which==0) hRealBBC = (TH1D *) fdata->Get("h_mbd_charge_ns_w_zdc_cut_w_mbd_cut_and_vertex_10"); // a particular z-vertex range
   
-  hRealBBC = (TH1D *) fdata->Get("h_charge_sum_min_bias");//_w_vertex_cut"); // a particular z-vertex range
+  hRealBBC = (TH1D *) fdata->Get("h_charge_sum_min_bias_w_vertex_cut"); // a particular z-vertex range
   hRealBBC_fine = (TH1D *) fdata->Get("h_charge_sum_fine_min_bias_w_vertex_cut"); // a particular z-vertex range
 
   if (!isSim)
     {
       if (qa_info.ZDC_percentage < 0.5) 
 	{
-	  hRealBBC = (TH1D *) fdata->Get("h_charge_sum_min_bias");//_w_vertex_cut"); // a particular z-vertex range
+	  hRealBBC = (TH1D *) fdata->Get("h_charge_sum_min_bias_w_vertex_cut"); // a particular z-vertex range
 	  hRealBBC_fine = (TH1D *) fdata->Get("h_charge_sum_fine_min_bias_w_vertex_cut"); // a particular z-vertex range
 	}
       else if (use_shifted && use_balanced) 
@@ -1303,9 +1403,11 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   if (!hRealBBC)
     {
       std::cout << " no histograms"<<std::endl;
+      return;
     }
   //hRealBBC->Scale(1./hRealBBC->Integral());
   int nhistbins = hRealBBC->GetNbinsX();
+  int nhistbins_fine = hRealBBC_fine->GetNbinsX();
   // j.nagle - also change 199.5 to be maxrange = ((float)nhistbins) - 0.5
   float maxrange = ((float) nhistbins) - 0.5;
   // might be good to have max Ncoll / Npart as well... (CuAu = 197 + 63 = 270)
@@ -1319,11 +1421,13 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   // for these two, the trigger is not required to have fired ... (BBC vs Ncoll)
 
   TH2D *hSimBBCNcoll = new TH2D("hSimBBCNcoll","hSimBBCNcoll",nhistbins,-0.5,maxrange,ncollmax,-0.5,maxrangencoll);
+  TH2D *hSimBBCNcoll_fine = new TH2D("hSimBBCNcoll_fine","hSimBBCNcoll",nhistbins,-0.5,maxrange,ncollmax,-0.5,maxrangencoll);
   TH2D *hSimBBCNcollHard = new TH2D("hSimBBCNcollHard","hSimBBCNcollHard",nhistbins,-0.5,maxrange,ncollmax,-0.5,maxrangencoll);
 
   // this now includes the trigger efficiency turn-on and can be used to calculate <Ncoll> for each centrality bin!!!
   
   TH2D *hSimBBCNcoll_wtrig = new TH2D("hSimBBCNcoll_wtrig","hSimBBCNcoll_wtrig",nhistbins,-0.5,maxrange,ncollmax,-0.5,maxrangencoll);
+  TH2D *hSimBBCNcoll_fine_wtrig = new TH2D("hSimBBCNcoll_fine_wtrig","hSimBBCNcoll_wtrig",nhistbins_fine,-0.5,maxrange,ncollmax,-0.5,maxrangencoll);
 
   // step #2
   TH1D *hSimBBC = new TH1D("hSimBBC","hSimBBC",nhistbins,-0.5,maxrange);
@@ -1335,14 +1439,14 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   double lowmu = 3.0;
   double highmu = 5.0;
   double lowk = 0.2;
-  double highk = 0.7;
+  double highk = 2.0;
   if (isSim)
     {
       lowmu = lowmu*130;
       highmu = highmu*130;
     }
   int nmusteps = 20;
-  int nksteps = 10;
+  int nksteps = 20;
 
   double binsizemu = (highmu-lowmu)/((double)nmusteps);
   double binsizek = (highk-lowk)/((double)nksteps);
@@ -1543,7 +1647,6 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
 
 
   hSimBBC->Reset();
-
   //-------------------------------------------------------------------------------------------
   // now use the best values (or default values) and re-calculate things, including bias factors...
   // loop over nNcoll values
@@ -1564,6 +1667,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
       hSimBBC->Fill((double) ihit, nbdvalue * event_weightfactor);
       // below value really needs to be ncoll to work correctly!!!!!
       hSimBBCNcoll->Fill((double) ihit, (double) ncoll, nbdvalue * event_weightfactor);
+      hSimBBCNcoll_fine->Fill((double) ihit, (double) ncoll, nbdvalue * event_weightfactor);
       hSimBBCHardUnbiased->Fill((double) ihit, nbdvalue * event_weightfactor * hardprocess_weightfactor);
 
     }
@@ -1695,7 +1799,10 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
 
       for (int ibbc = 1+ floor(centrality_low[icent]); ibbc <= 1 + (floor(centrality_high[icent])) ; ibbc++)
 	{
-	  for (int inpart = 1; inpart <= ncollmax;inpart++) h_npart_cent[icent]->Fill((double)inpart - 1.0, hSimBBCNcoll_wtrig->GetBinContent(ibbc, inpart));
+	  for (int inpart = 1; inpart <= ncollmax;inpart++) 
+	    {
+	      h_npart_cent[icent]->Fill((double)inpart - 1.0, hSimBBCNcoll_wtrig->GetBinContent(ibbc, inpart));
+	    }
 	}
 	  
       npartstore[icent] = h_npart_cent[icent]->GetMean();
