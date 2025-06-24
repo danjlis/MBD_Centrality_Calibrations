@@ -1,0 +1,11 @@
+Universe	= vanilla
+Executable	= finish_MbdAna.sh
+Output          = mbdana_combine_$(Process).out
+Error           = mbdana_combine_$(Process).err
+Log             = /tmp/condor_$(Process).log
+Arguments       = "$(runnumber)"
+Initialdir  	= /sphenix/user/dlis/Projects/centrality/macros/
+PeriodicHold 	= (NumJobStarts>=1 && JobStatus == 1)
+request_memory = 4096MB
+
+Queue runnumber from /sphenix/user/dlis/Projects/centrality/dst/runnumbers.txt

@@ -1,0 +1,9 @@
+Universe	= vanilla
+Executable	= scriptForMbdAna24.sh
+Output          = /sphenix/user/dlis/Projects/centrality/logs/mbdana_RUN_$(Process).out
+Error           = /sphenix/user/dlis/Projects/centrality/logs/mbdana_RUN_$(Process).err
+Log             = /tmp/condor_$(Process).log
+Arguments       = "$(segment)"
+Initialdir  	= INITDIR
+PeriodicHold 	= (NumJobStarts>=1 && JobStatus == 1)
+request_memory = 4096MB

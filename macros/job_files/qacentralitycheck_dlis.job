@@ -1,0 +1,15 @@
+Universe	= vanilla
+Executable	= scriptForQACentralityCheck.sh
+Output          = condor_$(Process).out
+Error           = condor_$(Process).err
+Log             = condor_$(Process).log
+Arguments       = "${arguments}"
+GetEnv          = True
+Initialdir      = INITDIR
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+transfer_input_files = setup_env.sh, submit_file.txt, container_scriptForQACentralityCheck.sh, scriptForQACentralityCheck.sh
+
+Queue arguments from submit_file.txt

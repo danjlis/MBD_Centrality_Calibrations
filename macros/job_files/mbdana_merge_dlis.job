@@ -1,0 +1,9 @@
+Universe	= vanilla
+Executable	= finish_MbdAna.sh
+Output          = merge_$(runnumber)_$(Process).out
+Error           = merge_$(runnumber)_$(Process).err
+Log             = /tmp/condor_$(Process).log
+Arguments       = "$(runnumber)"
+Initialdir  	= INITDIR
+PeriodicHold 	= (NumJobStarts>=1 && JobStatus == 1)
+request_memory = 4096MB
