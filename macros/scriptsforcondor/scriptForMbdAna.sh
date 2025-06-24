@@ -2,7 +2,7 @@
 id=$1
 runnumber=RUN
 
-source /opt/sphenix/core/bin/sphenix_setup.sh -n new
+source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.489
 source /opt/sphenix/core/bin/setup_local.sh /sphenix/user/dlis/Projects/install/
 
 source setup_env.sh

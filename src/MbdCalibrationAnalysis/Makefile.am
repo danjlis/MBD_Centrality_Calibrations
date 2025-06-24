@@ -17,12 +17,19 @@ AM_LDFLAGS = \
 
 libmbdcalibrationanalysis_la_LIBADD = \
   -lfun4all \
+  -lzdcinfo_io \
   -lcalo_io
 
 libmbdana_la_LIBADD = \
   -lfun4all \
+  -lcalotrigger \
+  -lcalotrigger_io \
+  -lcentrality_io \
+  -leventplaneinfo_io \
   -lcalo_io \
   -lmbd_io \
+  -lzdcinfo_io \
+  -lffarawobjects \
   -lglobalvertex
 
 pkginclude_HEADERS = \

@@ -7,60 +7,60 @@
 //#include "tdrstyle.C"   // std::clock()
 using namespace std;
 
-void SetLineAtt(TH1D *h, Color_t color, int width, int style){
+void SetLineAtt(TH1D *h, Color_t color, float width, int style){
   h->SetLineColor(color);
   h->SetLineWidth(width);
   h->SetLineStyle(style);
 }
-void SetLineAtt(TLine *h, Color_t color, int width, int style){
-  h->SetLineColor(color);
-  h->SetLineWidth(width);
-  h->SetLineStyle(style);
-}
-
-void SetLineAtt(TF1 *h, Color_t color, int width, int style){
+void SetLineAtt(TLine *h, Color_t color, float width, int style){
   h->SetLineColor(color);
   h->SetLineWidth(width);
   h->SetLineStyle(style);
 }
 
-void SetLineAtt(TProfile *h, Color_t color, int width, int style){
+void SetLineAtt(TF1 *h, Color_t color, float width, int style){
   h->SetLineColor(color);
   h->SetLineWidth(width);
   h->SetLineStyle(style);
 }
-void SetLineAtt(TGraph *h, Color_t color, int width, int style){
+
+void SetLineAtt(TProfile *h, Color_t color, float width, int style){
+  h->SetLineColor(color);
+  h->SetLineWidth(width);
+  h->SetLineStyle(style);
+}
+void SetLineAtt(TGraph *h, Color_t color, float width, int style){
   h->SetLineColor(color);
   h->SetLineWidth(width);
   h->SetLineStyle(style);
 }
 
 
-void SetMarkerAtt(TProfile *h, Color_t color, int size, int style){
+void SetMarkerAtt(TProfile *h, Color_t color, float size, int style){
   h->SetMarkerColor(color);
   h->SetMarkerSize(size);
   h->SetMarkerStyle(style);
 }
 
-void SetMarkerAtt(TH1D *h, Color_t color, int size, int style){
+void SetMarkerAtt(TH1D *h, Color_t color, float size, int style){
   h->SetMarkerColor(color);
   h->SetMarkerSize(size);
   h->SetMarkerStyle(style);
 }
-void SetMarkerAtt(TGraph *h, Color_t color, int size, int style){
+void SetMarkerAtt(TGraph *h, Color_t color, float size, int style){
   h->SetMarkerColor(color);
   h->SetMarkerSize(size);
   h->SetMarkerStyle(style);
 }
 
 
-void SetLineAtt(TEfficiency *h, Color_t color, int width, int style){
+void SetLineAtt(TEfficiency *h, Color_t color, float width, int style){
   h->SetLineColor(color);
   h->SetLineWidth(width);
   h->SetLineStyle(style);
 }
 
-void SetMarkerAtt(TEfficiency *h, Color_t color, int size, int style){
+void SetMarkerAtt(TEfficiency *h, Color_t color, float size, int style){
   h->SetMarkerColor(color);
   h->SetMarkerSize(size);
   h->SetMarkerStyle(style);
@@ -158,8 +158,8 @@ double findCross(TH1* h1, TH1* h2, double& frac, double& effi, double& fracErr, 
 
 void ratioPanelCanvas(TCanvas*& canv,
     const Float_t divRatio=0.4,
-    //const Float_t leftOffset=0.,
-    //const Float_t bottomOffset=0.,
+    const Float_t leftOffset=0.,
+    const Float_t bottomOffset=0.,
     const Float_t leftMargin=0.17,
     const Float_t bottomMargin=0.3,
     const Float_t edge=0.05) {
@@ -174,7 +174,7 @@ void ratioPanelCanvas(TCanvas*& canv,
   pad1->SetLeftMargin(leftMargin);
   pad1->SetRightMargin(edge);
   pad1->SetTopMargin(edge*2);
-  pad1->SetBottomMargin(0);
+  pad1->SetBottomMargin(bottomOffset);
   pad1->Draw();
   pad1->cd();
   pad1->SetNumber(1);
@@ -183,7 +183,7 @@ void ratioPanelCanvas(TCanvas*& canv,
   canv->cd();
   pad2->SetLeftMargin(leftMargin);
   pad2->SetRightMargin(edge);
-  pad2->SetTopMargin(0);
+  pad2->SetTopMargin(edge);
   pad2->SetBottomMargin(bottomMargin);
   pad2->Draw();
   pad2->cd();
@@ -470,6 +470,7 @@ void hist_to_graph(TGraphAsymmErrors* gr=0, TH1D* h1=0, TH1D* h2=0, TH1D* h3=0, 
     }
 }
 
+
 void MakeTextPrint(vector<string> lines, double x, double y, double dy){
 
   int s = lines.size();
@@ -483,21 +484,55 @@ void DrawSPHENIX(double xpos, double ypos, int isBeam = 1, int horiz  = 0, doubl
   string sPHENIX_MARK = "#bf{#it{sPHENIX}}";
   string extratext = "#it{Internal}";
   if (isPrelim) extratext = "#it{Preliminary}";
+  string fulltext  = sPHENIX_MARK + " "  + extratext;
   double xpos_diff = 0.18;
   double xdiff = 0.31;
   if (!horiz)
     {
-      drawText(sPHENIX_MARK.c_str(), xpos,ypos, 0, ci, size);//, 0, ci, 22);
-      drawText(extratext.c_str(), xpos+xpos_diff,ypos, 0, ci, size);
+      drawText(fulltext.c_str(), xpos,ypos, 0, ci, size);//, 0, ci, 22);
       if (isBeam) drawText("Au+Au #sqrt{s_{NN}}=200 GeV",xpos,ypos - (size + 0.01), 0, ci, size);
       else drawText("Cosmics Run",xpos,ypos - (size + 0.02), 0, ci, size);
     }
   else
     {
-      drawText(sPHENIX_MARK.c_str(), xpos,ypos, 0, ci, size);//, 0, ci, 22);
-      drawText(extratext.c_str(), xpos+xpos_diff,ypos, 0, ci, size);
+      drawText(fulltext.c_str(), xpos,ypos, 0, ci, size);//, 0, ci, 22);
       if (isBeam) drawText("Au+Au #sqrt{s_{NN}}=200 GeV",1. - xpos,ypos, 1, ci, size);
       else drawText("Cosmics Running",1. - xpos ,ypos, 1, ci, size);
     }
+}
+void DrawSPHENIXemma(double xpos, double ypos, int isBeam = 1, int horiz  = 0, double size = 0.05, int isPrelim = 0, int ci = kBlack)
+{
+  string sPHENIX_MARK = "#bf{#it{sPHENIX}}";
+  string extratext = "#it{Internal}";
+  if (isPrelim) extratext = "#it{Preliminary}";
+  string fulltext  = sPHENIX_MARK + " "  + extratext;
+  double xpos_diff = 0.18;
+  double xdiff = 0.31;
+  if (!horiz)
+    {
+      drawText(fulltext.c_str(), xpos,ypos, 0, ci, size);//, 0, ci, 22);
+      if (isBeam) drawText("Au+Au 200 GeV",xpos,ypos - (size + 0.01), 0, ci, size);
+      else drawText("Cosmics Run",xpos,ypos - (size + 0.02), 0, ci, size);
+    }
+  else
+    {
+
+      fulltext  = sPHENIX_MARK + " "  + extratext + "  Au+Au 200 GeV";
+      drawText(fulltext.c_str(), xpos,ypos, 0, ci, size);//, 0, ci, 22);
+    }
+}
+
+void SetAxisSizes(TGraphErrors* g, int font, float size)
+{
+  g->GetXaxis()->SetTitleFont(font);
+  g->GetXaxis()->SetTitleSize(size);
+  g->GetXaxis()->SetLabelFont(font);
+  g->GetXaxis()->SetLabelSize(size);
+
+  g->GetYaxis()->SetTitleFont(font);
+  g->GetYaxis()->SetTitleSize(size);
+  g->GetYaxis()->SetLabelFont(font);
+  g->GetYaxis()->SetLabelSize(size);
+
 }
 #endif

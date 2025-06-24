@@ -8,14 +8,17 @@ fi
 
 runnumber=${1}
 
-aligned=$(ls /sphenix/lustre01/sphnxpro/commissioning/aligned/*${runnumber}* 2> /dev/null | wc -l)
+mine=$(ls /sphenix/user/dlis/Projects/zdc_fix/output/*${runnumber}* 2> /dev/null | wc -l)
+
+#aligned=$(ls /sphenix/lustre01/sphnxpro/commissioning/mbd/beam/beam_seb18-000${runnumber}* 2> /dev/null | wc -l)
 
 aligned_prdf=$(ls /sphenix/lustre01/sphnxpro/commissioning/aligned_prdf/*${runnumber}* 2> /dev/null | wc -l)
 
 
-if (( aligned > aligned_prdf ))
+
+if (( mine > aligned_prdf ))
 then
-    echo $aligned
+    echo $mine
 else
     echo $aligned_prdf
 fi

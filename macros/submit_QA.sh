@@ -1,12 +1,9 @@
 #!/bin/bash
 
-if (( $# < 1 )); then
-    readarray -t a < good_runs_with_mbd.txt
-    njobs=$(cat good_runs_with_mbd.txt | wc -l)
-else
-    njobs=1
-    runnumber=$1
-fi
+submitfile=$1
+readarray -t a < $submitfile
+njobs=$(cat $submitfile | wc -l)
+echo $runnumber
 
 source setup_env.sh
 
@@ -25,18 +22,14 @@ cp ./job_files/$cFile $cFile2
 
 sed -i -e "s@INITDIR@$PWD/$cDir@g" $cFile2
 
-if (( njobs == 1 )); then
-    sed -i -e "s@ARGS@$runnumber@g" $cFile2
-else
-    sed -i -e "s@ARGS@0@g" $cFile2
-fi
+sed -i -e "s@REFRUN@$2@g" $cFile2
 echo "Queue ${njobs}" >> $cFile2
 
 cp $cFile2 $cDir
 rm $cFile2
 cp scriptsforcondor/scriptForQACentrality.sh $cDir
 cp setup_env.sh $cDir
-cp submit_file.txt $cDir
+cp $submitfile $cDir/submit_file.txt
 
 cd $cDir
 condor_submit $cFile2
