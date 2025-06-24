@@ -1,21 +1,23 @@
 #!/bin/bash
 
-readarray -t a < submit_file.txt
+submitfile=submit_file.txt
+
+if (( $# < 2 )); then
+    exit
+else
+    submitfile=$1
+fi
+
+readarray -t a < $submitfile
 
 total_jobs_needed=0
 for i in "${a[@]}"
 do
-
-    segments=$(get_n_segments.sh ${i})
-
-    if [ "${segments}" -gt "5" ]
-    then    
-	echo ${i} >> good_runs_with_mbd.txt
-	echo "Run ${i} ..."
-	bash submit_MbdAna.sh ${i}
-	sleep 2
-	echo "Done."
-    fi
+    echo "Run ${i} ..."
+    bash submit_MbdAna24.sh ${i} 0 ${2}
+    sleep 2
+    echo "Done."
+    
 done
 
 echo "Is this bad?"

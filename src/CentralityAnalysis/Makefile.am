@@ -17,13 +17,14 @@ libcentralityanalysis_la_LIBADD = \
   -lfun4all \
   -lcalo_io \
   -lcentrality \
+  -lcalotrigger \
   -lmbd_io
 
 pkginclude_HEADERS = \
-  CentralityAnalysis.h
+  CentralityValidation.h
 
 libcentralityanalysis_la_SOURCES = \
-  CentralityAnalysis.cc
+  CentralityValidation.cc
 
 # Rule for generating table CINT dictionaries.
 %_Dict.cc: %.h %LinkDef.h

@@ -1,10 +1,12 @@
 #!/bin/bash
 
-readarray -t a < good_runs_with_mbd.txt
+submitfile=$1
+
+readarray -t a < $submitfile
 
 for i in "${a[@]}"
 do
-
+    
     bash finish_MbdAna.sh ${i}
     
 done
