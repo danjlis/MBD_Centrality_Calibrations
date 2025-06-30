@@ -21,6 +21,7 @@ cFile2="$cFile2"_"$DATE"_"$TIME".job
 cp ./job_files/$cFile $cFile2
 
 sed -i -e "s@INITDIR@$PWD/$cDir@g" $cFile2
+sed -i -e "s@COPYDIR@$PWD/$cDir@g" $cFile2
 
 sed -i -e "s@REFRUN@$2@g" $cFile2
 echo "Queue ${njobs}" >> $cFile2

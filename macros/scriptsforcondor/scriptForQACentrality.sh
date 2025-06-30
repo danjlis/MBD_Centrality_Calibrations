@@ -27,7 +27,8 @@ export LD_LIBRARY_PATH=$MYINSTALL:$LD_LIBRARY_PATH
 
 
 id=$1
-refrun=$2
+dir=$2
+
 runnumber=0
 
 source setup_env.sh
@@ -38,4 +39,6 @@ runnumber=${a[id]}
 
 root -b -q "/sphenix/user/dlis/Projects/centrality/macros/calibration_ana/mainreferenceQA.C(${runnumber})"
 
+cp *out ${dir}
+cp *err ${dir}
 echo "JOB COMPLETE!"
