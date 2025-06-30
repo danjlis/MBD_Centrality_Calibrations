@@ -88,9 +88,27 @@ QA_centrality::QA_centrality(int silent, int debugger)
   /* Setting path for output files and input files */
 
   env_p = new char[200];
-  sprintf(env_p,"%s",std::getenv("MBD_CENTRALITY_CALIB_PATH"));
+  sprintf(env_p,"%s",std::getenv("MBD_CENTRALITY_PATH"));
   
   if(!env_p)
+    {
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
+      return;
+    }
+
+  env_out = new char[200];
+  sprintf(env_out,"%s",std::getenv("MBD_CENTRALITY_OUTPUT_PATH"));
+  
+  if(!env_out)
+    {
+      std::cout << "no env MBD_CENTRALITY_OUTPUT_PATH set."<<endl;
+      return;
+    }
+
+  env_calib = new char[200];
+  sprintf(env_calib,"%s",std::getenv("MBD_CENTRALITY_CALIB_PATH"));
+  
+  if(!env_calib)
     {
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
       return;
@@ -358,14 +376,14 @@ void QA_centrality::QA_CentralityCheck(const int runnumber, const int scaled)
   // Load in charge_sum distributions
   if (runnumber != reference_run && !isSim)
     {
-      TFile *fchargesum = new TFile(Form("%s/output_2024/plots/mbdana_charge_sum_%d.root", env_p, runnumber), "r");
+      TFile *fchargesum = new TFile(Form("%s/mbdana_charge_sum_%d.root", env_out, runnumber), "r");
       if (!fchargesum)
 	{
 	  cout << "No file exists for this charge sum plot... exiting" << endl;
 	  return;
 	} 
       
-      TFile *fchargesumref = new TFile(Form("%s/output_2024/plots/mbdana_charge_sum_%d.root", env_p, reference_run), "r");
+      TFile *fchargesumref = new TFile(Form("%s/mbdana_charge_sum_%d.root", env_out, reference_run), "r");
       if (!fchargesumref)
 	{
 	  cout << "No file exists for this charge sum plot... exiting" << endl;
@@ -404,11 +422,11 @@ void QA_centrality::QA_CentralityCheck(const int runnumber, const int scaled)
   float vertex_scale_factor[nvertexbins] = {0};
   if (isSim)
     {
-      sprintf(path, "%s/calib_2024/mbd_vertex_scale_%s.root" ,env_p, mc_map[runnumber].c_str());
+      sprintf(path, "%s/mbd_vertex_scale_%s.root" ,env_calib, mc_map[runnumber].c_str());
     }
   else
     {
-      sprintf(path, "%s/calib_2024/mbd_vertex_scale_%d.root" ,env_p, runnumber);
+      sprintf(path, "%s/mbd_vertex_scale_%d.root" ,env_calib, runnumber);
     }
 
   TFile *fcalibs = new TFile(path, "r");
@@ -433,20 +451,20 @@ void QA_centrality::QA_CentralityCheck(const int runnumber, const int scaled)
   char pathfile[1000];
   if (!isSim)
     {
-      sprintf(pathfile, "%s/calib_2024/mbdana_centrality%s%d.root", env_p, (scaled? "_bal_":"_"), reference_run);
+      sprintf(pathfile, "%s/mbdana_centrality%s%d.root", env_calib, (scaled? "_bal_":"_"), reference_run);
     }
   else
     {
-      sprintf(pathfile, "%s/calib_2024/mbdana_centrality%s%s.root", env_p, (scaled? "_bal_":"_"), mc_map[runnumber].c_str());
+      sprintf(pathfile, "%s/mbdana_centrality%s%s.root", env_calib, (scaled? "_bal_":"_"), mc_map[runnumber].c_str());
     }
   char pathvtxfile[1000];
   if (!isSim)
     {
-      sprintf(pathvtxfile, "%s/calib_2024/mbdana_centrality_vtx%s%d.root", env_p, (scaled? "_bal_":"_"), reference_run);
+      sprintf(pathvtxfile, "%s/mbdana_centrality_vtx%s%d.root", env_calib, (scaled? "_bal_":"_"), reference_run);
     }
   else
     {
-      sprintf(pathvtxfile, "%s/calib_2024/mbdana_centrality%s%s.root", env_p, (scaled? "_bal_":"_"), mc_map[runnumber].c_str());
+      sprintf(pathvtxfile, "%s/mbdana_centrality%s%s.root", env_calib, (scaled? "_bal_":"_"), mc_map[runnumber].c_str());
     }
 
   TFile *fcentralitycalib = new TFile(pathfile, "r");
@@ -687,10 +705,10 @@ void QA_centrality::QA_CentralityCheck(const int runnumber, const int scaled)
     {
       xtra = "_vtx_";
     }
-  std::string filename = Form("%s/output_2024/plots/mbdana_centrality_check%s%d.root", env_p,   xtra.c_str(), runnumber);
+  std::string filename = Form("%s/mbdana_centrality_check%s%d.root", env_out,   xtra.c_str(), runnumber);
   if (isSim)
     {
-      filename = Form("%s/output_2024/plots/mbdana_centrality_check%s%s.root", env_p,   xtra.c_str(), mc_map[runnumber].c_str());
+      filename = Form("%s/mbdana_centrality_check%s%s.root", env_out,   xtra.c_str(), mc_map[runnumber].c_str());
     }
   TFile *fout = new TFile(filename.c_str(),"recreate");
   h_vertex->Write();
@@ -746,7 +764,7 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
   if (reference_run && !isSim)
     {
       if (!silence) cout << "reference_run: " <<reference_run<< std::endl;
-      TFile *fout = new TFile(Form("%s/output_2024/plots/mbdana_charge_sum_%d.root", env_p, reference_run), "r");
+      TFile *fout = new TFile(Form("%s/mbdana_charge_sum_%d.root", env_out, reference_run), "r");
       if (!fout) return;
       TH1D *h_shift = (TH1D*) fout->Get("h_charge_sum_min_bias_w_vertex_cut");
       if (!h_shift) return;
@@ -1279,21 +1297,21 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
   char *pathvertex = new char[100];
   if (isSim)
     {
-      sprintf(pathvertex, "%s/calib_2024/mbd_vertex_scale_%s.root" , env_p, mc_map[runnumber].c_str());
+      sprintf(pathvertex, "%s/mbd_vertex_scale_%s.root" , env_calib, mc_map[runnumber].c_str());
     }
   else
     {
-      sprintf(pathvertex, "%s/calib_2024/mbd_vertex_scale_%d.root" ,env_p, runnumber);
+      sprintf(pathvertex, "%s/mbd_vertex_scale_%d.root" ,env_calib, runnumber);
     }
 
   char *pathout = new char[100];
   if (isSim)
     {
-      sprintf(pathout, "%s/output_2024/plots/mbdana_charge_sum_%s.root" , env_p, mc_map[runnumber].c_str());
+      sprintf(pathout, "%s/mbdana_charge_sum_%s.root" , env_out, mc_map[runnumber].c_str());
     }
   else
     {
-      sprintf(pathout, "%s/output_2024/plots/mbdana_charge_sum_%d.root" ,env_p, runnumber);
+      sprintf(pathout, "%s/mbdana_charge_sum_%d.root" ,env_out, runnumber);
     }
 
   TFile *fcalib = new TFile(pathvertex, "RECREATE");
@@ -1443,11 +1461,11 @@ void QA_centrality::QA_MakeDivisions(const int runnumber, const int doVertexScal
   char *path = new char[100];
   if (isSim)
     {
-      sprintf(path, "%s/calib_2024/mbd_vertex_scale_%s.root" , env_p, mc_map[runnumber].c_str());
+      sprintf(path, "%s/mbd_vertex_scale_%s.root" , env_calib, mc_map[runnumber].c_str());
     }
   else
     {
-      sprintf(path, "%s/calib_2024/mbd_vertex_scale_%d.root" ,env_p, runnumber);
+      sprintf(path, "%s/mbd_vertex_scale_%d.root" ,env_calib, runnumber);
     }
 
   TFile *fcalibs = new TFile(path, "r");
@@ -1582,10 +1600,10 @@ void QA_centrality::QA_MakeDivisions(const int runnumber, const int doVertexScal
   if (doVertexScaled == 1) extra = "bal_";
   if (doVertexScaled == 2) extra = "vtx_";
 
-  TString calib_file_name = Form("%s/calib_2024/mbdana_centrality_%s%d.root", env_p, extra.Data(), runnumber);
+  TString calib_file_name = Form("%s/mbdana_centrality_%s%d.root", env_calib, extra.Data(), runnumber);
   if (isSim)
     {
-      calib_file_name = Form("%s/calib_2024/mbdana_centrality_%s%s.root", env_p, extra.Data(), mc_map[runnumber].c_str());
+      calib_file_name = Form("%s/mbdana_centrality_%s%s.root", env_calib, extra.Data(), mc_map[runnumber].c_str());
     }
   TFile *fcalib = new TFile(calib_file_name, "recreate");
   if (doVertexScaled < 2)
@@ -1704,11 +1722,11 @@ void QA_centrality::QA_MBDChannels(const int runnumber)
   char *path_out = new char[100];
   if (isSim)
     {
-      sprintf(path_out, "%s/output_2024/plots/mbdana_channels_%s.root" , env_p, mc_map[runnumber].c_str());
+      sprintf(path_out, "%s/mbdana_channels_%s.root" , env_out, mc_map[runnumber].c_str());
     }
   else
     {
-      sprintf(path_out, "%s/output_2024/plots/mbdana_channels_%d.root" , env_p, runnumber);
+      sprintf(path_out, "%s/mbdana_channels_%d.root" , env_out, runnumber);
     }
   
   TFile *fout = new TFile(path_out, "recreate");
@@ -1888,7 +1906,7 @@ void QA_centrality::QA_ZDCCheck(const int runnumber)
 	}
     }
   qa_info.fillpattern = nbunches;
-  TFile *fout = new TFile(Form("%s//output_2024/plots/mbdana_zdc_check_%d.root", env_p, runnumber),"recreate");
+  TFile *fout = new TFile(Form("%s//mbdana_zdc_check_%d.root", env_out, runnumber),"recreate");
   for (int i = 0; i < 6; i++)
     {
       h_zdc_energy[i]->Write();
@@ -1948,11 +1966,11 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   char *fdataname = new char[100];
   if (isSim)
     {
-      sprintf(fdataname,"%s/output_2024/plots/mbdana_charge_sum_%s.root", env_p, mc_map[runnumber].c_str());  
+      sprintf(fdataname,"%s/mbdana_charge_sum_%s.root", env_out, mc_map[runnumber].c_str());  
     }
   else
     {
-      sprintf(fdataname,"%s/output_2024/plots/mbdana_charge_sum_%d.root", env_p, runnumber);  
+      sprintf(fdataname,"%s/mbdana_charge_sum_%d.root", env_out, runnumber);  
     }
 
   char runnum[100];
@@ -2277,10 +2295,10 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   TString   extra = "";    
   if (doVertexScaled || use_shifted) extra = Form("%s%s_", (use_shifted ? "sca" :""), (doVertexScaled ? "bal":""));
 
-  TString calib_file_name = Form("%s/calib_2024/mbdana_centrality_%s%d.root", env_p, vextra.c_str(), runnumber);
+  TString calib_file_name = Form("%s/mbdana_centrality_%s%d.root", env_calib, vextra.c_str(), runnumber);
   if (isSim)
     {
-      calib_file_name = Form("%s/calib_2024/mbdana_centrality_%s%s.root", env_p, vextra.c_str(), mc_map[runnumber].c_str());
+      calib_file_name = Form("%s/mbdana_centrality_%s%s.root", env_calib, vextra.c_str(), mc_map[runnumber].c_str());
     }
 
   float cent_high, cent_low;
@@ -2449,14 +2467,14 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   qa_info.glauber_b[(use_shifted? 1: 0) + (doVertexScaled?1:0)*2] = h_b_all->GetMean();  
 
 
-  TString calib_file_name2 = Form("%s/calib_2024/mbdana_npart_%s%d.root", env_p, extra.Data(), runnumber);
+  TString calib_file_name2 = Form("%s/mbdana_npart_%s%d.root", env_calib, extra.Data(), runnumber);
   if (isSim)
     {
-      calib_file_name2 = Form("%s/calib_2024/mbdana_npart_%s%s.root", env_p, extra.Data(), mc_map[runnumber].c_str());
+      calib_file_name2 = Form("%s/mbdana_npart_%s%s.root", env_calib, extra.Data(), mc_map[runnumber].c_str());
     }
   if (systematics)
     {
-      calib_file_name2 = Form("%s/calib_2024/mbdana_npart_sys_%s_%s%d.root", env_p, sysname.c_str(), extra.Data(), runnumber);
+      calib_file_name2 = Form("%s/mbdana_npart_sys_%s_%s%d.root", env_calib, sysname.c_str(), extra.Data(), runnumber);
     }
   if (!silence) std::cout  << " filling npart file "<<calib_file_name2<<std::endl;
   TFile *fcalib2 = new TFile(calib_file_name2, "recreate");
@@ -2470,10 +2488,10 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   fcalib2->Close();
 
   if (!silence) std::cout  << " filling file "<<std::endl;
-  TString fname = Form("%s/output_2024/plots/mbdana_centrality_trigeff_%s%d.root", env_p, extra.Data(), runnumber);;
+  TString fname = Form("%s/mbdana_centrality_trigeff_%s%d.root", env_out, extra.Data(), runnumber);;
   if (isSim)
     {
-      fname = Form("%s/output_2024/plots/mbdana_centrality_trigeff_%s%s.root", env_p, extra.Data(), mc_map[runnumber].c_str());;
+      fname = Form("%s/mbdana_centrality_trigeff_%s%s.root", env_out, extra.Data(), mc_map[runnumber].c_str());;
     }
   if (!silence) std::cout  << " filling file "<<std::endl;
   TFile *fout = new TFile(fname,"recreate");

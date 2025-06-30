@@ -112,6 +112,8 @@ class QA_centrality{
   bool countbefore = true;
   char *env_p = nullptr;
   char *env_tree = nullptr;
+  char *env_calib = nullptr;
+  char *env_out = nullptr;
   int silence = 0;
   int debug = 0;
   bool forceZDC = false;

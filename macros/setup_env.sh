@@ -1,6 +1,8 @@
 #!/bin/bash
 
-export MBD_CENTRALITY_CALIB_PATH=/sphenix/user/dlis/Projects/centrality/
+export MBD_CENTRALITY_PATH=/sphenix/user/dlis/Projects/centrality/
+export MBD_CENTRALITY_OUTPUT_PATH=/sphenix/user/dlis/Projects/centrality/output_2024/
+export MBD_CENTRALITY_CALIB_PATH=/sphenix/user/dlis/Projects/centrality/calib_2024/
 
 export MBDTREELOC=/sphenix/tg/tg01/commissioning/CaloCalibWG/dlis/centrality/runs/
 
