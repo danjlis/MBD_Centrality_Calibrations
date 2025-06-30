@@ -14,6 +14,100 @@ R__LOAD_LIBRARY(libphool.so)
 
 R__LOAD_LIBRARY(libcdbobjects.so)
 
+int CDB_MakeCentralityCDBTree(const int runnumber)
+{
+
+  
+  char *env_p = new char[200];
+  sprintf(env_p,"%s",std::getenv("MBD_CENTRALITY_CALIB_PATH"));
+
+  if(!env_p)
+    {
+      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      return 1;
+    }
+
+  TString calib_file_name = Form("%s/calib/mbdana_centrality_bal_%d.root", env_p, runnumber);
+  if (runnumber == 0)
+    {
+      calib_file_name = Form("%s/calib/mbdana_centrality_hijing.root", env_p);
+    }
+  else if (runnumber == 1)
+    {
+      calib_file_name = Form("%s/calib/mbdana_centrality_ampt.root", env_p);
+    }
+  else if (runnumber == 2)
+    {
+      calib_file_name = Form("%s/calib/mbdana_centrality_epos.root", env_p);
+    }
+  else if (runnumber == 3)
+    {
+      calib_file_name = Form("%s/calib/mbdana_centrality_hijing_magoff.root", env_p);
+    }
+  else if (runnumber == 4)
+    {
+      calib_file_name = Form("%s/calib/mbdana_centrality_ampt_magoff.root", env_p);
+    }
+  else if (runnumber == 5)
+    {
+      calib_file_name = Form("%s/calib/mbdana_centrality_epos_magoff.root", env_p);
+    }
+
+  TFile *fcalib = new TFile(calib_file_name.Data(), "r");
+  if (!fcalib) 
+    {
+      cout << " No file " <<endl;
+      return 1;
+    }
+  TNtuple *ts = (TNtuple*) fcalib->Get("tn_centrality");
+  if (!ts) 
+    {
+      cout << " No TNtuple " << endl;
+      return 1;
+    }
+
+  float lowbin;
+  float npart;
+  ts->SetBranchAddress("low",&lowbin);
+  TString cdb_name = Form("%s/cdb/calibrations24/divs/cdb_centrality_%d.root", env_p, runnumber);
+  if (runnumber == 0)
+    {
+      cdb_name = Form("%s/cdb/calibrations24/divs/cdb_centrality_hijing.root", env_p);
+    }
+  else if (runnumber == 1)
+    {
+      cdb_name = Form("%s/cdb/calibrations24/divs/cdb_centrality_ampt.root", env_p);
+    }
+  else if (runnumber == 2)
+    {
+      cdb_name = Form("%s/cdb/calibrations24/divs/cdb_centrality_epos.root", env_p);
+    }
+  else if (runnumber == 3)
+    {
+      cdb_name = Form("%s/cdb/calibrations24/divs/cdb_centrality_hijing_magoff.root", env_p);
+    }
+  else if (runnumber == 4)
+    {
+      cdb_name = Form("%s/cdb/calibrations24/divs/cdb_centrality_ampt_magoff.root", env_p);
+    }
+  else if (runnumber == 5)
+    {
+      cdb_name = Form("%s/cdb/calibrations24/divs/cdb_centrality_epos_magoff.root", env_p);
+    }
+
+  CDBTTree *cdbttree = new CDBTTree(cdb_name.Data());
+  for (int i=0; i<ts->GetEntries(); i++)
+  {
+    ts->GetEntry(i);
+
+    cdbttree->SetFloatValue(i,"centralitydiv",lowbin);
+  }
+  cdbttree->Commit();
+  cdbttree->Print();
+  cdbttree->WriteCDBTTree();
+  delete cdbttree;
+  return 0;
+}
 int CDB_MakeCentralityCDBTree(const int runnumber, const int divnumber)
 {
 
