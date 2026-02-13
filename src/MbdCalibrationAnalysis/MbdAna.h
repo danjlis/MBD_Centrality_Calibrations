@@ -3,7 +3,7 @@
 
 #include <fun4all/SubsysReco.h>
 #include <ffarawobjects/Gl1Packet.h>
-#include <limits>
+#include <globalvertex/GlobalVertex.h>
 
 // Forward declarations
 class PHCompositeNode;
@@ -15,6 +15,8 @@ class TNtuple;
 class TTree;
 class Zdcinfo;
 class Gl1Packet;
+class GlobalVertexMap;
+class GlobalVertex;
 class MbdOut;
 class MbdPmtHit;
 class MbdPmtContainer;
@@ -22,6 +24,8 @@ class MinimumBiasInfo;
 class EventplaneinfoMap;
 class Eventplaneinfo;
 class CentralityInfo;
+class TowerInfoContainer;
+class EpdGeom;
 class TH1;
 class TH2;
 class MbdAna : public SubsysReco
@@ -56,6 +60,7 @@ class MbdAna : public SubsysReco
     North = 1
   };
 
+  std::vector<GlobalVertex::VTXTYPE> m_vtxtypes{};
   bool useZDC;
   TFile *outfile = nullptr;
   TTree *ttree = nullptr;
@@ -63,12 +68,14 @@ class MbdAna : public SubsysReco
   MbdPmtContainer *_pmts_mbd = nullptr;
   Zdcinfo *_zdcinfo = nullptr;
   Gl1Packet *_gl1_packet = nullptr;
+  GlobalVertexMap *vertexmap = nullptr;
   MbdOut *_mbd_out = nullptr;
   TriggerAnalyzer *triggeranalyzer{nullptr};
-  MinimumBiasInfo *_minimumbiasinfo{nullptr};
+  MinimumBiasInfo *minimumbiasinfo{nullptr};
   CentralityInfo *centralityinfo{nullptr};
   EventplaneinfoMap *eventplaneinfomap{nullptr};
-  
+  TowerInfoContainer *sepd_towers{nullptr};
+  EpdGeom *epdgeom{nullptr};  
   EventHeader *m_eventheader{nullptr};
   std::string _tree_filename;
 
@@ -84,6 +91,13 @@ class MbdAna : public SubsysReco
 
   float m_mbd_side[128]{};
   float m_mbd_ipmt[128]{};
+
+  float m_sepd_energy[744]{};
+  int m_sepd_good[744]{};
+  float m_sepd_r[744]{};
+  int m_sepd_ch[744]{};
+  int m_sepd_arm[744]{};
+  float m_sepd_phi[744]{};
 
   unsigned int m_mbd_vertex_id = std::numeric_limits<unsigned int>::signaling_NaN();
   float m_mbd_vertex = std::numeric_limits<float>::signaling_NaN();

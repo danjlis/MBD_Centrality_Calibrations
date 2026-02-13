@@ -1,13 +1,12 @@
 #!/bin/bash
 
 export MBD_CENTRALITY_PATH=/sphenix/user/dlis/Projects/centrality/
-export MBD_CENTRALITY_NAME=_2024auau
-export MBD_CENTRALITY_OUTPUT_PATH=/sphenix/user/dlis/Projects/centrality/output_2024auau/
-export MBD_CENTRALITY_CALIB_PATH=/sphenix/user/dlis/Projects/centrality/calib_2024auau/
-export MBD_CENTRALITY_FINAL_PATH=/sphenix/user/dlis/Projects/centrality/cdb/calibrations24_full/
+export MBD_CENTRALITY_OUTPUT_PATH=/sphenix/user/dlis/Projects/centrality/output_2026oo/
+export MBD_CENTRALITY_CALIB_PATH=/sphenix/user/dlis/Projects/centrality/calib_2026oo/
+export MBD_CENTRALITY_FINAL_PATH=/sphenix/user/dlis/Projects/centrality/cdb/calibrations26_full/
 
-export MBDTREELOC=/sphenix/tg/tg01/commissioning/CaloCalibWG/dlis/centrality/runs/
-export MBDSIMLOC=/sphenix/tg/tg01/commissioning/CaloCalibWG/dlis/centrality/
+export MBDTREELOC=/sphenix/tg/tg01/commissioning/CaloCalibWG/dlis/centrality/oo/runs/
+export MBDSIMLOC=/sphenix/tg/tg01/commissioning/CaloCalibWG/dlis/centrality/oo/
 
 export MBD_SIM_CENTRALITY_OUTPUT_PATH=/sphenix/user/dlis/Projects/centrality/output_sim/
 export MBD_SIM_CENTRALITY_CALIB_PATH=/sphenix/user/dlis/Projects/centrality/calib_sim/

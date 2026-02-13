@@ -1,9 +1,9 @@
 Universe	= vanilla
 Executable	= scriptForQACentrality.sh
-Output          = condor_$(Process).out
-Error           = condor_$(Process).err
-Log             = condor_$(Process).log
-Arguments       = "$(Process) COPYDIR"
+Output          = INITDIR/condor_$(runnumber).out
+Error           = INITDIR/condor_$(runnumber).err
+Log             = INITDIR/condor_$(runnumber).log
+Arguments       = "$(runnumber)"
 Initialdir      = INITDIR
 PeriodicHold 	= (NumJobStarts>=1 && JobStatus == 1)
 request_memory = 4096MB

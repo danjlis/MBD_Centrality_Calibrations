@@ -6,7 +6,6 @@ AM_CPPFLAGS = \
   -isystem`root-config --incdir`
 
 lib_LTLIBRARIES = \
-   libmbdcalibrationanalysis.la \
    libmbdana.la
 
 AM_LDFLAGS = \
@@ -15,10 +14,6 @@ AM_LDFLAGS = \
   -L$(ROOTSYS)/lib
 
 
-libmbdcalibrationanalysis_la_LIBADD = \
-  -lfun4all \
-  -lzdcinfo_io \
-  -lcalo_io
 
 libmbdana_la_LIBADD = \
   -lfun4all \
@@ -27,17 +22,14 @@ libmbdana_la_LIBADD = \
   -lcentrality_io \
   -leventplaneinfo_io \
   -lcalo_io \
+  -lepd_io \
   -lmbd_io \
   -lzdcinfo_io \
   -lffarawobjects \
   -lglobalvertex
 
 pkginclude_HEADERS = \
-  MbdCalibrationAnalysis.h \
   MbdAna.h
-
-libmbdcalibrationanalysis_la_SOURCES = \
-  MbdCalibrationAnalysis.cc
 
 libmbdana_la_SOURCES = \
   MbdAna.cc
@@ -54,11 +46,7 @@ libmbdana_la_SOURCES = \
 BUILT_SOURCES = testexternals.cc
 
 noinst_PROGRAMS = \
-  testexternals_mbdcalibrationanalysis \
   testexternals_mbdana
-
-testexternals_mbdcalibrationanalysis_SOURCES = testexternals.cc
-testexternals_mbdcalibrationanalysis_LDADD = libmbdcalibrationanalysis.la
 
 testexternals_mbdana_SOURCES = testexternals.cc
 testexternals_mbdana_LDADD = libmbdana.la

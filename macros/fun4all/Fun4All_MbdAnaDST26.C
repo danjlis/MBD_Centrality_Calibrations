@@ -53,7 +53,7 @@ R__LOAD_LIBRARY(libglobalvertex.so)
 #endif
 
 
-void Fun4All_MbdAnaDST24(const std::string filename, const int phase = 0)
+void Fun4All_MbdAnaDST26(const std::string filename, const int phase = 0)
 {
   gSystem->Load("libg4dst");
   gSystem->Load("libcalo_reco");
@@ -125,14 +125,9 @@ void Fun4All_MbdAnaDST24(const std::string filename, const int phase = 0)
   CDBInterface::instance()->Verbosity(1);
   FROG *fr = new FROG();
 
-  std::string input = fr->location(filename.c_str());
-  Fun4AllInputManager *in = new Fun4AllDstInputManager("in");
-  in->fileopen(filename.c_str());
-  in->Verbosity(0);
-  se->registerInputManager(in);
 
-  //  TriggerRunInfoReco* trig = new TriggerRunInfoReco();
-  //se->registerSubsystem(trig);
+  TriggerRunInfoReco* trig = new TriggerRunInfoReco();
+  se->registerSubsystem(trig);
 
   // MBD/BBC Reconstruction
   MbdReco *mbdreco = new MbdReco();
@@ -182,8 +177,23 @@ void Fun4All_MbdAnaDST24(const std::string filename, const int phase = 0)
   // CentralityValid *centralityvalidation = new CentralityValid("CentralityValid",hist_outfile);
   // se->registerSubsystem(centralityvalidation);
 
+  std::string input = fr->location(filename.c_str());
+
+  Fun4AllInputManager *in = new Fun4AllDstInputManager("in");
+  in->fileopen(filename.c_str());
+  in->Verbosity(0);
+  se->registerInputManager(in);
+  //////////////////////
+  // Input geometry node
+  std::cout << "Adding Geometry file" << std::endl;
+  Fun4AllInputManager *ingeo = new Fun4AllRunNodeInputManager("DST_GEO");
+  std::string geoLocation = CDBInterface::instance()->getUrl("calo_geo");
+  ingeo->AddFile(geoLocation);
+  se->registerInputManager(ingeo);
+
+  
   MbdAna *mbdana = new MbdAna("MbdAna", tree_outfile);
-  mbdana->Verbosity(verbosity);
+  mbdana->Verbosity(0);
   se->registerSubsystem(mbdana);
 
   // GetEPinfo *epana = new GetEPinfo("GetEPInfo", ep_outfile, calib_outfile);

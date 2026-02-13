@@ -500,6 +500,27 @@ void DrawSPHENIX(double xpos, double ypos, int isBeam = 1, int horiz  = 0, doubl
       else drawText("Cosmics Running",1. - xpos ,ypos, 1, ci, size);
     }
 }
+void DrawSPHENIXOO(double xpos, double ypos, int isBeam = 1, int horiz  = 0, double size = 0.05, int isPrelim = 0, int ci = kBlack)
+{
+  string sPHENIX_MARK = "#bf{#it{sPHENIX}}";
+  string extratext = "#it{Internal}";
+  if (isPrelim) extratext = "#it{Preliminary}";
+  string fulltext  = sPHENIX_MARK + " "  + extratext;
+  double xpos_diff = 0.18;
+  double xdiff = 0.31;
+  if (!horiz)
+    {
+      drawText(fulltext.c_str(), xpos,ypos, 0, ci, size);//, 0, ci, 22);
+      if (isBeam) drawText("O+O #sqrt{s_{NN}}=200 GeV",xpos,ypos - (size + 0.01), 0, ci, size);
+      else drawText("Cosmics Run",xpos,ypos - (size + 0.02), 0, ci, size);
+    }
+  else
+    {
+      drawText(fulltext.c_str(), xpos,ypos, 0, ci, size);//, 0, ci, 22);
+      if (isBeam) drawText("O+O #sqrt{s_{NN}}=200 GeV",1. - xpos,ypos, 1, ci, size);
+      else drawText("Cosmics Running",1. - xpos ,ypos, 1, ci, size);
+    }
+}
 void DrawSPHENIXemma(double xpos, double ypos, int isBeam = 1, int horiz  = 0, double size = 0.05, int isPrelim = 0, int ci = kBlack)
 {
   string sPHENIX_MARK = "#bf{#it{sPHENIX}}";

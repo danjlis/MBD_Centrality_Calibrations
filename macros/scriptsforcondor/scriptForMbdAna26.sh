@@ -28,9 +28,9 @@ id=$1
 phase=$2
 source setup_env.sh
 
-root -b -q "Fun4All_MbdAnaDST24.C(\"${id}\", 0)"
+root -b -q "Fun4All_MbdAnaDST26.C(\"${id}\", 0)"
 
-cp *root /sphenix/tg/tg01/commissioning/CaloCalibWG/dlis/centrality/
+cp *root /sphenix/tg/tg01/commissioning/CaloCalibWG/dlis/centrality/oo/
 
 echo "JOB COMPLETE!"
 

@@ -26,31 +26,39 @@ int CDB_MakeCentralityCDBTree(const int runnumber)
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
       return 1;
     }
+  char *env_out = new char[200];
+  sprintf(env_out,"%s",std::getenv("MBD_CENTRALITY_OUTPUT_PATH"));
 
-  TString calib_file_name = Form("%s/calib/mbdana_centrality_bal_%d.root", env_p, runnumber);
+  if(!env_out)
+    {
+      std::cout << "no env MBD_CENTRALITY_OUTPUT_PATH set."<<endl;
+      return 1;
+    }
+
+  TString calib_file_name = Form("%s/mbdana_centrality_bal_%d.root", env_p, runnumber);
   if (runnumber == 0)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_hijing.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_hijing.root", env_p);
     }
   else if (runnumber == 1)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_ampt.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_ampt.root", env_p);
     }
   else if (runnumber == 2)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_epos.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_epos.root", env_p);
     }
   else if (runnumber == 3)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_hijing_magoff.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_hijing_magoff.root", env_p);
     }
   else if (runnumber == 4)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_ampt_magoff.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_ampt_magoff.root", env_p);
     }
   else if (runnumber == 5)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_epos_magoff.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_epos_magoff.root", env_p);
     }
 
   TFile *fcalib = new TFile(calib_file_name.Data(), "r");
@@ -120,31 +128,39 @@ int CDB_MakeCentralityCDBTree(const int runnumber, const int divnumber)
       std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
       return 1;
     }
+  char *env_out = new char[200];
+  sprintf(env_out,"%s",std::getenv("MBD_CENTRALITY_OUTPUT_PATH"));
 
-  TString calib_file_name = Form("%s/calib/mbdana_centrality_bal_%d.root", env_p, divnumber);
+  if(!env_out)
+    {
+      std::cout << "no env MBD_CENTRALITY_OUTPUT_PATH set."<<endl;
+      return 1;
+    }
+
+  TString calib_file_name = Form("%s/mbdana_centrality_bal_%d.root", env_p, divnumber);
   if (runnumber == 0)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_hijing.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_hijing.root", env_p);
     }
   else if (runnumber == 1)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_ampt.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_ampt.root", env_p);
     }
   else if (runnumber == 2)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_epos.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_epos.root", env_p);
     }
   else if (runnumber == 3)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_hijing_magoff.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_hijing_magoff.root", env_p);
     }
   else if (runnumber == 4)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_ampt_magoff.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_ampt_magoff.root", env_p);
     }
   else if (runnumber == 5)
     {
-      calib_file_name = Form("%s/calib/mbdana_centrality_epos_magoff.root", env_p);
+      calib_file_name = Form("%s/mbdana_centrality_epos_magoff.root", env_p);
     }
 
   TFile *fcalib = new TFile(calib_file_name.Data(), "r");

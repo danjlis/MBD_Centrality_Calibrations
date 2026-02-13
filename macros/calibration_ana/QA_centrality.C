@@ -58,11 +58,10 @@ double NBD_getValue(int n, double mu, double k) {
 
 static double NBDGlauberConv(double *x, double *par)
 {
-
   double ihit = x[0];
   double mu = par[0];
   double k = par[1];
-
+  double alpha = par[2];
   double result = 0;
   for (int ib = 2; ib <= hglauber->GetNbinsX(); ib++)
     {
@@ -70,10 +69,10 @@ static double NBDGlauberConv(double *x, double *par)
       double event_weight = hglauber->GetBinContent(ib);
       if (event_weight <= 0) continue;
       //      if (npart > 10 && ihit < (2*npart*(int) mu)) continue;
-      double nbd = NBD_getValue(ihit, mu * (double) npart, k * (double) npart); 
+      double nbd = NBD_getValue(ihit, mu * (double) (pow(npart, alpha)), k * (double) (pow(npart, alpha))); 
       result += nbd*event_weight;
     }  
-  return par[2]*result;
+  return par[3]*result;
 }
 
 class QA_centrality;
@@ -245,7 +244,7 @@ void QA_centrality::QA_ReferenceRun(
     {
       return;
     }
-    QA_ZDCCheck(runnumber);
+  QA_ZDCCheck(runnumber);
   //Go through and make distributions for MBD channels (charge and time)
   QA_MBDChannels(runnumber);
   // Charge sum plots are made here with scaled and with all cuts
@@ -253,18 +252,18 @@ void QA_centrality::QA_ReferenceRun(
   // Centrality Calibrations + NBD+Glauber Fit is here
 
   QA_MakeDivisions(runnumber, 0);  
-  QA_MakeDivisions(runnumber, 1);  
+  //QA_MakeDivisions(runnumber, 1);  
   //QA_MakeDivisions(runnumber, 2);  
 
   QA_MakeCentralityCalibrations(runnumber, 0);
-  QA_MakeCentralityCalibrations(runnumber, 1);
+  //QA_MakeCentralityCalibrations(runnumber, 1);
 
   //CentralityCalibrations(runnumber, 1);
   SetReferenceRun(runnumber);
 
-  QA_CentralityCheck(runnumber, 0);
-  QA_CentralityCheck(runnumber, 1);
-  QA_CentralityCheck(runnumber, 2);
+  //  QA_CentralityCheck(runnumber, 0);
+  //QA_CentralityCheck(runnumber, 1);
+  //QA_CentralityCheck(runnumber, 2);
   return;
 }
 
@@ -292,15 +291,17 @@ void QA_centrality::QA_MC(
 {
 
   isSim = true;
+
   if (strcmp(mc_generator.c_str(), "hijing") == 0)
     qa_info.runnumber = 0;
-  
+
   else if (strcmp(mc_generator.c_str(), "ampt") == 0)
     qa_info.runnumber = 1;
   
   else if (strcmp(mc_generator.c_str(), "epos") == 0)
     qa_info.runnumber = 2;
-  if (strcmp(mc_generator.c_str(), "hijing_magoff") == 0)
+
+  else if (strcmp(mc_generator.c_str(), "hijing_magoff") == 0)
     qa_info.runnumber = 3;
   
   else if (strcmp(mc_generator.c_str(), "ampt_magoff") == 0)
@@ -312,6 +313,45 @@ void QA_centrality::QA_MC(
     return;
 
   int runnumber = qa_info.runnumber;
+
+  /* Setting path for output files and input files */
+
+  env_p = new char[200];
+  sprintf(env_p,"%s",std::getenv("MBD_CENTRALITY_PATH"));
+  
+  if(!env_p)
+    {
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
+      return;
+    }
+
+  env_out = new char[200];
+  sprintf(env_out,"%s",std::getenv("MBD_SIM_CENTRALITY_OUTPUT_PATH"));
+  
+  if(!env_out)
+    {
+      std::cout << "no env MBD_SIM_CENTRALITY_OUTPUT_PATH set."<<endl;
+      return;
+    }
+
+  env_calib = new char[200];
+  sprintf(env_calib,"%s",std::getenv("MBD_SIM_CENTRALITY_CALIB_PATH"));
+  
+  if(!env_calib)
+    {
+      std::cout << "no env MBD_SIM_CENTRALITY_CALIB_PATH set."<<endl;
+      return;
+    }
+
+  env_tree = new char[200];
+  sprintf(env_tree,"%s",std::getenv("MBDSIMLOC"));
+  
+  if(!env_tree)
+    {
+      std::cout << "no env MBDSIMLOC set."<<endl;
+      return;
+    }
+
   if (loadTree())
     {
       return;
@@ -364,7 +404,7 @@ void QA_centrality::Start_QA_Centrality(
 
   QA_CentralityCheck(runnumber, 0);
   QA_CentralityCheck(runnumber, 1);
-  //QA_CentralityCheck(runnumber, 2);
+  QA_CentralityCheck(runnumber, 2);
 
   return;
 }
@@ -579,8 +619,8 @@ void QA_centrality::QA_CentralityCheck(const int runnumber, const int scaled)
       nsum = 0;
       m_ttree->GetEntry(i);
 
-      if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
-
+      if (!(((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1)) continue;
+      //if (!isSim && !((((gl1_scaled >> 14) & 0x1 ) == 0x1) || (((gl1_scaled >> 10) & 0x1 ) == 0x1))) continue;
       double scale = 1;
       int vbin = -1;
       if (scaled)
@@ -630,9 +670,10 @@ void QA_centrality::QA_CentralityCheck(const int runnumber, const int scaled)
 	}
       //      if (!minbias) continue;
       bool mymb = true;
-      if (hits_s < 2 || hits_n < 2) mymb = false;//continue; 
+      if (hits_s < m_mbd_hit_cut || hits_n < m_mbd_hit_cut) mymb = false;//continue; 
+      if (fabs(mbd_time_zero) > m_mbd_time_cut) mymb = false;
       if (fabs(mbd_vertex) > z_cut) mymb = false;//continue; 
-      if (!isSim && ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) mymb = false;//continue; 
+      //if (!isSim && ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) mymb = false;//continue; 
       if (hasZDC && !isSim && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) mymb = false;//continue; 
       if ((ssum + nsum) > m_maxsumcut) mymb = false;//continue; 
       if (!mymb) continue;
@@ -793,6 +834,12 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
       nbin = 2500;
       maxrange = 2500;
     }
+  if (m_oo)
+    {
+      nbin = 350;
+      maxrange = 350;
+    }
+      
   TH2D *h_mbd_hits_ns = new TH2D("h_mbd_hits_ns", ";nhit S; nhit N", 65, -0.5, 64.5, 65, -0.5, 64.5);
 
   TH2D *h2_charge_sum_v_zdc = new TH2D("h_charge_sum_v_zdc","", nbin/10, -0.5, (float)maxrange - 0.5, 2000, 0, 20000);
@@ -932,7 +979,8 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
       nsum = 0;
       ssum = 0;
       m_ttree->GetEntry(i);
-      if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
+      if (((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x0) continue;
+      //      if (!isSim && !((((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1) || (((gl1_scaled >> 10) & 0x1 ) == 0x1))) continue;//      if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
       for (int ich = 0 ; ich < 64; ich++)
 	{
 	  if (countbefore)
@@ -955,8 +1003,9 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
       // don't continue if this does not work.
 
       h_mbd_hits_ns->Fill(hits_s, hits_n);
-      if (hits_s < 2 || hits_n < 2) continue; 
 
+      if (hits_s < m_mbd_hit_cut || hits_n < m_mbd_hit_cut) continue; 
+      if (fabs(mbd_time_zero) > m_mbd_time_cut) continue;
       h2_charge_sum_ns->Fill(ssum, nsum);
       h_charge_sum->Fill(ssum + nsum);
       h_charge_sum_fine->Fill(ssum + nsum);
@@ -989,8 +1038,8 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
 	    }
 	}
 
-      if (!isSim && ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
-      if (hasZDC && !isSim && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) continue;
+      //if (!isSim && ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
+      //if (hasZDC && !isSim && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) continue;
 
       h_charge_sum_min_bias->Fill(ssum + nsum);
       h_charge_sum_fine_min_bias->Fill(ssum + nsum);
@@ -1085,7 +1134,7 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
       nsum = 0;
       ssum = 0;
       m_ttree->GetEntry(i);
-      if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
+      if (!(((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1)) continue;//      if (!isSim && !((((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1) || (((gl1_scaled >> 10) & 0x1 ) == 0x1))) continue;//      if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
       double vscale = 0;
       for (int iv = 0; iv < nvertexbins; iv++)
 	{
@@ -1115,8 +1164,9 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
 	    }
 	} 
       // don't continue if this does not work.
-      if (hits_s < 2 || hits_n < 2) continue; 
-      if (ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;      
+      if (hits_s < m_mbd_hit_cut || hits_n < m_mbd_hit_cut) continue; 
+      if (fabs(mbd_time_zero) > m_mbd_time_cut) continue;//      if (fabs(mbd_time_zero) > m_mbd_time_cut) mymb = false;
+      //if (ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;      
       if (fabs(mbd_vertex) > z_cut) continue;
 
       h_charge_sum_vtx_balanced->Fill(nsum + ssum);
@@ -1158,7 +1208,7 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
 	  nsum=0;
 
 	  m_ttree->GetEntry(i);
-	  if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
+	  if (!(((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1)) continue;//	  if (!isSim && !((((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1) || (((gl1_scaled >> 10) & 0x1 ) == 0x1))) continue;//	  if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
 	  for (int ich = 0 ; ich < 64; ich++)
 	    {
 	      if (countbefore)
@@ -1179,16 +1229,18 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
 	    } 
 	  double total_sum = nsum+ssum;
 	  // don't continue if this does not work.
-	  if (hits_s < 2 || hits_n < 2) continue; 
+	  if (hits_s < m_mbd_hit_cut || hits_n < m_mbd_hit_cut) continue; 
+
 	  h_charge_sum_scaled->Fill(total_sum);
 	  h_charge_sum_fine_scaled->Fill(total_sum);
 	  if (fabs(mbd_vertex) > z_cut) continue;
+	  if (fabs(mbd_time_zero) > m_mbd_time_cut) continue;
 	  h_charge_sum_vtx_scaled->Fill(total_sum);
 	  h_charge_sum_fine_vtx_scaled->Fill(total_sum);
 	  if (hasZDC && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) continue;
 	  h_charge_sum_fine_min_bias_scaled->Fill(total_sum);
 	  h_charge_sum_min_bias_scaled->Fill(total_sum);
-	  if (ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
+	  //	  if (ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
 	  //if (!minbias) continue;
 	  h_charge_sum_min_bias_w_vertex_cut_scaled->Fill(total_sum);
 	  h_charge_sum_fine_min_bias_w_vertex_cut_scaled->Fill(total_sum);
@@ -1203,7 +1255,7 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
 	  nsum=0;
 
 	  m_ttree->GetEntry(i);
-	  if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
+	  if (!(((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1)) continue;//	  if (!isSim && !((((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1) || (((gl1_scaled >> 10) & 0x1 ) == 0x1))) continue;//	  if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
 	  double vscale = 0;
 	  for (int iv = 0; iv < nvertexbins; iv++)
 	    {
@@ -1236,16 +1288,17 @@ void QA_centrality::QA_MakeChargeSum(const int runnumber)
 
 	  double total_sum = nsum+ssum;
 	  // don't continue if this does not work.
-	  if (hits_s < 2 || hits_n < 2) continue; 
+	  if (hits_s < m_mbd_hit_cut || hits_n < m_mbd_hit_cut) continue; 
 	  h_charge_sum_balanced_scaled->Fill(total_sum);
 	  h_charge_sum_fine_balanced_scaled->Fill(total_sum);
 	  if (fabs(mbd_vertex) > z_cut) continue;
+	  if (fabs(mbd_time_zero) > m_mbd_time_cut) continue;
 	  h_charge_sum_vtx_balanced_scaled->Fill(total_sum);
 	  h_charge_sum_fine_vtx_balanced_scaled->Fill(total_sum);
 	  if (hasZDC && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) continue;
 	  h_charge_sum_min_bias_balanced_scaled->Fill(total_sum);
 	  h_charge_sum_fine_min_bias_balanced_scaled->Fill(total_sum);
-	  if (ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
+	  //if (ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
 	  //if (!minbias) continue;
 	  h_charge_sum_min_bias_w_vertex_cut_balanced_scaled->Fill(total_sum);
 	  h_charge_sum_fine_min_bias_w_vertex_cut_balanced_scaled->Fill(total_sum);
@@ -1511,14 +1564,6 @@ void QA_centrality::QA_MakeDivisions(const int runnumber, const int doVertexScal
 
   fcalibs->Close();
 
-  if (isSim)
-    {
-      sprintf(path, "%s/mbdana/mbd_tree_%s_2025.root" , mc_map[runnumber].c_str(), mc_map[runnumber].c_str());
-    }
-  else
-    {
-      sprintf(path, "Run24/run%d/mbdana/mbd_trees_%d.root" ,runnumber, runnumber);
-    }
 
 
   std::vector<float> v_mbd_charge_sum{};
@@ -1544,7 +1589,7 @@ void QA_centrality::QA_MakeDivisions(const int runnumber, const int doVertexScal
       ssum = 0;
       nsum = 0;
       m_ttree->GetEntry(i);
-      if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
+      if (!(((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1)) continue;//      if (!isSim && !((((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1) || (((gl1_scaled >> 10) & 0x1 ) == 0x1))) continue;//      if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
       double scale = 0;
       int vbin = 0;
       for (int iv = 0; iv < nvertexbins; iv++)
@@ -1576,9 +1621,10 @@ void QA_centrality::QA_MakeDivisions(const int runnumber, const int doVertexScal
 	    } 
 	}
       //if (!minbias) continue;
-      if (hits_s < 2 || hits_n < 2) continue; 
+      if (hits_s < m_mbd_hit_cut || hits_n < m_mbd_hit_cut) continue; 
+      if (fabs(mbd_time_zero) > m_mbd_time_cut) continue;
       if (fabs(mbd_vertex) > z_cut) continue;
-      if (!isSim && ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
+      //      if (!isSim && ssum > charge_sum_south_cut && nsum < charge_sum_north_cut) continue;
 
       if (hasZDC && !isSim && (zdc_sum[0] <= zdc_cut || zdc_sum[1] <= zdc_cut)) continue;
       if (!isSim && (ssum + nsum) > m_maxsumcut) continue; 
@@ -1799,7 +1845,8 @@ void QA_centrality::QA_ZDCCheck(const int runnumber)
 	  if (i%10000 == 0) std::cout << " Event " << i << " \r" << std::flush;
 	}
       m_ttree->GetEntry(i);
-      if (!(((gl1_scaled >> 14) & 0x1 ) == 0x1)) continue;
+
+      if (!(((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1)) continue;//      if (!isSim && !((((gl1_scaled >> m_trigger_bit) & 0x1 ) == 0x1) || (((gl1_scaled >> 10) & 0x1 ) == 0x1))) continue;//      if (!((((gl1_scaled >> 14) & 0x1 ) == 0x1) || (((gl1_scaled >> 10) & 0x1 ) == 0x1))) continue;
       n_events++;
       h_vertex->Fill(mbd_vertex);
       h_time_zero->Fill(mbd_time_zero);
@@ -1817,27 +1864,29 @@ void QA_centrality::QA_ZDCCheck(const int runnumber)
 
       h_zdc_sum_ns->Fill(zdc_sum[0], zdc_sum[1]);
       h_mbd_hits_ns->Fill(hits_s, hits_n);
-      if (!(hits_n >= 2 && hits_s >= 2) ) continue;
+      if (!(hits_n >= m_mbd_hit_cut && hits_s >= m_mbd_hit_cut) ) continue;
 
       n_two_hits++;
       if (fabs(mbd_vertex) > z_cut) continue;
+      if (fabs(mbd_time_zero) > m_mbd_time_cut) continue;      
       for (int j = 0; j < 6; j++) h_zdc_energy[j]->Fill(zdc_energy[j]);
+
       h_zdc_sum_n->Fill(zdc_sum[1]);
       h_zdc_sum_s->Fill(zdc_sum[0]);
       n_vertex++;
 
-      if (mbd_sum[1] < charge_sum_north_cut && mbd_sum[0] > charge_sum_south_cut) 
-	{
-	  if (zdc_sum[0] > zdc_cut && zdc_sum[1] > zdc_cut)
-	    {
-	      n_zdc_in_box++;
-	    }
-	  else
-	    {
-	      n_nozdc_in_box++;
-	    }
-	  continue;
-	}    
+      // if (mbd_sum[1] < charge_sum_north_cut && mbd_sum[0] > charge_sum_south_cut) 
+      // 	{
+      // 	  if (zdc_sum[0] > zdc_cut && zdc_sum[1] > zdc_cut)
+      // 	    {
+      // 	      n_zdc_in_box++;
+      // 	    }
+      // 	  else
+      // 	    {
+      // 	      n_nozdc_in_box++;
+      // 	    }
+      // 	  continue;
+      // 	}    
 
       n_passed_ns_cut++;
       running_MB++;
@@ -1855,7 +1904,10 @@ void QA_centrality::QA_ZDCCheck(const int runnumber)
 
 
   if (!silence) std::cout << " done 1"<<std::endl;
+
   h_vertex->Fit("gaus",(silence?"Q":""),"", -60, 60);
+  std::cout << "fitting" << std::endl;
+
   float mean = h_vertex->GetFunction("gaus")->GetParameter(1);
 
   h_vertex->Fit("gaus",(silence?"Q":""),"", mean - 20, mean+20);
@@ -1874,7 +1926,7 @@ void QA_centrality::QA_ZDCCheck(const int runnumber)
     {
       hasZDC = false;
     }
-  if (!silence)
+  if (true)//!silence)
     {
       std::cout << "Total events: "<< m_ttree->GetEntries()<<endl;
       std::cout << "Number of events passing Two Hits Cut             : "<<n_two_hits <<"/"<<n_events<<" = "<<static_cast<double>(n_two_hits)/static_cast<double>(n_events)<<std::endl;
@@ -1955,10 +2007,15 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
  
   int lowfit = 100; // lowest end of standard fit range, was 30 in PHENIX
   int highfit = 1900; // lowest end of standard fit range, was 30 in PHENIX
-
+  if (m_oo)
+    {
+      lowfit = 40;
+      highfit = 280;
+    }
+    
   // the below file contains the "hNcoll" histogram to be sampled from (step #1)
   TFile *fglauber = new TFile(name.c_str()); 
-  
+  std::cout << name << std::endl;
   hglauber = (TH1D * ) fglauber->Get("hNpart"); // note that this is only npart in the Au nucleus
   // this creates a problem because there is never an Npart = 1, always Npart >= 2
   // the below file contains the "hbbcQs6" histogram of MBD data distribution (from z-vertex range)
@@ -2007,9 +2064,15 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   int nhistbinsfine = hRealMBDfine->GetNbinsX();
   // j.nagle - also change 199.5 to be maxrange = ((float)nhistbins) - 0.5
   float maxrange = ((float) nhistbins) - 0.5;
+  std::cout << "Max range : " << maxrange << std::endl;
   // might be good to have max Ncoll / Npart as well... (CuAu = 197 + 63 = 270)
   // Au+Au case 197 + 197 = 396
+  // o+o = 16+16 = 32
   int ncollmax = 400; // really npart here
+  if (m_oo)
+    {
+      ncollmax = 32;
+    }
   float maxrangencoll = ((float) ncollmax) - 0.5;
 
   TH1D *hSimMBDHardUnbiased = new TH1D("hSimMBDHardUnbiased","hSimMBDHardUnbiased",nhistbins,-0.5,maxrange);
@@ -2030,29 +2093,46 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
 
   // Starting the fit
   
-  double mu = 4.1;
-  double k = 0.8;
+  double mu = 4.7;
+  double k = 1.16;
   double N = 1.0;
+  double alpha = 1.00;
   double biased_mu = mu;
   double biased_k = k;
   const int nvertexbins = 15;
   double cut = hRealMBD->Integral(lowfit, highfit);
-  double all =   hRealMBD->Integral()*trigeff;
+  double all =   hRealMBD->Integral();//*trigeff;
   double after = cut/all;
   double scalefactor = hglauber->Integral()*after/all;
   TH1D *hRealMBDScaled = (TH1D*) hRealMBD->Clone();
   hRealMBDScaled->Scale(scalefactor);
-  
+
+  float highfunc = 2500;
+  if (m_oo)
+    {
+      highfunc = 250;
+    }
+      
   // Make the function
-  TF1 *fNBD = new TF1("nbd", NBDGlauberConv, 0, 2500, 3);
-  fNBD->SetParameters(mu,k, N);
-  fNBD->SetParNames("mu","k","N");
-  fNBD->SetParLimits(0, 2, 5.5);
-  fNBD->SetParLimits(1, 0.3, 3);
-  fNBD->SetParLimits(2, 0.1, 1.5);
-  hRealMBDScaled->Fit("nbd", "NDOR", "",100, 2000);  
-  hRealMBDScaled->Fit("nbd", "NDOR", "",100, 2000);  
-  hRealMBDScaled->Fit("nbd", "NDOR", "",100, 2000);  
+  TF1 *fNBD = new TF1("nbd", NBDGlauberConv, 0, highfunc, 4);
+  fNBD->SetParameters(mu,k, alpha, N);
+  fNBD->SetParNames("mu","k","alpha","N");
+
+  fNBD->SetParLimits(0, 1, 10000);
+  fNBD->SetParLimits(1, 0.1, 3);
+  //fNBD->SetParLimits(2, 0.5, 1.5);
+  fNBD->FixParameter(2, 1);
+  //
+  fNBD->SetParLimits(3, 0.1, 1.5);
+
+  hRealMBDScaled->Fit("nbd", "NDOR", "",lowfit, highfit);  
+  // fNBD->SetParLimits(0, 1, 10000);
+  // fNBD->SetParLimits(1, 0.1, 3);
+  // fNBD->SetParLimits(2, 0.5, 1.5);
+  // fNBD->SetParLimits(3, 0.1, 1.5);//  fNBD->FixParameter(3, 1);
+
+  // hRealMBDScaled->Fit("nbd", "NDOR", "",lowfit, highfit);  
+  // hRealMBDScaled->Fit("nbd", "NDOR", "",lowfit, highfit);  
  
   double bestmu = fNBD->GetParameter(0);
   double bestk = fNBD->GetParameter(1);
@@ -2077,7 +2157,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   qa_info.glauber_k[(use_shifted? 1 : 0) + 2*(doVertexScaled?1:0)] = k;  
   qa_info.glauber_chi2[(use_shifted? 1 : 0) + 2*(doVertexScaled?1:0)] = chi2;  
 
-  double alpha = 1.00;
+
   double particlealpha = 1.00;
 
   //TF1 *trigeffcurveVertex[nvertexbins];
@@ -2523,9 +2603,14 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
 
 int QA_centrality::loadTree()
 {
-  
-  m_file = new TFile(Form("%s/mbd_trees_%d.root", env_tree, qa_info.runnumber), "r");
-
+  if (!isSim)
+    {
+      m_file = new TFile(Form("%s/mbd_trees_%d.root", env_tree, qa_info.runnumber), "r");
+    }
+  else
+    {
+      m_file = new TFile(Form("%s/%s/all/mbd_ana_tree_%s.root", env_tree, mc_map[qa_info.runnumber].c_str(), mc_map[qa_info.runnumber].c_str()));
+    }
   if (!m_file)
     {
       std::cout << " No Tree File found " <<std::endl;
@@ -2543,12 +2628,16 @@ int QA_centrality::loadTree()
   m_ttree->SetBranchAddress("gl1_live", &gl1_live);    
   m_ttree->SetBranchAddress("minbias", &minbias);
   m_ttree->SetBranchAddress("bunch_number", &bunch_number);
-  m_ttree->SetBranchAddress("zdc_sum",zdc_sum);
-  m_ttree->SetBranchAddress("zdc_energy",zdc_energy);
+  if (!isSim)
+    {
+      m_ttree->SetBranchAddress("zdc_sum",zdc_sum);
+      m_ttree->SetBranchAddress("zdc_energy",zdc_energy);
+    }
   m_ttree->SetBranchAddress("mbd_charge_sum",mbd_charge_sum);
   m_ttree->SetBranchAddress("mbd_charge",mbd_charge);
   m_ttree->SetBranchAddress("mbd_time",mbd_time);
   m_ttree->SetBranchAddress("mbd_vertex",&mbd_vertex);
+  m_ttree->SetBranchAddress("mbd_time_zero",&mbd_time_zero);
   return 0;
 }
   

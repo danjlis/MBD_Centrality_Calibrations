@@ -4,6 +4,9 @@
 #include <fun4all/Fun4AllHistoManager.h>
 #include <fun4all/Fun4AllReturnCodes.h>
 #include <zdcinfo/Zdcinfo.h>
+#include <calobase/TowerInfoContainer.h>
+#include <calobase/TowerInfo.h>
+#include <epd/EpdGeom.h>
 #include <calotrigger/TriggerAnalyzer.h>
 #include <phool/PHCompositeNode.h>
 #include <phool/PHIODataNode.h>
@@ -13,7 +16,8 @@
 #include <phool/PHRandomSeed.h>
 #include <phool/getClass.h>
 #include <ffaobjects/EventHeaderv1.h>
-
+#include <globalvertex/GlobalVertexMap.h>
+#include <globalvertex/GlobalVertex.h>
 #include <mbd/MbdOut.h>
 #include <mbd/MbdPmtContainer.h>
 #include <mbd/MbdPmtHit.h>
@@ -41,6 +45,7 @@ MbdAna::MbdAna(const std::string &name, const std::string &tree_name)
 {
   useZDC = true;
   _tree_filename = tree_name;
+  m_vtxtypes.push_back(GlobalVertex::VTXTYPE::MBD);
 }
 
 MbdAna::~MbdAna()
@@ -62,10 +67,17 @@ int MbdAna::Init(PHCompositeNode * /*unused*/)
   // ttree->Branch("psi1", &m_psi1, "psi1/F");
   // ttree->Branch("psi2n", &m_psi2n, "psi2n/F");
   // ttree->Branch("psi2s", &m_psi2s, "psi2s/F");
-  // ttree->Branch("psi2", &m_psi2, "psi2/F");
+  ttree->Branch("psi2", &m_psi2, "psi2/F");
   // ttree->Branch("psi3n", &m_psi3n, "psi3n/F");
   // ttree->Branch("psi3s", &m_psi3s, "psi3s/F");
   // ttree->Branch("psi3", &m_psi3, "psi3/F");
+
+  ttree->Branch("sepd_energy", m_sepd_energy, "sepd_energy[744]/F");
+  ttree->Branch("sepd_good", m_sepd_good, "sepd_good[744]/I");
+  ttree->Branch("sepd_arm", m_sepd_arm, "sepd_arm[744]/I");
+  ttree->Branch("sepd_phi", m_sepd_phi, "sepd_phi[744]/F");
+  ttree->Branch("sepd_r", m_sepd_r, "sepd_r[744]/F");
+  ttree->Branch("sepd_ch", m_sepd_ch, "sepd_ch[744]/I");
 
   ttree->Branch("mbd_charge", m_mbd_charge, "mbd_charge[128]/F");
   ttree->Branch("mbd_time", m_mbd_time, "mbd_time[128]/F");
@@ -112,7 +124,7 @@ void MbdAna::ResetVars()
   m_mbd_time_zero = 999;
   m_mbd_time_zero_err = 999;
   m_centrality = 999;
-
+  m_psi2 = -999;
   for (int i = 0; i < 2; i ++)
     m_mbd_charge_sum[i] = 0.;
 
@@ -125,7 +137,17 @@ void MbdAna::ResetVars()
       m_mbd_side[i] = -999;
       m_mbd_ipmt[i] = -999;
     }
+  for (int i = 0 ; i < 744; i++)
+    {
+      
+      m_sepd_energy[i]= 0;//(epd_e);
+      m_sepd_good[i] = 0;//(epd_isgood);
+      m_sepd_arm[i] = 0;//(epd_arm);
+      m_sepd_phi[i] = 0;//(epd_phi);
+      m_sepd_r[i] = 0;//(epd_r);
+      m_sepd_ch[i] = 0;//(epd_ch);
 
+    }
   for (int i = 0; i < 6; i++)
     {
       m_zdc_energy[i] = 0;
@@ -177,10 +199,36 @@ int MbdAna::FillVars()
 
   
   m_mbd_vertex_id = 1;
-  m_mbd_vertex = _mbd_out->get_zvtx();
-  m_mbd_vertex_err = _mbd_out->get_zvtxerr();
-  m_mbd_time_zero = _mbd_out->get_t0();
-  m_mbd_time_zero_err = _mbd_out->get_t0err();
+  if (vertexmap)
+    {
+      std::cout << "in vertex map" << std::endl;
+
+      std::vector<GlobalVertex*> vertices = vertexmap->get_gvtxs_with_type(m_vtxtypes);
+      if(!vertices.empty())
+	{
+	  std::cout << " In vertex " << std::endl;
+	  if(vertices.at(0))
+	    {
+	      std::cout << " getting vertex " << std::endl;
+	      m_mbd_vertex = vertices.at(0)->get_z();
+	      m_mbd_time_zero = vertices.at(0)->get_t();
+	      std::cout << " getting vertex " << std::endl;
+	}
+	  if(vertices.size() > 1 && Verbosity() > 0)
+	    {
+	      std::cout << "TowerJetInput::WARNING!! More than one vertex of selected type!" << std::endl;
+	    }
+	}
+    }
+
+  
+  if (std::isnan(m_mbd_vertex))
+    {
+      m_mbd_vertex = -999;
+    }
+
+  m_mbd_vertex_err = 0.2;
+  m_mbd_time_zero_err = 0.2;
 
   if (Verbosity())
     {
@@ -194,13 +242,39 @@ int MbdAna::FillVars()
 	  m_zdc_sum[i] = _zdcinfo->get_zdc_energy(i);
 	}
     }
-  
+        
+  unsigned int ntowers = sepd_towers->size();
 
-  // if (_minimumbiasinfo)
-  //   m_minbias = (_minimumbiasinfo->isAuAuMinimumBias()? 1 : 0);
+  for (unsigned int ch = 0; ch < ntowers; ch++) {
+    TowerInfo *s_tower = sepd_towers->get_tower_at_channel(ch);
+    unsigned int key = TowerInfoDefs::encode_epd(ch);
+    int epd_isgood = (s_tower->get_isGood()?1:0);
+    float epd_e = s_tower->get_energy();
+    int epd_arm = TowerInfoDefs::get_epd_arm(key);
+    float epd_phi = epdgeom->get_phi(key);
+    float epd_r = epdgeom->get_r(key);
+    float epd_ch = ch;
 
+    m_sepd_energy[ch]= (epd_e);
+    m_sepd_good[ch] = (epd_isgood);
+    m_sepd_arm[ch] = (epd_arm);
+    m_sepd_phi[ch] = (epd_phi);
+    m_sepd_r[ch] = (epd_r);
+    m_sepd_ch[ch] = (epd_ch);
+  }
 
-  // auto pMBDS = eventplaneinfomap->get(EventplaneinfoMap::MBDS);
+  if (minimumbiasinfo)
+    m_minbias = (minimumbiasinfo->isAuAuMinimumBias()? 1 : 0);
+  if (centralityinfo)
+    m_centrality = (centralityinfo->get_centrality_bin(CentralityInfo::PROP::mbd_NS));
+  if (eventplaneinfomap)
+    {
+      if (!eventplaneinfomap->empty())
+	{
+	  auto EPDNS = eventplaneinfomap->get(EventplaneinfoMap::sEPDNS);  
+	  m_psi2 = EPDNS->get_shifted_psi(2);
+	}
+    }
   // auto pMBDN = eventplaneinfomap->get(EventplaneinfoMap::MBDN);
 
   // //first order stuff
@@ -264,7 +338,7 @@ int MbdAna::process_event(PHCompositeNode *topNode)
 
   if (!m_issim)
     {
-      m_gl1_scaled = _gl1_packet->getTriggerVector();
+      m_gl1_scaled = _gl1_packet->getScaledVector();
       m_gl1_live = _gl1_packet->getLiveVector();
       m_bunch_number = _gl1_packet->getBunchNumber();
       // Fill Arrays
@@ -314,6 +388,14 @@ int MbdAna::GetNodes(PHCompositeNode *topNode)
       return Fun4AllReturnCodes::ABORTRUN;
     }
 
+  vertexmap = findNode::getClass<GlobalVertexMap>(topNode, "GlobalVertexMap");
+
+  if (!vertexmap)
+    {
+      std::cout << "no vertex node " << std::endl;
+      return Fun4AllReturnCodes::ABORTRUN;
+    }  
+
   _mbd_out = findNode::getClass<MbdOut>(topNode, "MbdOut");
   
   if (!_mbd_out)
@@ -331,12 +413,32 @@ int MbdAna::GetNodes(PHCompositeNode *topNode)
       useZDC = false;
       //      return Fun4AllReturnCodes::ABORTRUN;
     }
+  if (!m_issim)
+    {
+      sepd_towers =
+	findNode::getClass<TowerInfoContainer>(topNode, "TOWERINFO_CALIB_SEPD");
+    }
+  else
+  {
+      sepd_towers =
+	findNode::getClass<TowerInfoContainer>(topNode, "TOWERINFO_CALIB_EPD");
+    }	
+  if (!sepd_towers) {
+    std::cout << PHWHERE << "::ERROR - cannot find TOWERINFO_CALIB_SEPD"
+	      << std::endl;
+    exit(-1);
+  }
+  epdgeom = findNode::getClass<EpdGeom>(topNode, "TOWERGEOM_EPD");
+  if (!epdgeom) {
+    std::cout << PHWHERE << "::ERROR - cannot find TOWERGEOM_EPD"
+	      << std::endl;
+    exit(-1);
+  }
 
-
-  // centralityinfo = findNode::getClass<CentralityInfo>(topNode, "CentralityInfo");
-  // eventplaneinfomap = findNode::getClass<EventplaneinfoMap>(topNode, "EventplaneinfoMap");
+  centralityinfo = findNode::getClass<CentralityInfo>(topNode, "CentralityInfo");
+  eventplaneinfomap = findNode::getClass<EventplaneinfoMap>(topNode, "EventplaneinfoMap");
   // //  _min_bias_info = findNode::getClass<MinimumBiasInfo>(topNode, "MinimumBiasInfo");
-  // _minimumbiasinfo = findNode::getClass<MinimumBiasInfo>(topNode, "MinimumBiasInfo");
+  minimumbiasinfo = findNode::getClass<MinimumBiasInfo>(topNode, "MinimumBiasInfo");
   
   return Fun4AllReturnCodes::EVENT_OK;
 }

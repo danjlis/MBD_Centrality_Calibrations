@@ -1,7 +1,5 @@
 #pragma once
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,00,0)
-#include <mbd/MbdReco.h>
-#include <g4mbd/MbdDigitization.h>
 #include <fun4all/SubsysReco.h>
 #include <fun4all/Fun4AllServer.h>
 #include <fun4all/Fun4AllInputManager.h>
@@ -19,35 +17,25 @@
 #include <ffamodules/CDBInterface.h>
 
 #include <centrality/CentralityReco.h>
-#include <centrality/CentralityValid.h>
 #include <calotrigger/MinimumBiasClassifier.h>
-#include <centrality/MbdAna.h>
-#include <DLUtility.h>
+#include <mbdana/MbdAna.h>
 #include <fun4all/Fun4AllUtils.h>
 #include <frog/FROG.h>
 #include <globalvertex/GlobalVertexReco.h>
 
-R__LOAD_LIBRARY(libglobalvertex.so)
-R__LOAD_LIBRARY(libdlutility.so)
-R__LOAD_LIBRARY(libFROG.so)
-R__LOAD_LIBRARY(libcalo_reco.so) 
-//R__LOAD_LIBRARY(libmbd_io.so) 
 R__LOAD_LIBRARY(libmbd.so)
-R__LOAD_LIBRARY(libg4mbd.so) 
+R__LOAD_LIBRARY(libg4mbd.so)
+R__LOAD_LIBRARY(libglobalvertex.so)
+R__LOAD_LIBRARY(libFROG.so)
 R__LOAD_LIBRARY(libmbdana.so) 
-R__LOAD_LIBRARY(libfun4allraw.so)
 R__LOAD_LIBRARY(libfun4all.so)
 R__LOAD_LIBRARY(libffamodules.so)
 R__LOAD_LIBRARY(libcentrality.so)
-R__LOAD_LIBRARY(libcentralityvalid.so)
-R__LOAD_LIBRARY(libphool.so)
+
 #endif
   
 void Fun4All_MbdAnaMC( const std::string input_3) //, const std::string input_2, const std::string input_1)
 {
-  gSystem->Load("libg4dst");
-  gSystem->Load("libFROG");
-  gSystem->Load("libcalo_reco");
 
 
   int nevents = 100000;
@@ -152,10 +140,6 @@ void Fun4All_MbdAnaMC( const std::string input_3) //, const std::string input_2,
   cr->setOverwriteVtx("/sphenix/user/dlis/Projects/centrality/cdb/calibrations/vertexscales/cdb_centrality_vertex_scale_1.root");
   cr->setOverwriteDivs("/sphenix/user/dlis/Projects/centrality/cdb/calibrations/divs/cdb_centrality_1.root");
   se->registerSubsystem(cr);
-
-  CentralityValid *centralityvalidation = new CentralityValid("CentralityValid",hist_outfile);
-  centralityvalidation->setIsSim(true);
-  se->registerSubsystem(centralityvalidation);
 
   MbdAna *mbdana = new MbdAna("MbdAna", tree_outfile);
   mbdana->Verbosity(verbosity);

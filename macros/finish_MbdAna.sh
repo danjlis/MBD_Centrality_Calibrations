@@ -16,10 +16,9 @@ then
     rsync -a $this_dir/* .
 else
    echo condor scratch NOT set
-   exit -1
 fi
 
-source /opt/sphenix/core/bin/sphenix_setup.sh -n new
+source /opt/sphenix/core/bin/sphenix_setup.sh -n ana.533
 export MYINSTALL=/sphenix/user/dlis/Projects/install/
 export SPHENIX=$MYINSTALL
 source /opt/sphenix/core/bin/setup_local.sh $MYINSTALL
@@ -29,7 +28,7 @@ source setup_env.sh
 
 runnumber=$1
 
-dir="/sphenix/tg/tg01/commissioning/CaloCalibWG/dlis/centrality/"
+dir="/sphenix/tg/tg01/commissioning/CaloCalibWG/dlis/centrality/oo/"
 hdir="${dir}runs/"
 
 mkdir -p $hdir

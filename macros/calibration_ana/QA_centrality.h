@@ -80,7 +80,10 @@ class QA_centrality{
   void QA_CentralityCheck(const int runnumber, const int scaled = 1);
 
   void Print_QA_Info(bool use_table = false);
-
+  void SetTriggerBit(int bit) { m_trigger_bit = bit; }
+  void SetOO(bool oo) { m_oo = oo; }
+  void SetMBDHitCut(int hit) { m_mbd_hit_cut = hit; }
+  void SetMBDTimeCut(int time) { m_mbd_time_cut = time; }
   void SetRunNumber(int run) { qa_info.runnumber = run;}
   void SetNEvents(int events) { nevents = events;}
   void SetReferenceRun(int ref_run) { reference_run = ref_run ; }
@@ -109,6 +112,8 @@ class QA_centrality{
   bool systematics = false;
   struct QA_Info qa_info;
 
+  int m_trigger_bit = 12;
+  bool m_oo = false;
   bool countbefore = true;
   char *env_p = nullptr;
   char *env_tree = nullptr;
@@ -122,6 +127,8 @@ class QA_centrality{
   bool isSim = false;
   int ndivs = 20;
   int divs = 95;
+  int m_mbd_hit_cut = 2;
+  int m_mbd_time_cut = 2;
   float m_maxsumcut = 2100;
   int nevents = 0;
   double cthresh = 0.5;

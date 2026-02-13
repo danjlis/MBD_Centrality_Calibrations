@@ -17,7 +17,7 @@
 #include "TNtuple.h"
 #include "TH1.h"
 #include "TH2.h"
-int ndivs = 93;
+int ndivs = 79;
 int isSim = 0;
 const int mbd_ring_index[64] =                                                                                                                                                                                                                                                                                                                                                                              
    {2, 2, 2, 1, 1, 2, 1, 0,   
@@ -40,7 +40,7 @@ void DrawMBDCentralityCheck(const int runnumber);
 void DrawMCMBDCentralityCheck(const int runnumber);
 void DrawZDCCheck(const int runnumber);
 void DrawRunCentralityChecks(const std::string runlist);
-void Draw_QA_Centrality(const std::string runlist)
+void Draw_QA_Centrality_Ref(const std::string runlist)
 {
   std::ifstream inputFile(runlist.c_str());
    if (!inputFile.is_open()) {
@@ -61,11 +61,45 @@ void Draw_QA_Centrality(const std::string runlist)
        //// DrawZDCCheck(runnumber);
        //  DrawMBDChannels(runnumber);
        //DrawMBDChargeSum(runnumber);
-       DrawMBDChargeSum(runnumber);
+       //DrawMBDChargeSum(runnumber);
        //DrawMBDVertex(runnumber);
        //DrawMBDCentralityCalibrations(runnumber, 0, 0);
        //DrawMBDCentralityCalibrations(runnumber, 0, 1);
-       DrawMBDCentralityCalibrations(runnumber, 0, 1);
+       //DrawMBDCentralityCalibrations(runnumber, 0, 1);
+       //DrawMBDCentralityCalibrations(runnumber,1);
+       //DrawMBDCentralityCalibrations(runnumber,1,0,1);
+       DrawMBDCentralityCheck(runnumber);
+
+     }
+   }
+  return;
+}
+void Draw_QA_Centrality_Check(const std::string runlist)
+{
+  std::ifstream inputFile(runlist.c_str());
+   if (!inputFile.is_open()) {
+       std::cerr << "Error opening file!" << std::endl;
+       return; // Exit if file cannot be opened
+   }
+
+
+   std::string line;
+
+   while (std::getline(inputFile, line)) {
+     std::stringstream ss(line);
+     int runnumber;
+     int runnumber_ref = 0;
+     while (ss >> runnumber >> runnumber_ref) {
+       std::cout << runnumber << " -- > " << runnumber_ref << std::endl;
+       //DrawMBDChannels(runnumber);
+       //// DrawZDCCheck(runnumber);
+       //  DrawMBDChannels(runnumber);
+       //DrawMBDChargeSum(runnumber);
+       //DrawMBDChargeSum(runnumber, runnumber_ref);
+       //DrawMBDVertex(runnumber);
+       //DrawMBDCentralityCalibrations(runnumber, 0, 0);
+       //DrawMBDCentralityCalibrations(runnumber, 0, 1);
+       //DrawMBDCentralityCalibrations(runnumber, 0, 1);
        //DrawMBDCentralityCalibrations(runnumber,1);
        //DrawMBDCentralityCalibrations(runnumber,1,0,1);
        DrawMBDCentralityCheck(runnumber);
@@ -88,11 +122,19 @@ void Draw_QA_Centrality_2(const int runnumber){
 void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false, bool use_balanced = false, bool flag = false)
 {
 
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+  const char *env_p = std::getenv("MBD_CENTRALITY_PATH");
 
   if(!env_p)
     {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
+      return;
+    }
+
+  const char *env_n = std::getenv("MBD_CENTRALITY_NAME");
+
+  if(!env_n)
+    {
+      std::cout << "no env MBD_CENTRALITY_NAME set."<<endl;
       return;
     }
 
@@ -101,13 +143,13 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
 
   TString extra = Form("_%s%s%s", (use_shifted ? "sca" :""), (use_balanced ? "bal":""), (flag ? "forc":""));
   if (!use_shifted && !use_balanced && !flag) extra = "";
-  TString filename = Form("%s/output_2024/plots/mbdana_centrality_trigeff%s_%d.root", env_p, extra.Data(), runnumber);
+  TString filename = Form("%s/output%s/mbdana_centrality_trigeff%s_%d.root", env_p, env_n, extra.Data(), runnumber);
   if (runnumber < 10)
     {
-      filename = Form("%s/output_2024/plots/mbdana_centrality_trigeff%s_hijing.root", env_p, extra.Data());
+      filename = Form("%s/output%s/plots/mbdana_centrality_trigeff%s_hijing.root", env_p, env_n, extra.Data());
     }
   TFile *file = new TFile(filename.Data(), "r");
-  std::cout << "opening :"<<Form("%s/output_2024/plots/mbdana_centrality_trigeff%s_%d.root", env_p, extra.Data(), runnumber)<<std::endl;
+  std::cout << "opening :"<<Form("%s/output%s/mbdana_centrality_trigeff%s_%d.root", env_p, env_n, extra.Data(), runnumber)<<std::endl;
   if (!file)
     {
       cout<< "NOFILE" <<endl;
@@ -219,27 +261,27 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
 
   TF1 *trigeffcurve = (TF1*) file->Get("trigeffcurve");
   if (!trigeffcurve) return;
-  TString calib_file_name = Form("%s/calib_2024/mbdana_centrality_%d.root", env_p, runnumber);
+  TString calib_file_name = Form("%s/calib%s/mbdana_centrality_%d.root", env_p, env_n, runnumber);
   if (runnumber < 10)
     {
-      calib_file_name = Form("%s/calib_2024/mbdana_centrality_hijing.root", env_p);
+      calib_file_name = Form("%s/calib%s/mbdana_centrality_hijing.root", env_p, env_n);
     }
 
-  if (flag && use_balanced && use_shifted) calib_file_name = Form("%s/calib_2024/mbdana__centralitysca_bal_%d.root", env_p, 20869);
-  else if (flag && use_balanced) calib_file_name = Form("%s/calib_2024/mbdana_centrality_bal_%d.root", env_p, 20869);
-  else if (flag && use_shifted) calib_file_name = Form("%s/calib_2024/mbdana_centrality_%d.root", env_p, 20869); 
-  else if (use_balanced && use_shifted) calib_file_name = Form("%s/calib_2024/mbdana_centrality_sca_bal_%d.root", env_p, runnumber);
-  else if (use_balanced) calib_file_name = Form("%s/calib_2024/mbdana_centrality_bal_%d.root", env_p, runnumber);
-  else if (use_shifted) calib_file_name = Form("%s/calib_2024/mbdana_centrality_sca_%d.root", env_p, runnumber);
+  if (flag && use_balanced && use_shifted) calib_file_name = Form("%s/calib%s/mbdana__centralitysca_bal_%d.root", env_p, env_n, 20869);
+  else if (flag && use_balanced) calib_file_name = Form("%s/calib%s/mbdana_centrality_bal_%d.root", env_p, env_n, 20869);
+  else if (flag && use_shifted) calib_file_name = Form("%s/calib%s/mbdana_centrality_%d.root", env_p, env_n, 20869); 
+  else if (use_balanced && use_shifted) calib_file_name = Form("%s/calib%s/mbdana_centrality_sca_bal_%d.root", env_p, env_n, runnumber);
+  else if (use_balanced) calib_file_name = Form("%s/calib%s/mbdana_centrality_bal_%d.root", env_p, env_n, runnumber);
+  else if (use_shifted) calib_file_name = Form("%s/calib%s/mbdana_centrality_sca_%d.root", env_p, env_n, runnumber);
   if (isSim)
     {
 
-      if (flag && use_balanced && use_shifted) calib_file_name = Form("%s/calib_2024/mbdana_centralitysca_bal_%s.root", env_p, "hijing");
-      else if (flag && use_balanced) calib_file_name = Form("%s/calib_2024/mbdana_centrality_bal_%s.root", env_p, "hijing");
-      else if (flag && use_shifted) calib_file_name = Form("%s/calib_2024/mbdana_centrality_%s.root", env_p, "hijing"); 
-      else if (use_balanced && use_shifted) calib_file_name = Form("%s/calib_2024/mbdana_centrality_sca_bal_%s.root", env_p, "hijing");
-      else if (use_balanced) calib_file_name = Form("%s/calib_2024/mbdana_centrality_bal_%s.root", env_p, "hijing");
-      else if (use_shifted) calib_file_name = Form("%s/calib_2024/mbdana_centrality_sca_%s.root", env_p, "hijing");
+      if (flag && use_balanced && use_shifted) calib_file_name = Form("%s/calib%s/mbdana_centralitysca_bal_%s.root", env_p, env_n, "hijing");
+      else if (flag && use_balanced) calib_file_name = Form("%s/calib%s/mbdana_centrality_bal_%s.root", env_p, env_n, "hijing");
+      else if (flag && use_shifted) calib_file_name = Form("%s/calib%s/mbdana_centrality_%s.root", env_p, env_n, "hijing"); 
+      else if (use_balanced && use_shifted) calib_file_name = Form("%s/calib%s/mbdana_centrality_sca_bal_%s.root", env_p, env_n, "hijing");
+      else if (use_balanced) calib_file_name = Form("%s/calib%s/mbdana_centrality_bal_%s.root", env_p, env_n, "hijing");
+      else if (use_shifted) calib_file_name = Form("%s/calib%s/mbdana_centrality_sca_%s.root", env_p, env_n, "hijing");
 
     }
 
@@ -279,14 +321,19 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
     std::cout << centrality_low[i] << ", "<<centrality_high[i] <<std::endl;
   }  
 
-  TString calib_file_name2 = Form("%s/calib_2024/mbdana_npart_%d.root", env_p, runnumber); 
+  TString calib_file_name2 = Form("%s/calib%s/mbdana_npart_%d.root", env_p, env_n, runnumber); 
   if (isSim)
     {
-      calib_file_name2 = Form("%s/calib_2024/mbdana_npart_hijing.root", env_p); 
+      calib_file_name2 = Form("%s/calib%s/mbdana_npart_hijing.root", env_p, env_n); 
     }
   TFile *calibfile2 = new TFile(calib_file_name2, "r");
-
+  if (!calibfile2) return;
   TNtuple *tn2 = (TNtuple*) calibfile2->Get("tn_npart");
+  if (!tn2)
+    {
+      calibfile2->Close();
+      return;
+    }
   tn2->SetBranchAddress("npart",&npart);
 
   for (int i = 0; i < tn2->GetEntries(); i++)
@@ -306,6 +353,8 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
   gPad->SetTicks(1);	
   hRealMBD->SetLineWidth(2);
   hRealMBD->SetMarkerStyle(24);
+  hRealMBD->SetMarkerColor(kBlack);
+  hRealMBD->SetLineColor(kBlack);
   hRealMBD->SetMaximum(hSimMBD->GetBinContent(10)*3);
   hRealMBD->GetXaxis()->SetRangeUser(0.0,2500);
   gPad->SetTopMargin(.13);
@@ -325,12 +374,13 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
   hRealMBD->GetYaxis()->SetTitleOffset(1);
   hRealMBD->GetYaxis()->SetTitleSize(.07);
   hRealMBD->GetYaxis()->SetLabelSize(.05);
+  hRealMBD->SetMaximum(hRealMBD->GetBinContent(hRealMBD->GetMaximumBin()) * 100);
   hRealMBD->DrawCopy("p,e,l");
 
   hSimMBD->SetLineWidth(2);
   hSimMBD->SetLineColor(kRed);
   
-  hSimMBD->DrawCopy("l,same");
+  hSimMBD->DrawCopy("hist ,same");
 
   int nhistbins = hRealMBD->GetNbinsX();
   double err_real; double err_sim;
@@ -341,10 +391,10 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
   l.SetNDC();
   l.SetTextSize(0.04);
   
-  DrawSPHENIXemma(0.65, 0.8, 1, 0, 0.06);
-  drawText(Form("Run %d", runnumber), 0.65, 0.67, 0, kBlack, 0.06);
-  TLegend *l1 = new TLegend(0.25, 0.67, 0.5, 0.8);
-  l1->SetTextSize(0.06);
+  DrawSPHENIXOO(0.6, 0.8, 1, 0, 0.06);
+  drawText(Form("Run %d", runnumber), 0.60, 0.67, 0, kBlack, 0.06);
+  TLegend *l1 = new TLegend(0.22, 0.67, 0.5, 0.8);
+  l1->SetTextSize(0.05);
   l1->SetLineWidth(0);
   l1->AddEntry(hRealMBD, "Data", "p, e, l");
   l1->AddEntry(hSimMBD, "Glauber + NBD Fit", "p, e, l");
@@ -356,9 +406,9 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
   hpRatio->SetLineWidth(2);
   hpRatio->SetLineColor(kRed);
   hRatio->SetMarkerStyle(24);
-  hRatio->SetMaximum(1.5);
+  hRatio->SetMaximum(2.0);
   hRatio->SetMinimum(0);
-  hRatio->GetXaxis()->SetRangeUser(0.0,400);
+  hRatio->GetXaxis()->SetRangeUser(0.0,2500);
   hRatio->SetXTitle(foo.c_str());
 
   hRatio->SetYTitle("Data / MC");
@@ -375,7 +425,7 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
 
   hRatio->Draw("p,e");
   //hpRatio->Draw("hist same");
-  //  drawText(Form("Trigger Efficiency = %2.1f #pm %1.1f%%", trigeff*100, trigeff_err*100), 0.37, 0.8, 0, kBlack, 0.07);
+  drawText(Form("Trigger Efficiency = %2.1f %%", trigeff*100), 0.4, 0.8, 0, kBlack, 0.07);
   TLine *tl = new TLine(0.0,1.0,400,1.0);
   SetLineAtt(tl, kRed, 3, 4);
   tl->Draw();
@@ -408,7 +458,7 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
 	in_data[j] += hRealMBD->GetBinContent(i);
 	in_sim[j] += hSimMBD->GetBinContent(i);
       }
-    cout << "Centbin = " << j << " Lowcut = " << 
+    cout << "Centbin = " << j << " Lowcut = " << centrality_low[j] << " " << 
       hslice->GetBinCenter(1+(floor(centrality_low[j]))) << 
       " Highcut = " << 
       hslice->GetBinCenter(1+(floor(centrality_low[j+1]))) << " -- "
@@ -424,8 +474,8 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
   // redraw real data to be on top
   hRealMBD->DrawCopy("p,e,l,same");
   hSimMBD->DrawCopy("hist,same");  
-  c1->SaveAs(Form("%s/output_2024/centrality_2024/run%d_glauber%s.pdf", env_p, runnumber, extra.Data()));
-  c1->SaveAs(Form("%s/output_2024/centrality_2024/run%d_glauber%s.png", env_p, runnumber, extra.Data()));
+  c1->SaveAs(Form("%s/output%s/centrality%s/run%d_glauber%s.pdf", env_p, env_n, env_n, runnumber, extra.Data()));
+  c1->SaveAs(Form("%s/output%s/centrality%s/run%d_glauber%s.png", env_p, env_n, env_n, runnumber, extra.Data()));
   //===============================================================================
 
 
@@ -469,14 +519,14 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
       h_npart_cent[i]->SetMarkerStyle(21);
       h_npart_cent[i]->SetMarkerSize(1);
       h_npart_cent[i]->Draw("same PMC PLC");
-      ll->AddEntry(h_npart_cent[i], Form("%d-%d %% - %3.1f #pm %3.1f", i*5, i*5+5, npart_cents[i], h_npart_cent[i]->GetRMS()),"PMC PLC"); 
+      ll->AddEntry(h_npart_cent[i], Form("%d-%d %% - %3.1f #pm %3.1f", i*5, i*5+5, h_npart_cent[i]->GetMean(), h_npart_cent[i]->GetRMS()),"PMC PLC"); 
     }
   SetLegendStyle(ll);
   ll->Draw("same");
-  DrawSPHENIX(0.43, 0.88, 1, 0, 0.04);
+  DrawSPHENIXOO(0.43, 0.88, 1, 0, 0.04);
   
-  c2->SaveAs(Form("%s/output_2024/centrality_2024/run%d_npart_glauber%s.pdf", env_p, runnumber, extra.Data()));
-  c2->SaveAs(Form("%s/output_2024/centrality_2024/run%d_npart_glauber%s.png", env_p, runnumber, extra.Data()));
+  c2->SaveAs(Form("%s/output%s/centrality%s/run%d_npart_glauber%s.pdf", env_p, env_n, env_n, runnumber, extra.Data()));
+  c2->SaveAs(Form("%s/output%s/centrality%s/run%d_npart_glauber%s.png", env_p, env_n, env_n, runnumber, extra.Data()));
 
 
   // ecc2
@@ -501,10 +551,10 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
     }
   SetLegendStyle(ll);
   ll->Draw("same");
-  DrawSPHENIX(0.43, 0.88, 1, 0, 0.04);
+  DrawSPHENIXOO(0.43, 0.88, 1, 0, 0.04);
   
-  c2->SaveAs(Form("%s/output_2024/centrality_2024/run%d_ecc2_glauber%s.pdf", env_p, runnumber, extra.Data()));
-  c2->SaveAs(Form("%s/output_2024/centrality_2024/run%d_ecc2_glauber%s.png", env_p, runnumber, extra.Data()));
+  c2->SaveAs(Form("%s/output%s/centrality%s/run%d_ecc2_glauber%s.pdf", env_p, env_n, env_n, runnumber, extra.Data()));
+  c2->SaveAs(Form("%s/output%s/centrality%s/run%d_ecc2_glauber%s.png", env_p, env_n, env_n, runnumber, extra.Data()));
 
   // ecc3
  
@@ -528,10 +578,10 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
     }
   SetLegendStyle(ll);
   ll->Draw("same");
-  DrawSPHENIX(0.43, 0.88, 1, 0, 0.04);
+  DrawSPHENIXOO(0.43, 0.88, 1, 0, 0.04);
   
-  c2->SaveAs(Form("%s/output_2024/centrality_2024/run%d_ecc3_glauber%s.pdf", env_p, runnumber, extra.Data()));
-  c2->SaveAs(Form("%s/output_2024/centrality_2024/run%d_ecc3_glauber%s.png", env_p, runnumber, extra.Data()));
+  c2->SaveAs(Form("%s/output%s/centrality%s/run%d_ecc3_glauber%s.pdf", env_p, env_n, env_n, runnumber, extra.Data()));
+  c2->SaveAs(Form("%s/output%s/centrality%s/run%d_ecc3_glauber%s.png", env_p, env_n, env_n, runnumber, extra.Data()));
 
 
   // ecc2
@@ -556,10 +606,10 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
     }
   SetLegendStyle(ll);
   ll->Draw("same");
-  DrawSPHENIX(0.43, 0.88, 1, 0, 0.04);
+  DrawSPHENIXOO(0.43, 0.88, 1, 0, 0.04);
   
-  c2->SaveAs(Form("%s/output_2024/centrality_2024/run%d_b_glauber%s.pdf", env_p, runnumber, extra.Data()));
-  c2->SaveAs(Form("%s/output_2024/centrality_2024/run%d_b_glauber%s.png", env_p, runnumber, extra.Data()));
+  c2->SaveAs(Form("%s/output%s/centrality%s/run%d_b_glauber%s.pdf", env_p, env_n, env_n, runnumber, extra.Data()));
+  c2->SaveAs(Form("%s/output%s/centrality%s/run%d_b_glauber%s.png", env_p, env_n, env_n, runnumber, extra.Data()));
 
 
   return;
@@ -568,19 +618,26 @@ void DrawMBDCentralityCalibrations(const int runnumber, bool use_shifted = false
 void DrawMBDTimeChannels(const int runnumber)
 {
 
-  
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+  const char *env_n = std::getenv("MBD_CENTRALITY_NAME");
+
+  if(!env_n)
+    {
+      std::cout << "no env MBD_CENTRALITY_NAME set."<<endl;
+      return;
+    }
+
+  const char *env_p = std::getenv("MBD_CENTRALITY_PATH");
 
   if(!env_p)
     {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
       return;
     }
 
   gStyle->SetOptStat(0);
   SetyjPadStyle();
 
-  TFile *file = new TFile(Form("%s/output_2024/plots/histout_%d.root", env_p, runnumber), "r");
+  TFile *file = new TFile(Form("%s/output%s/histout_%d.root", env_p, env_n, runnumber), "r");
 
   if (!file)
     {
@@ -613,7 +670,7 @@ void DrawMBDTimeChannels(const int runnumber)
   float yi = .9 - xi;
   float dpx = (1. - 2*xi)/8.;
   float dpy = (.9 - 2*xi)/8.;
-  DrawSPHENIX(0.05, 0.95, 1, 1, 0.03, 0);
+  DrawSPHENIXOO(0.05, 0.95, 1, 1, 0.03, 0);
   drawText(Form("Run - %d", runnumber), 0.05, 0.91, 0, kBlack, 0.03);
   drawText("South MBD Time Distributions", 0.95, 0.91, 1, kBlack, 0.03);
   for (int i = 0; i < 64; i++)
@@ -640,11 +697,11 @@ void DrawMBDTimeChannels(const int runnumber)
       drawText(Form("S Ch. %d", i),0.1, 0.88, 0, kBlack, 0.07);
     }
 
-  c->Print(Form("%s/output_2024/centrality_2024/run%d_time.pdf(", env_p, runnumber));
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_time_south.png", env_p, runnumber));
+  c->Print(Form("%s/output%s/centrality%s/run%d_time.pdf(", env_p, env_n, env_n, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_time_south.png", env_p, env_n, env_n, runnumber));
 
   c = new TCanvas("c1","c1", 1000, 1200);
-  DrawSPHENIX(0.05, 0.95, 1, 1, 0.03, 0);
+  DrawSPHENIXOO(0.05, 0.95, 1, 1, 0.03, 0);
   drawText(Form("Run - %d", runnumber), 0.05, 0.91, 0, kBlack, 0.03);
   drawText("North MBD Time Distributions", 0.95, 0.91, 1, kBlack, 0.03);
 
@@ -672,8 +729,8 @@ void DrawMBDTimeChannels(const int runnumber)
       drawText(Form("N Ch. %d", i),0.1, 0.88, 0, kBlack, 0.07);
     }
 
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_time_north.png", env_p, runnumber));
-  c->Print(Form("%s/output_2024/centrality_2024/run%d_time.pdf)", env_p, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_time_north.png", env_p, env_n, env_n, runnumber));
+  c->Print(Form("%s/output%s/centrality%s/run%d_time.pdf)", env_p, env_n, env_n, runnumber));
 
 }
  
@@ -682,17 +739,25 @@ void DrawMBDVertex(const int runnumber)
   gStyle->SetOptStat(0);
   SetyjPadStyle();
 
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+  const char *env_n = std::getenv("MBD_CENTRALITY_NAME");
+
+  if(!env_n)
+    {
+      std::cout << "no env MBD_CENTRALITY_NAME set."<<endl;
+      return;
+    }
+
+  const char *env_p = std::getenv("MBD_CENTRALITY_PATH");
 
   if(!env_p)
     {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
       return;
     }
 
 
-  TFile *file = new TFile(Form("%s/output_2024/plots/mbdana_zdc_check_%d.root", env_p, runnumber), "r");
-
+  TFile *file = new TFile(Form("%s/output%s/mbdana_zdc_check_%d.root", env_p, env_n, runnumber), "r");
+  if (!file) return;
   TH1D *h_vertex = (TH1D*) file->Get("h_vertex");
 
   if (!h_vertex) return;
@@ -706,13 +771,15 @@ void DrawMBDVertex(const int runnumber)
 
   float max = 1.3 * h_time_0->GetBinContent(h_time_0->GetMaximumBin());
   TCanvas *c_time = new TCanvas("time","time", 600, 600);
+  c_time->SetLogy();
+  
   h_time_0->SetTitle(";Time [ns];Counts");      
   h_time_0->SetMaximum(max);
   h_time_0->Draw();
   
-  DrawSPHENIX(0.2, 0.87, 1, 0, 0.04);
+  DrawSPHENIXOO(0.2, 0.87, 1, 0, 0.04);
   drawText(Form("Run %d", runnumber), 0.2, 0.76, 0, kBlack, 0.04);
-  c_time->SaveAs(Form("%s/output_2024/centrality_2024/run%d_time_0.pdf", env_p, runnumber));
+  c_time->SaveAs(Form("%s/output%s/centrality%s/run%d_time_0.pdf", env_p, env_n, env_n, runnumber));
 
   max = 1.3 * h_vertex->GetBinContent(h_vertex->GetMaximumBin());
   TCanvas *c_vertex = new TCanvas("vertex","vertex", 600, 300);
@@ -733,14 +800,14 @@ void DrawMBDVertex(const int runnumber)
   h_vertex->Draw("same");
   
   
-  DrawSPHENIX(0.2, 0.87, 1, 0, 0.04);
+  DrawSPHENIXOO(0.2, 0.87, 1, 0, 0.04);
   drawText(Form("Run %d", runnumber), 0.2, 0.76, 0, kBlack, 0.04);
   drawText(Form("<z_{vtx}> = %2.2f", mean), 0.87, 0.87, 1, kBlack, 0.04);
   drawText(Form("#sigma(z_{vtx}) = %2.2f", std), 0.87, 0.82, 1, kBlack, 0.04);
   drawText(Form("#Chi^{2}/NDF = %2.2f", chi2ndf), 0.87, 0.77, 1, kBlack, 0.04);
-  c_vertex->SaveAs(Form("%s/output_2024/centrality_2024/run%d_zvtx.pdf", env_p, runnumber));
+  c_vertex->SaveAs(Form("%s/output%s/centrality%s/run%d_zvtx.pdf", env_p, env_n, env_n, runnumber));
   gPad->SetLogy();
-  c_vertex->SaveAs(Form("%s/output_2024/centrality_2024/run%d_zvtx_log.pdf", env_p, runnumber));
+  c_vertex->SaveAs(Form("%s/output%s/centrality%s/run%d_zvtx_log.pdf", env_p, env_n, env_n, runnumber));
   
 }
 
@@ -749,18 +816,26 @@ void DrawMBDChargeSum(const int runnumber)
   gStyle->SetOptStat(0);
   SetyjPadStyle();
 
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+  const char *env_n = std::getenv("MBD_CENTRALITY_NAME");
 
-  if(!env_p)
+  if(!env_n)
     {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      std::cout << "no env MBD_CENTRALITY_NAME set."<<endl;
       return;
     }
 
-  TString filename = Form("%s/output_2024/plots/mbdana_charge_sum_%d.root", env_p, runnumber);
+  const char *env_p = std::getenv("MBD_CENTRALITY_PATH");
+
+  if(!env_p)
+    {
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
+      return;
+    }
+
+  TString filename = Form("%s/output%s/mbdana_charge_sum_%d.root", env_p, env_n, runnumber);
   if (isSim)
     {
-      filename = Form("%s/output_2024/plots/mbdana_charge_sum_hijing.root", env_p);
+      filename = Form("%s/output%s/mbdana_charge_sum_hijing.root", env_p, env_n);
     }
   TFile *file = new TFile(filename.Data(), "r");
   if (!file) return;
@@ -813,7 +888,9 @@ void DrawMBDChargeSum(const int runnumber)
   TProfile *hp_charge_sum_v_zdc =  (TProfile*) file->Get("hp_charge_sum_v_zdc");
   TProfile *hp_charge_sum_v_zdc_mb =  (TProfile*) file->Get("hp_charge_sum_v_zdc_mb");
 
-  TFile *file2 = new TFile(Form("%s/output_2024/plots/mbdana_charge_sum_54912.root", env_p), "r");
+  TFile *file2 = new TFile(Form("%s/output%s/mbdana_charge_sum_54912.root", env_p, env_n), "r");
+
+  if (!file2) return;
   TProfile *hp_charge_sum_v_zdc_mbref =  (TProfile*) file2->Get("hp_charge_sum_v_zdc_mb");
   hp_charge_sum_v_zdc_mbref->GetXaxis()->SetRangeUser(10, 1500);
   hp_charge_sum_v_zdc_mb->GetXaxis()->SetRangeUser(10, 1500);
@@ -835,7 +912,7 @@ void DrawMBDChargeSum(const int runnumber)
   h_charge_sum->Draw("");
   h_charge_sum_vtx->Draw("same");
   h_charge_sum_mb_vtx->Draw("same");
-  DrawSPHENIX(0.22, 0.85, 1, 0, 0.04);
+  DrawSPHENIXOO(0.22, 0.85, 1, 0, 0.04);
   drawText(Form("Run %d", runnumber), 0.22, 0.74, 0, kBlack, 0.04);
 
   TLegend *l = new TLegend(0.6, 0.7, 0.8, 0.9);
@@ -846,7 +923,7 @@ void DrawMBDChargeSum(const int runnumber)
   l->AddEntry(h_charge_sum_mb_vtx, "ZDC and MBD sum cut");
   l->Draw("same");
 
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum.pdf", env_p, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum.pdf", env_p, env_n, env_n, runnumber));
 
   c->Clear();
 
@@ -861,11 +938,11 @@ void DrawMBDChargeSum(const int runnumber)
 
   h2_charge_sum_vtx_ns->Draw("colz");
 
-  DrawSPHENIX(0.22, 0.85, 1, 0, 0.04);
+  DrawSPHENIXOO(0.22, 0.85, 1, 0, 0.04);
   drawText(Form("Run %d", runnumber), 0.22, 0.74, 0, kBlack, 0.04);
   drawText("MBD NS #geq 2", 0.22, 0.69, 0, kBlack, 0.04);
   drawText("|z_{vtx}| < 60 cm", 0.22, 0.64, 0, kBlack, 0.04);
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_2d_bkg.pdf", env_p, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_2d_bkg.pdf", env_p, env_n, env_n, runnumber));
 
 
   c->Clear();
@@ -875,7 +952,7 @@ void DrawMBDChargeSum(const int runnumber)
   h_charge_sum_mb_vtx->SetMaximum(10*h_charge_sum_mb_vtx->GetBinContent(h_charge_sum_mb_vtx->GetMaximumBin()));
   h_charge_sum_mb_vtx->Draw("");
   h_charge_sum_sca_mb_vtx->Draw("same");
-  DrawSPHENIX(0.22, 0.85, 1, 0, 0.04);
+  DrawSPHENIXOO(0.22, 0.85, 1, 0, 0.04);
   drawText(Form("Run %d", runnumber), 0.22, 0.74, 0, kBlack, 0.04);
   drawText("Min Bias Events", 0.86, 0.74, 1, kBlack, 0.04);
   drawText(Form("Scale Factor = %1.2f", scale), 0.86, 0.69, 1, kBlack, 0.04);
@@ -886,7 +963,7 @@ void DrawMBDChargeSum(const int runnumber)
   l->AddEntry(h_charge_sum_sca_mb_vtx, "Scaled to run 54912");
   l->Draw("same");
 
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_scaled.pdf", env_p, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_scaled.pdf", env_p, env_n, env_n, runnumber));
   if (h_charge_sum_v_zdc_mb)
     {
       c->Clear();
@@ -919,8 +996,8 @@ void DrawMBDChargeSum(const int runnumber)
       SetLegendStyle(l);
       //l->Draw("same");
 
-      c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_zdc.png", env_p, runnumber));
-      c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_zdc.pdf", env_p, runnumber));
+      c->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_zdc.png", env_p, env_n, env_n, runnumber));
+      c->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_zdc.pdf", env_p, env_n, env_n, runnumber));
     }
 
   TCanvas *c_charge = new TCanvas("c_charge","c_charge", 500, 700);
@@ -1018,7 +1095,7 @@ void DrawMBDChargeSum(const int runnumber)
       h_vertex_ratios[i]->Draw("same");
     }
 
-  c_charge->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_vertex.pdf", env_p, runnumber));
+  c_charge->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_vertex.pdf", env_p, env_n, env_n, runnumber));
   c_charge->cd(1);
   gPad->SetLogy();
   h_charge_sum_mb->Draw();
@@ -1040,7 +1117,7 @@ void DrawMBDChargeSum(const int runnumber)
       h_vertex_ratios_mb[i]->Draw("same");
     }
 
-  c_charge->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_vertex_mb.pdf", env_p, runnumber));
+  c_charge->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_vertex_mb.pdf", env_p, env_n, env_n, runnumber));
 
   c_charge->cd(1);
   gPad->SetLogy();
@@ -1063,7 +1140,7 @@ void DrawMBDChargeSum(const int runnumber)
       h_vertex_ratios_vtx[i]->Draw("same");
     }
 
-  c_charge->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_vertex_vtx.pdf", env_p, runnumber));
+  c_charge->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_vertex_vtx.pdf", env_p, env_n, env_n, runnumber));
 
 
   c_charge->cd(1);
@@ -1088,7 +1165,7 @@ void DrawMBDChargeSum(const int runnumber)
       h_vertex_ratios_mb_vtx[i]->Draw("same");
     }
 
-  c_charge->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_vertex_mb_vtx.pdf", env_p, runnumber));
+  c_charge->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_vertex_mb_vtx.pdf", env_p, env_n, env_n, runnumber));
 
   // Integrate and normalize each coloumn.
   
@@ -1120,7 +1197,7 @@ void DrawMBDChargeSum(const int runnumber)
   lred->SetLineWidth(0);
   lred->AddEntry(h_charge_p, "<#Sigma Q_{MBD}>");
   lred->Draw("same");
-  cc1->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_v_vtx.pdf", env_p, runnumber));
+  cc1->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_v_vtx.pdf", env_p, env_n, env_n, runnumber));
 
   TCanvas *cc2 = new TCanvas("cc2","cc2", 500, 500);
   cc2->SetLogz();
@@ -1154,7 +1231,7 @@ void DrawMBDChargeSum(const int runnumber)
   lred->SetLineWidth(0);
   lred->AddEntry(h_charge_bal_p, "<#Sigma Q_{MBD}>");
   lred->Draw("same");
-  cc2->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_balanced_v_vtx.pdf", env_p, runnumber));
+  cc2->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_balanced_v_vtx.pdf", env_p, env_n, env_n, runnumber));
 
   TCanvas *cc3 = new TCanvas("cc3","cc3", 500, 700);
   ratioPanelCanvas(cc3);
@@ -1227,7 +1304,7 @@ void DrawMBDChargeSum(const int runnumber)
 
   lred->Draw("same");
 
-  cc3->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_sum_balanced_vertex.pdf", env_p, runnumber));
+  cc3->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_sum_balanced_vertex.pdf", env_p, env_n, env_n, runnumber));
 
   file->Close();
   delete file;
@@ -1250,19 +1327,27 @@ void DrawMBDChargeSum(const int runnumber, const int runnumber2)
   gStyle->SetOptStat(0);
   SetyjPadStyle();
 
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+  const char *env_n = std::getenv("MBD_CENTRALITY_NAME");
+
+  if(!env_n)
+    {
+      std::cout << "no env MBD_CENTRALITY_NAME set."<<endl;
+      return;
+    }
+
+  const char *env_p = std::getenv("MBD_CENTRALITY_PATH");
 
   if(!env_p)
     {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
       return;
     }
 
 
-  TFile *file = new TFile(Form("%s/output_2024/plots/mbdana_charge_sum_%d.root", env_p, runnumber), "r");
+  TFile *file = new TFile(Form("%s/output%s/mbdana_charge_sum_%d.root", env_p, env_n, runnumber), "r");
   if (!file) return;
 
-  TFile *file2 = new TFile(Form("%s/output_2024/plots/mbdana_charge_sum_%d.root", env_p, runnumber2), "r");
+  TFile *file2 = new TFile(Form("%s/output%s/mbdana_charge_sum_%d.root", env_p, env_n, runnumber2), "r");
   if (!file2) return;
 
   TH1D *h_charge_sum_mb_vtx = (TH1D*) file->Get("h_charge_sum_min_bias_w_vertex_cut_balanced_scaled");
@@ -1326,7 +1411,7 @@ void DrawMBDChargeSum(const int runnumber, const int runnumber2)
   TLine *line = new TLine(0., 1., 2500., 1.);
   SetLineAtt(line, kRed, 2, 4);
   line->Draw("same");
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_run%d_charge_sum.pdf", env_p, runnumber, runnumber2));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_run%d_charge_sum.pdf", env_p, env_n, env_n, runnumber, runnumber2));
 
 
 
@@ -1341,19 +1426,26 @@ void DrawMBDCentralityCheck(const int runnumber)
 
 
   std::string datestring = "new";
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
 
+  const char *env_n = std::getenv("MBD_CENTRALITY_NAME");
 
+  if(!env_n)
+    {
+      std::cout << "no env MBD_CENTRALITY_NAME set."<<endl;
+      return;
+    }
+
+  const char *env_p = std::getenv("MBD_CENTRALITY_PATH");
 
   if(!env_p)
     {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
       return;
     }
-  TString filename = Form("%s/output_2024/plots/mbdana_centrality_check_vtx_%d.root", env_p, runnumber);
+  TString filename = Form("%s/output%s/mbdana_centrality_check_vtx_%d.root", env_p, env_n, runnumber);
   if (isSim)
     {
-      filename = Form("%s/output_2024/plots/mbdana_centrality_check_vtx_hijing.root", env_p);
+      filename = Form("%s/output%s/mbdana_centrality_check_vtx_hijing.root", env_p, env_n);
     }
   // TFile *file_vtx = new TFile(filename.Data(), "r");
 
@@ -1390,10 +1482,10 @@ void DrawMBDCentralityCheck(const int runnumber)
   //     if (!h_cent_vtx_sca_vtx[i]) return;
   //   }
   // std::cout << __LINE__ << std::endl;
-  TString filename2 = Form("%s/output_2024/plots/mbdana_centrality_check_%d.root", env_p, runnumber);
+  TString filename2 = Form("%s/output%s/mbdana_centrality_check_%d.root", env_p, env_n, runnumber);
   if (isSim)
     {
-      filename2 = Form("%s/output_2024/plots/mbdana_centrality_check_hijing.root", env_p);
+      filename2 = Form("%s/output%s/mbdana_centrality_check_hijing.root", env_p, env_n);
     }
   TFile *filer = new TFile(filename2.Data(), "r");
 
@@ -1426,10 +1518,10 @@ void DrawMBDCentralityCheck(const int runnumber)
     }
 
   std::cout << __LINE__ << std::endl;
-  TString filename3 = Form("%s/output_2024/plots/mbdana_centrality_check_bal_%d.root", env_p, runnumber);
+  TString filename3 = Form("%s/output%s/mbdana_centrality_check_bal_%d.root", env_p, env_n, runnumber);
   if (isSim)
     {
-      filename3 = Form("%s/output_2024/plots/mbdana_centrality_check_bal_hijing.root", env_p);
+      filename3 = Form("%s/output%s/mbdana_centrality_check_bal_hijing.root", env_p, env_n);
     }
   TFile *file = new TFile(filename3.Data(), "r");
 
@@ -1472,6 +1564,7 @@ void DrawMBDCentralityCheck(const int runnumber)
   h_cent_bin_shifted = (TH1D*) file->Get("hcent_bins_sca");
 
   if (!h_cent_bin_shifted) return;
+
   h_cent_bin_shifted->Scale(100);
   h_cent_bin_r_shifted->Scale(100);
 
@@ -1497,10 +1590,11 @@ void DrawMBDCentralityCheck(const int runnumber)
   h_cent_bin->GetXaxis()->SetLabelSize(0.04);  
   h_cent_bin->GetYaxis()->SetLabelSize(0.04);  
 
-  h_cent_bin->SetMaximum(1.4);
-  h_cent_bin->SetMinimum(0.9);
-  h_cent_bin->Draw();
-  //  h_cent_bin_r->Draw("same");
+  h_cent_bin_r->SetMaximum(3);
+  h_cent_bin_r->SetMinimum(0.0);
+  h_cent_bin_r->Draw();
+  h_cent_bin_r_shifted->Draw("same");
+  //h_cent_bin_r->Draw("same");
   //h_cent_bin_vtx->Draw("same");
 
   TF1 *flatline = new TF1("flatline","[0]",-0.5, 91.5);
@@ -1532,7 +1626,7 @@ void DrawMBDCentralityCheck(const int runnumber)
   lg->AddEntry(h_cent_bin_r,Form("Uncorr. : %2.3f", chi2_r));
   lg->AddEntry(h_cent_bin,Form("Vtx Scaled: %2.3f", chi2)); 
   lg->Draw("same");
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_centrality.pdf", env_p, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_centrality.pdf", env_p, env_n, env_n, runnumber));
 
   // h_cent_bin_r->SetTitle(";Centrality Bin; Fraction of Events");
   // SetMarkerAtt(h_cent_bin_r_shifted, kViolet - 2, 1, 89);
@@ -1572,7 +1666,7 @@ void DrawMBDCentralityCheck(const int runnumber)
   // lg->AddEntry(h_cent_bin_r,Form("Not Scaled: %2.3f", chi2));
   // lg->AddEntry(h_cent_bin_r_shifted,Form("Scaled: %2.3f", chi2_shifted)); 
   // lg->Draw("same");
-  // c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_centrality_r.pdf", env_p, runnumber));
+  // c->SaveAs(Form("%s/output%s/centrality%s/run%d_centrality_r.pdf", env_p, env_n, runnumber));
 
   TCanvas *c1 = new TCanvas("c1","c1", 500, 500);
   int colors[4] = {kBlack, kRed - 7, kAzure + 6, kViolet - 4};
@@ -1606,7 +1700,7 @@ void DrawMBDCentralityCheck(const int runnumber)
   l2->AddEntry(h_cent_vtx[classes[3]], "85-90%");
   l2->Draw("same");
 
-  c1->SaveAs(Form("%s/output_2024/centrality_2024/run%d_vtx_centrality.pdf", env_p, runnumber));
+  c1->SaveAs(Form("%s/output%s/centrality%s/run%d_vtx_centrality.pdf", env_p, env_n, env_n, runnumber));
 
   std::cout << __LINE__ << std::endl;
   h_cent_vtx_r[classes[0]]->SetMinimum(0.00);
@@ -1627,7 +1721,7 @@ void DrawMBDCentralityCheck(const int runnumber)
   l2->AddEntry(h_cent_vtx[classes[3]], "85-90%");
   l2->Draw("same");
   
-  c1->SaveAs(Form("%s/output_2024/centrality_2024/run%d_vtx_r_centrality.pdf", env_p, runnumber));
+  c1->SaveAs(Form("%s/output%s/centrality%s/run%d_vtx_r_centrality.pdf", env_p, env_n, env_n, runnumber));
   std::cout << __LINE__ << std::endl;
 
   for (int i = 0; i < 4; i++)
@@ -1652,7 +1746,7 @@ void DrawMBDCentralityCheck(const int runnumber)
   l2->AddEntry(h_cent_vertex[classes[2]], "45-50%");
   l2->AddEntry(h_cent_vertex[classes[3]], "85-90%");
   l2->Draw("same");
-  c1->SaveAs(Form("%s/output_2024/centrality_2024/run%d_vertex_centrality.pdf", env_p, runnumber));
+  c1->SaveAs(Form("%s/output%s/centrality%s/run%d_vertex_centrality.pdf", env_p, env_n, env_n, runnumber));
 
   for (int i = 0; i < 4; i++)
     {
@@ -1676,7 +1770,7 @@ void DrawMBDCentralityCheck(const int runnumber)
   l2->AddEntry(h_cent_vertex_r[classes[2]], "45-50%");
   l2->AddEntry(h_cent_vertex_r[classes[3]], "85-90%");
   l2->Draw("same");
-  c1->SaveAs(Form("%s/output_2024/centrality_2024/run%d_vertex_r_centrality.pdf", env_p, runnumber));
+  c1->SaveAs(Form("%s/output%s/centrality%s/run%d_vertex_r_centrality.pdf", env_p, env_n, env_n, runnumber));
 
 
   c1->Close();
@@ -1696,18 +1790,27 @@ void DrawMCMBDCentralityCheck(const int runnumber)
 
 
   std::string datestring = "new";
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+
+  const char *env_n = std::getenv("MBD_CENTRALITY_NAME");
+
+  if(!env_n)
+    {
+      std::cout << "no env MBD_CENTRALITY_NAME set."<<endl;
+      return;
+    }
+
+  const char *env_p = std::getenv("MBD_CENTRALITY_PATH");
 
 
   if(!env_p)
     {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
       return;
     }
-  TString filename2 = Form("%s/output_2024/plots/mbdana_centrality_check_%d.root", env_p, runnumber);
+  TString filename2 = Form("%s/output%s/mbdana_centrality_check_%d.root", env_p, env_n, runnumber);
   if (isSim)
     {
-      filename2 = Form("%s/output_2024/plots/mbdana_centrality_check_hijing.root", env_p);
+      filename2 = Form("%s/output%s/mbdana_centrality_check_hijing.root", env_p, env_n);
     }
   TFile *filer = new TFile(filename2.Data(), "r");
 
@@ -1782,7 +1885,7 @@ void DrawMCMBDCentralityCheck(const int runnumber)
   lg->SetHeader("Flatline #chi^2/NDF");
   lg->AddEntry(h_cent_bin_r,Form("Uncorr. : %2.3f", chi2_r));
   lg->Draw("same");
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_centrality.pdf", env_p, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_centrality.pdf", env_p, env_n, env_n, runnumber));
 
 }
 
@@ -1791,16 +1894,24 @@ void DrawZDCCheck(const int runnumber)
   gStyle->SetOptStat(0);
   SetyjPadStyle();
 
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+  const char *env_n = std::getenv("MBD_CENTRALITY_NAME");
+
+  if(!env_n)
+    {
+      std::cout << "no env MBD_CENTRALITY_NAME set."<<endl;
+      return;
+    }
+
+  const char *env_p = std::getenv("MBD_CENTRALITY_PATH");
 
   if(!env_p)
     {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
       return;
     }
 
 
-  TFile *file = new TFile(Form("%s/output_2024/plots/mbdana_zdc_check_%d.root", env_p, runnumber), "r");
+  TFile *file = new TFile(Form("%s/output%s/mbdana_zdc_check_%d.root", env_p, env_n, runnumber), "r");
 
   if (!file)
     {
@@ -1865,8 +1976,8 @@ void DrawZDCCheck(const int runnumber)
   SetLegendStyle(lg);
   lg->Draw("same");
 
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_zdc.png", env_p, runnumber));
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_zdc.pdf", env_p, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_zdc.png", env_p, env_n, env_n, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_zdc.pdf", env_p, env_n, env_n, runnumber));
 
   c->Clear();
   c->SetLogx(1);
@@ -1885,8 +1996,8 @@ void DrawZDCCheck(const int runnumber)
   SetLegendStyle(lg);
   lg->Draw("same");
 
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_zdc_singles.png", env_p, runnumber));
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_zdc_singles.pdf", env_p, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_zdc_singles.png", env_p, env_n, env_n, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_zdc_singles.pdf", env_p, env_n, env_n, runnumber));
 
 
 }
@@ -1894,27 +2005,35 @@ void DrawZDCCheck(const int runnumber)
 void DrawMBDChannels(const int runnumber)
 {
   
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+  const char *env_n = std::getenv("MBD_CENTRALITY_NAME");
+
+  if(!env_n)
+    {
+      std::cout << "no env MBD_CENTRALITY_NAME set."<<endl;
+      return;
+    }
+
+  const char *env_p = std::getenv("MBD_CENTRALITY_PATH");
 
   if(!env_p)
     {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
       return;
     }
 
   gStyle->SetOptStat(0);
-  std::string filepath = Form("%s/output_2024/plots/mbdana_channels_%d.root", env_p, runnumber);
+  std::string filepath = Form("%s/output%s/mbdana_channels_%d.root", env_p, env_n, runnumber);
   if (runnumber == 0)
     {
-      filepath = Form("%s/output_2024/plots/mbdana_channels_hijing.root", env_p);
+      filepath = Form("%s/output%s/mbdana_channels_hijing.root", env_p, env_n);
     }
   else if (runnumber == 1)
     {
-      filepath = Form("%s/output_2024/plots/mbdana_channels_ampt.root", env_p);
+      filepath = Form("%s/output%s/mbdana_channels_ampt.root", env_p, env_n);
     }
   else if (runnumber == 2)
     {
-      filepath = Form("%s/output_2024/plots/mbdana_channels_epos.root", env_p);
+      filepath = Form("%s/output%s/mbdana_channels_epos.root", env_p, env_n);
     }
   TFile *fout = new TFile(filepath.c_str(), "r");
   TH1D *hpeaks_fit = new TH1D("hpeaks_fit",";MPV_{calib};Tubes", 41, 0.795, 1.205);
@@ -1971,8 +2090,8 @@ void DrawMBDChannels(const int runnumber)
   //     hp_time_vertex[i+64]->Draw("same");
   //   }
 
-  // ctv->Print(Form("%s/output_2024/centrality_2024/run%d_time_vtx.pdf", env_p, runnumber));
-  // ctv->SaveAs(Form("%s/output_2024/centrality_2024/run%d_time_vtx.pdf", env_p, runnumber));
+  // ctv->Print(Form("%s/output%s/centrality%s/run%d_time_vtx.pdf", env_p, env_n, runnumber));
+  // ctv->SaveAs(Form("%s/output%s/centrality%s/run%d_time_vtx.pdf", env_p, env_n, runnumber));
 
   TCanvas *ccv = new TCanvas("ccv","ccv", 1000, 700);
   ccv->Divide(2, 1);
@@ -2004,8 +2123,8 @@ void DrawMBDChannels(const int runnumber)
   lgr->AddEntry(hp_charge_vertex[6], "Middle Ring","p");
   lgr->AddEntry(hp_charge_vertex[0], "Outer Ring","p");
   lgr->Draw("same");
-  ccv->Print(Form("%s/output_2024/centrality_2024/run%d_charge_vtx.pdf", env_p, runnumber));
-  ccv->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_vtx.png", env_p, runnumber));
+  ccv->Print(Form("%s/output%s/centrality%s/run%d_charge_vtx.pdf", env_p, env_n, env_n, runnumber));
+  ccv->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_vtx.png", env_p, env_n, env_n, runnumber));
 
   TCanvas *c = new TCanvas("c","c", 1000, 1200);
 
@@ -2072,8 +2191,8 @@ void DrawMBDChannels(const int runnumber)
       hpeaks_fit->Fill(f_lan_w_gausexp->GetParameter(1));
     }
 
-  c->Print(Form("%s/output_2024/centrality_2024/run%d_charge.pdf(", env_p, runnumber));
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_south.png", env_p, runnumber));
+  c->Print(Form("%s/output%s/centrality%s/run%d_charge.pdf(", env_p, env_n, env_n, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_south.png", env_p, env_n, env_n, runnumber));
 
   c = new TCanvas("c1","c1", 1000, 1200);
   DrawSPHENIX(0.05, 0.95, 1, 1, 0.03, 0);
@@ -2126,8 +2245,8 @@ void DrawMBDChannels(const int runnumber)
       hpeaks_fit->Fill(f_lan_w_gausexp->GetParameter(1));
     }
 
-  c->Print(Form("%s/output_2024/centrality_2024/run%d_charge.pdf)", env_p, runnumber));
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_north.png", env_p, runnumber));
+  c->Print(Form("%s/output%s/centrality%s/run%d_charge.pdf)", env_p, env_n, env_n, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_north.png", env_p, env_n, env_n, runnumber));
 
   TCanvas *cc = new TCanvas("cc","cc", 500, 500);
   SetyjPadStyle();
@@ -2136,7 +2255,7 @@ void DrawMBDChannels(const int runnumber)
   DrawSPHENIX(0.5, 0.8, 1, 0, 0.04);
   drawText(Form("Run %d", runnumber), 0.5, 0.7, 0, kBlack, 0.04);
   drawText("Official MBD Calibrations", 0.5, 0.65, 0, kBlack, 0.04);
-  cc->SaveAs(Form("%s/output_2024/centrality_2024/run%d_charge_fits.png", env_p, runnumber));
+  cc->SaveAs(Form("%s/output%s/centrality%s/run%d_charge_fits.png", env_p, env_n, env_n, runnumber));
 
   c = new TCanvas("c2","c2", 1000, 1200);
   colorline_mb = kViolet+1;
@@ -2177,8 +2296,8 @@ void DrawMBDChannels(const int runnumber)
       drawText(Form("S Ch. %d", i),0.5, 0.88, 0, kBlack, 0.07);
     }
 
-  c->Print(Form("%s/output_2024/centrality_2024/run%d_time.pdf(", env_p, runnumber));
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_time_south.png", env_p, runnumber));
+  c->Print(Form("%s/output%s/centrality%s/run%d_time.pdf(", env_p, env_n, env_n, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_time_south.png", env_p, env_n, env_n, runnumber));
 
   c = new TCanvas("c3","c3", 1000, 1200);
   DrawSPHENIX(0.05, 0.95, 1, 1, 0.03, 0);
@@ -2215,8 +2334,8 @@ void DrawMBDChannels(const int runnumber)
       tl->Draw();
       drawText(Form("N Ch. %d", i),0.5, 0.88, 0, kBlack, 0.07);
     }
-  c->Print(Form("%s/output_2024/centrality_2024/run%d_time.pdf)", env_p, runnumber));
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_time_north.png", env_p, runnumber));
+  c->Print(Form("%s/output%s/centrality%s/run%d_time.pdf)", env_p, env_n, env_n, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_time_north.png", env_p, env_n, env_n, runnumber));
 
 
   c = new TCanvas("cc1","cc1", 500, 500);
@@ -2232,7 +2351,7 @@ void DrawMBDChannels(const int runnumber)
   l->SetLineWidth(2);
   l->Draw("same");
 
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_one_charge.png", env_p, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_one_charge.png", env_p, env_n, env_n, runnumber));
   h_time_mb[0]->SetTitle(";Time [ns];Counts");
   maximum =   1.3*h_time_mb[0]->GetBinContent(  h_time_mb[0]->GetMaximumBin());
   h_time_mb[0]->SetMaximum(maximum);
@@ -2250,18 +2369,26 @@ void DrawMBDChannels(const int runnumber)
   l2->SetLineColor(kBlack);
   l2->SetLineWidth(2);
   l2->Draw("same");
-  c->SaveAs(Form("%s/output_2024/centrality_2024/run%d_one_time.pdf", env_p, runnumber));
+  c->SaveAs(Form("%s/output%s/centrality%s/run%d_one_time.pdf", env_p, env_n, env_n, runnumber));
 
 
 }
 void DrawRunCentralityChecks(const std::string runlist)
 {
 
-  const char *env_p = std::getenv("MBD_CENTRALITY_CALIB_PATH");
+  const char *env_n = std::getenv("MBD_CENTRALITY_NAME");
+
+  if(!env_n)
+    {
+      std::cout << "no env MBD_CENTRALITY_NAME set."<<endl;
+      return;
+    }
+
+  const char *env_p = std::getenv("MBD_CENTRALITY_PATH");
 
   if(!env_p)
     {
-      std::cout << "no env MBD_CENTRALITY_CALIB_PATH set."<<endl;
+      std::cout << "no env MBD_CENTRALITY_PATH set."<<endl;
       return;
     }
   std::ifstream file("../rundb/time_table.csv");
@@ -2297,7 +2424,7 @@ void DrawRunCentralityChecks(const std::string runlist)
     while (getline(inputFile, line)) { // Read each line from the file
 
       int runnumber = std::stoi(line);
-      TFile *file_bal = new TFile(Form("%s/output_2024/plots/mbdana_centrality_check_bal_%d.root", env_p, runnumber), "r");
+      TFile *file_bal = new TFile(Form("%s/output%s/mbdana_centrality_check_bal_%d.root", env_p, env_n, runnumber), "r");
 
       if (!file_bal)
 	{
@@ -2315,7 +2442,7 @@ void DrawRunCentralityChecks(const std::string runlist)
 	runhistmap[runnumber] = h_cent_bin;
 
 
-	TFile *file_zdc = new TFile(Form("%s/output_2024/plots/mbdana_zdc_check_%d.root", env_p, runnumber), "r");
+	TFile *file_zdc = new TFile(Form("%s/output%s/mbdana_zdc_check_%d.root", env_p, env_n, runnumber), "r");
 
 	if (!file_zdc)
 	  {
@@ -2438,8 +2565,8 @@ void DrawRunCentralityChecks(const std::string runlist)
   c1->cd(1);
   DrawSPHENIX(0.2, 0.8, 1, 0, 0.1);
 
-  c->SaveAs(Form("%s/output_2024/centralitycheck_run24.pdf", env_p));
-  c1->SaveAs(Form("%s/output_2024/centralitycheckdate_run24.pdf", env_p));
+  c->SaveAs(Form("%s/output%s/centralitycheck_run24.pdf", env_p, env_n));
+  c1->SaveAs(Form("%s/output%s/centralitycheckdate_run24.pdf", env_p, env_n));
 
   for (auto gp : runvertexmap)
     {
@@ -2498,7 +2625,7 @@ void DrawRunCentralityChecks(const std::string runlist)
 
   TCanvas *c3 = new TCanvas("c3","c3", 300, 600);
   c3->Divide(1, 3);
-  c3->Print(Form("%s/output_2024/rundrama.pdf[", env_p),"pdf");
+  c3->Print(Form("%s/output%s/rundrama.pdf[", env_p, env_n),"pdf");
   for (auto gp : runvertexmap)
     {
       int runnumber = gp.first;
@@ -2510,7 +2637,7 @@ void DrawRunCentralityChecks(const std::string runlist)
       runMBmap[runnumber]->Draw("AP");
       c3->cd(3);
       runZDCmap[runnumber]->Draw("AP");
-      c3->Print(Form("%s/output_2024/rundrama.pdf",env_p), "pdf");
+      c3->Print(Form("%s/output%s/rundrama.pdf",env_p, env_n), "pdf");
     }
-  c3->Print(Form("%s/output_2024/rundrama.pdf]", env_p), "pdf");
+  c3->Print(Form("%s/output%s/rundrama.pdf]", env_p, env_n), "pdf");
 }
