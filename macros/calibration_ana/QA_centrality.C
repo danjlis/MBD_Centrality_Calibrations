@@ -2403,7 +2403,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
 
   TF1 *fflat = new TF1("fflat","1.0",0.0,1.0);
 
-  std::string name_tntuple = Form("%s/SOFTX-D-15-00001/%s", env_p, ntuple_file.c_str());
+  std::string name_tntuple = Form("%s/glauber/%s", env_p, ntuple_file.c_str());
 
   TFile *ftglauber = new TFile(name_tntuple.c_str(), "r");
   if (!ftglauber) {
