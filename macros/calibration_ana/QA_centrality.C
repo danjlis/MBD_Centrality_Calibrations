@@ -2071,7 +2071,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   int ncollmax = 400; // really npart here
   if (m_oo)
     {
-      ncollmax = 32;
+      ncollmax = 64;
     }
   float maxrangencoll = ((float) ncollmax) - 0.5;
 
@@ -2400,6 +2400,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   // TODO: Now the same case for HARD collisions
 
   // NPart for each centrality bin
+
   TF1 *fflat = new TF1("fflat","1.0",0.0,1.0);
 
   std::string name_tntuple = Form("%s/SOFTX-D-15-00001/%s", env_p, ntuple_file.c_str());
@@ -2415,6 +2416,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   }
 
   Float_t npart;
+  Float_t ncoll;
   Float_t B;
   Float_t Ecc[5];
   Float_t Psi[5];
@@ -2430,6 +2432,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   double sum_b = {0};
   double counter = 0.0;
   tauau->SetBranchAddress("Npart", &npart);
+  tauau->SetBranchAddress("Ncoll", &ncoll);
   tauau->SetBranchAddress("B", &B);
 
   for (int i = 0; i < 5; i++)
@@ -2443,11 +2446,15 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   TH1D *h_ecc2[100];
   TH1D *h_ecc3[100];
   TH1D *h_b[100];
-  TH1D *h_b_all = new TH1D("h_b_all",";B;", 100 ,0,20); 
+  TH1D *h_ncoll[100];
+  
+  TH1D *h_b_all = new TH1D("h_b_all",";B;", 100 ,0,20);
+  TH1D *h_ncoll_all = new TH1D("h_ncoll_all",";B;", 64, 0.5, 63.5);
   TH1D *h_ecc2_all = new TH1D("h_ecc2_all", ";Ecc2;", 100,0,1); 
   TH1D *h_ecc3_all = new TH1D("h_ecc3_all", ";Ecc3;", 100,0,1); 
   for (int i = 0; i < 100; i++)
     {
+      h_ncoll[i] = new TH1D(Form("h_ncoll_%d", i), ";Cent;Ncoll", 64, -0.5, 63.5); 
       h_b[i] = new TH1D(Form("h_b_%d", i), ";Cent;B", 100 ,0,20); 
       h_ecc2[i] = new TH1D(Form("h_ecc2_%d", i), ";Cent;Ecc2", 100,0,1); 
       h_ecc3[i] = new TH1D(Form("h_ecc3_%d", i), ";Cent;Ecc3", 100,0,1); 
@@ -2479,6 +2486,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
 	      break;
 	    }
 	}
+      h_ncoll_all->Fill(ncoll);
       h_b_all->Fill(B);
       h_ecc2_all->Fill(Ecc[1]);
       h_ecc3_all->Fill(Ecc[2]);
@@ -2489,6 +2497,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
       h_b[centbin]->Fill(B);
       h_ecc2[centbin]->Fill(Ecc[1]);
       h_ecc3[centbin]->Fill(Ecc[2]);
+      h_ncoll[centbin]->Fill(ncoll);
       for (int ie = 0; ie < 5; ie++)
 	{
 	  a_ecc[ie][centbin] += (double) Ecc[ie];
@@ -2509,6 +2518,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
 
 
   double npartstore[100] = {0};
+  double ncollstore[100] = {0};
 
   TH1D *h_npart_cent[100];
 
@@ -2525,6 +2535,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
 	}
 	  
       npartstore[icent] = h_npart_cent[icent]->GetMean();
+      ncollstore[icent] = h_ncoll[icent]->GetMean();
       if (!silence) std::cout << " Centbin "<<icent<<" <NPart> = " << npartstore[icent] << std::endl;
     }
 
@@ -2558,10 +2569,10 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
     }
   if (!silence) std::cout  << " filling npart file "<<calib_file_name2<<std::endl;
   TFile *fcalib2 = new TFile(calib_file_name2, "recreate");
-  TNtuple *ts2 = new TNtuple("tn_npart", "holds npart divisions", "bin:cent_low:cent_high:npart:ecc2:ecc3:b");
+  TNtuple *ts2 = new TNtuple("tn_npart", "holds npart divisions", "bin:cent_low:cent_high:npart:ncoll:ecc2:ecc3:b");
   for (int i = 0; i < 95 ; i++)
     {
-      ts2->Fill(i+1, centrality_low[i], centrality_high[i], npartstore[i], a_ecc[1][i], a_ecc[2][i], a_b[i]);
+      ts2->Fill(i+1, centrality_low[i], centrality_high[i], npartstore[i], ncollstore[i], a_ecc[1][i], a_ecc[2][i], a_b[i]);
     }
 
   fcalib2->Write();
@@ -2585,6 +2596,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
   hRatiofine->Write();
   trigeffcurve->Write();
   h_npart_total->Write();
+  h_ncoll_all->Write();
   h_b_all->Write();
   h_ecc2_all->Write();
   h_ecc3_all->Write();
@@ -2593,6 +2605,7 @@ void QA_centrality::QA_MakeCentralityCalibrations(const int runnumber, const boo
     {
       h_npart_cent[icent]->Write();
       h_b[icent]->Write();
+      h_ncoll[icent]->Write();
       h_ecc2[icent]->Write();
       h_ecc3[icent]->Write();
     }
